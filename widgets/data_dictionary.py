@@ -16,9 +16,15 @@ def render_data_dictionary_widget():
         st.caption(f':blue[{filename}]')
         df = pd.DataFrame({
             'Column Name': st.session_state['vetted_files'][filename]['columns_names'],
-            'Description': [None]*len(st.session_state['vetted_files'][filename]['columns_names']),
         })
         df['Primary Key'] = df['Column Name'].apply(lambda x: x in st.session_state['vetted_files'][filename]['primary_key'])
+        df['Description'] = None
+
+        st.session_state['vetted_files'][filename]['dataset_description'] = st.text_area(
+            label='Dataset Description:',
+            key=f'{filename}_dataset_description',
+            height=100
+        )
         st.session_state['vetted_files'][filename]['data_dictionary'] = st.data_editor(
             data=df,
             use_container_width=True,
@@ -26,6 +32,7 @@ def render_data_dictionary_widget():
             key=filename,
             column_config={
                 'Column Name': {'disabled': True},
+                'Primary Key': {'disabled': True},
             }
         )
     
