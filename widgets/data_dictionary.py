@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-from utils.data_analysis_helpers import convert_data_dictionary_to_json
+from utils.data_analysis_helpers import process_data_dictionaries
 
 def render_data_dictionary_widget():
     st.write(':blue[Your files have been uploaded!]')
@@ -16,9 +16,11 @@ def render_data_dictionary_widget():
         st.caption(f':blue[{filename}]')
         df = pd.DataFrame({
             'Column Name': st.session_state['vetted_files'][filename]['columns_names'],
+            'Data Type': st.session_state['vetted_files'][filename]['data_types']
         })
+        df['Data Type'] = df['Data Type'].astype(str)
         df['Primary Key'] = df['Column Name'].apply(lambda x: x in st.session_state['vetted_files'][filename]['primary_key'])
-        df['Description'] = None
+        df['Description'] = df['Column Name']
 
         st.session_state['vetted_files'][filename]['dataset_description'] = st.text_area(
             label='Dataset Description:',
@@ -32,13 +34,19 @@ def render_data_dictionary_widget():
             key=filename,
             column_config={
                 'Column Name': {'disabled': True},
+                'Data Type': st.column_config.SelectboxColumn(
+                    label='Data Type',
+                    help='Select the data type for the column.',
+                    required=True,
+                    options=['Int64', 'Float64', 'string', 'datetime64', 'bool', 'category', 'object'],
+                ),
                 'Primary Key': {'disabled': True},
             }
         )
     
     st.button(
         label=':green[Save Data Dictionary and Proceed to Analysis]',
-        on_click=convert_data_dictionary_to_json,
+        on_click=process_data_dictionaries,
         use_container_width=True,
         args=(st.session_state['vetted_files'],)
     )

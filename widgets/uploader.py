@@ -16,5 +16,5 @@ def render_uploader():
         st.button(
             label=':green[Lets Go!]',
             on_click=gather_metadata,
-            use_container_width=True
+            use_container_width=True,
         )

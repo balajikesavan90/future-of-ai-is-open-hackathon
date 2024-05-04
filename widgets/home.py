@@ -3,6 +3,7 @@ import pandas as pd
 
 from widgets.uploader import render_uploader
 from widgets.data_dictionary import render_data_dictionary_widget
+from widgets.data_analysis import render_data_analysis
 
 def setup_home():
     if 'vetted_files' not in st.session_state.keys():
@@ -31,9 +32,7 @@ def render_home():
             render_data_dictionary_widget()
 
         else:
-            for filename in st.session_state['vetted_files']:
-                df = st.session_state['vetted_files'][filename]['dataframe']
-                st.dataframe(df)
+            render_data_analysis()
 
 
     # # User-provided prompt
