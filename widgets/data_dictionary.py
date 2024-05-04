@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import time
 
 from utils.data_analysis_helpers import process_data_dictionaries
 

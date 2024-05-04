@@ -1,6 +1,6 @@
 import streamlit as st
 
-def reset():
+def reset_app():
     st.session_state = {}
 
 def goto_data_dictionary_widget():
@@ -8,3 +8,6 @@ def goto_data_dictionary_widget():
 
 def goto_data_analysis_widget():
     st.session_state['datasets_vetted'] = True
+
+def reset_chat():
+    st.session_state['messages'] = []

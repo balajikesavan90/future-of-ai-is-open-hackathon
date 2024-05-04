@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import itertools
+import os
+from datetime import datetime 
 
 def gather_metadata():
     """
@@ -8,7 +10,8 @@ def gather_metadata():
     """
     vetted_files = {}
     for uploaded_file in st.session_state['uploaded_files']:
-        filename = uploaded_file.name
+        filename, _ = os.path.splitext(uploaded_file.name)
+        filename = filename.replace(' ', '_').replace('-', '_')
         vetted_files[filename] = {}
         df = pd.read_csv(
             filepath_or_buffer=uploaded_file, 
@@ -70,18 +73,26 @@ def check_datatypes(vetted_files):
     Check data types.
     """
     for filename in vetted_files:
-        for column in vetted_files[filename]['dataframe'].columns:
-            if vetted_files[filename]['dataframe'][column].dtype == 'object':
+        vetted_files[filename]['data_dictionary'] = pd.DataFrame(vetted_files[filename]['data_dictionary'])
+        for column in vetted_files[filename]['data_dictionary']['Column Name']:
+
+            if vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'object':
                 vetted_files[filename]['dataframe'][column] = vetted_files[filename]['dataframe'][column].astype('string')
-            elif vetted_files[filename]['dataframe'][column].dtype == 'float64':
+
+            elif vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'float64':
                 vetted_files[filename]['dataframe'][column] = vetted_files[filename]['dataframe'][column].astype('Float64')
-            elif vetted_files[filename]['dataframe'][column].dtype == 'int64':
+
+            elif vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'int64':
                 vetted_files[filename]['dataframe'][column] = vetted_files[filename]['dataframe'][column].astype('Int64')
-            elif vetted_files[filename]['dataframe'][column].dtype == 'bool':
+
+            elif vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'bool':
                 vetted_files[filename]['dataframe'][column] = vetted_files[filename]['dataframe'][column].astype('bool')
-            elif vetted_files[filename]['dataframe'][column].dtype == 'datetime64[ns]':
-                vetted_files[filename]['dataframe'][column] = vetted_files[filename]['dataframe'][column].astype('datetime64[ns]')
-            elif vetted_files[filename]['dataframe'][column].dtype == 'category':
+
+            elif vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'datetime64[ns]':
+                vetted_files[filename]['dataframe'][column] = pd.to_datetime(vetted_files[filename]['dataframe'][column])
+                vetted_files[filename]['dataframe'][column] = datetime.strftime(vetted_files[filename]['dataframe'][column], '%Y-%m-%d %H:%M:%S%z')
+
+            elif vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'category':
                 vetted_files[filename]['dataframe'][column] = vetted_files[filename]['dataframe'][column].astype('category')
     return vetted_files
 
@@ -94,3 +105,10 @@ def process_data_dictionaries(vetted_files):
     vetted_files=convert_pandas_describe_to_json(vetted_files)
     st.session_state['vetted_files'] = vetted_files
     st.session_state['data_dictionaries_loaded'] = True
+
+
+def generate_report(): 
+    st.session_state['vetted_files']['open_ai_chatcompletions']['dataframe']['COST'] = st.session_state['vetted_files']['open_ai_chatcompletions']['dataframe']['COST'] / 1000000 
+    monthly_cost = st.session_state['vetted_files']['open_ai_chatcompletions']['dataframe'].groupby('DTTM')['COST'].sum().reset_index() 
+    monthly_cost.rename(columns={'COST': 'MONTHLY_COST'}, inplace=True) 
+    return monthly_cost
