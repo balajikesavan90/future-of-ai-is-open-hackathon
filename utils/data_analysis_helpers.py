@@ -17,7 +17,7 @@ def gather_metadata():
         df = df.convert_dtypes()
         vetted_files[filename]['columns_names'] = df.columns
         vetted_files[filename]['data_types'] = df.dtypes
-        vetted_files[filename]['row_count'] = df.shape[0]
+        vetted_files[filename]['pandas_describe'] = df.describe(include='all')
         vetted_files[filename]['primary_key'] = detect_primary_keys(df)
         vetted_files[filename]['dataframe'] = df
     
@@ -50,11 +50,20 @@ def convert_data_dictionary_to_json(vetted_files):
     Convert data dictionary to JSON.
     """
     for filename in vetted_files:
-        vetted_files[filename]['data_dictionary_json'] = vetted_files[filename]['data_dictionary'].to_json(orient='records')
+        vetted_files[filename]['data_dictionary_json'] = vetted_files[filename]['data_dictionary'].to_json(orient='table')
         del st.session_state['vetted_files'][filename]['data_dictionary']
 
     return vetted_files
-    
+
+def convert_pandas_describe_to_json(vetted_files):
+    """
+    Convert pandas describe to JSON.
+    """
+    for filename in vetted_files:
+        vetted_files[filename]['pandas_describe_json'] = vetted_files[filename]['pandas_describe'].to_json(orient='table')
+        del st.session_state['vetted_files'][filename]['pandas_describe']
+
+    return vetted_files
 
 def check_datatypes(vetted_files):
     """
@@ -82,5 +91,6 @@ def process_data_dictionaries(vetted_files):
     """
     vetted_files=check_datatypes(vetted_files)
     vetted_files=convert_data_dictionary_to_json(vetted_files)
+    vetted_files=convert_pandas_describe_to_json(vetted_files)
     st.session_state['vetted_files'] = vetted_files
     st.session_state['data_dictionaries_loaded'] = True
