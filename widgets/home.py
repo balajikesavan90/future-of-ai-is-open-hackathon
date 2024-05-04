@@ -3,7 +3,7 @@ import pandas as pd
 
 from widgets.uploader import render_uploader
 from widgets.data_dictionary import render_data_dictionary_widget
-from widgets.data_analysis import render_data_analysis
+from widgets.uploaded_data import render_uploaded_data
 
 def setup_home():
     if 'vetted_files' not in st.session_state.keys():
@@ -11,6 +11,9 @@ def setup_home():
     
     if 'data_dictionaries_loaded' not in st.session_state.keys():
         st.session_state['data_dictionaries_loaded'] = False    
+    
+    if 'datasets_vetted' not in st.session_state.keys():
+        st.session_state['datasets_vetted'] = False
 
 def render_home():
     # if 'messages' not in st.session_state.keys() or not st.session_state['messages']:
@@ -32,7 +35,10 @@ def render_home():
             render_data_dictionary_widget()
 
         else:
-            render_data_analysis()
+            if not st.session_state['datasets_vetted']:
+                render_uploaded_data()
+            else:
+                st.write('Data have been vetted')
 
 
     # # User-provided prompt
