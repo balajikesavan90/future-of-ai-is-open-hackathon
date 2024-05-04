@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-from utils.data_analysis import convert_data_dictionary_to_json
+from utils.data_analysis_helpers import convert_data_dictionary_to_json
 
 def render_data_dictionary_widget():
     st.write(':blue[Your files have been uploaded!]')
