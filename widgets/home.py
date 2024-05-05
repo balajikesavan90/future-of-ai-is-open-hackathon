@@ -78,8 +78,15 @@ def render_home():
                                 commentary = extract_commentary(response)
                             
                             for filename in st.session_state['vetted_files']:
-                                read_csv_line = f"{filename} = pd.read_csv({filename}.csv)"
-                                python_syntax = python_syntax.replace(read_csv_line, '')
+                                read_csv_line1 = f"{filename} = pd.read_csv('{filename}.csv')"
+                                read_csv_line2 = f'{filename} = pd.read_csv("{filename}.csv")'
+                                read_json_line1 = f"{filename} = pd.read_json('{filename}.json')"
+                                read_json_line2 = f'{filename} = pd.read_json("{filename}.json")'
+
+                                python_syntax = python_syntax.replace(read_csv_line1, '')
+                                python_syntax = python_syntax.replace(read_csv_line2, '')
+                                python_syntax = python_syntax.replace(read_json_line1, '')
+                                python_syntax = python_syntax.replace(read_json_line2, '')
 
                                 pattern = re.compile(r'\b' + re.escape(filename) + r'\b')
                                 python_syntax = pattern.sub(f"st.session_state['vetted_files']['{filename}']['dataframe']", python_syntax)

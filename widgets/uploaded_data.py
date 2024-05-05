@@ -14,7 +14,6 @@ def render_uploaded_data():
             hide_index=True,
             height=500
         )
-        st.write(df.dtypes)
         st.divider()
     
     back_col, proceed_col = st.columns(2)
