@@ -5,11 +5,10 @@ from widgets.data_dictionary import render_data_dictionary_widget
 from widgets.uploaded_data import render_uploaded_data
 from utils.ai_helpers import welcome_message, generate_arctic_response, extract_python_syntax, extract_commentary
 import json
-from utils.streamlit_helpers import reset_chat
+from utils.python_helpers import remove_st_set_page_config, remove_generate_report
 import re
 import pandas as pd
 import numpy as np
-
 
 def setup_home():
     if 'vetted_files' not in st.session_state.keys():
@@ -45,19 +44,21 @@ def render_home():
                 with st.expander('See uploaded Datasets'):
                     for filename in st.session_state['vetted_files']:
                         st.subheader(f':blue[{filename}]')
-                        st.dataframe(st.session_state['vetted_files'][filename]['dataframe'])
+                        st.dataframe(st.session_state['vetted_files'][filename]['dataframe'], use_container_width=True)
 
                 for message in st.session_state['messages']:
-                    with st.chat_message(message['role']):
-                        if message['role'] == 'user':
-                            st.write(message['content'])
-                        if message['role'] == 'assistant':
-                            if message['count'] == 0:
+                    if 'error' not in message.keys():
+                        with st.chat_message(message['role']):
+                            if message['role'] == 'user':
                                 st.write(message['content'])
-                            if 'python_syntax' in message.keys():
-                                exec(message['python_syntax'])
-                            # if 'commentary' in message.keys():
-                            #     st.write(message['commentary'])
+                            if message['role'] == 'assistant':
+                                if message['count'] == 0:
+                                    st.write(message['content'])
+                                if 'python_syntax' in message.keys():
+                                    if message['python_syntax'] is not None:
+                                        with st.expander('See Python Syntax'):
+                                            st.write(message['raw_python'])
+                                        exec(message['python_syntax'])
 
                 if user_input := st.chat_input():
                     st.session_state['messages'].append({'role': 'user', 'content': user_input})
@@ -77,28 +78,65 @@ def render_home():
                                 python_syntax = extract_python_syntax(response)
                                 commentary = extract_commentary(response)
                             
-                            for filename in st.session_state['vetted_files']:
-                                read_csv_line1 = f"{filename} = pd.read_csv('{filename}.csv')"
-                                read_csv_line2 = f'{filename} = pd.read_csv("{filename}.csv")'
-                                read_json_line1 = f"{filename} = pd.read_json('{filename}.json')"
-                                read_json_line2 = f'{filename} = pd.read_json("{filename}.json")'
+                            if 'read_csv' in python_syntax:
+                                st.session_state['count'] += 1
+                                message = {'role': 'assistant', 'content': response, 'error': True}
+                                st.session_state['messages'].append(message)
+                                pandas_dataframes = ''
+                                if len(st.session_state['vetted_files']) > 1:
+                                    for filename in st.session_state['vetted_files']:
+                                        pandas_dataframes += f", {filename}"  
+                                    message = {'role': 'user', 'content': f'{pandas_dataframes} are already loaded as pandas dataframe. Please remove the read_csv', 'error': True}
+                                else:
+                                    message = {'role': 'user', 'content': f'{filename} is already loaded as a pandas dataframe. Please remove the read_csv', 'error': True}
+                                st.session_state['messages'].append(message)
+                                st.rerun()
 
-                                python_syntax = python_syntax.replace(read_csv_line1, '')
-                                python_syntax = python_syntax.replace(read_csv_line2, '')
-                                python_syntax = python_syntax.replace(read_json_line1, '')
-                                python_syntax = python_syntax.replace(read_json_line2, '')
+                            if 'read_json' in python_syntax:
+                                st.session_state['count'] += 1
+                                message = {'role': 'assistant', 'content': response, 'error': True}
+                                st.session_state['messages'].append(message)
+                                pandas_dataframes = ''
+                                if len(st.session_state['vetted_files']) > 1:
+                                    for filename in st.session_state['vetted_files']:
+                                        pandas_dataframes += f", {filename}"  
+                                    message = {'role': 'user', 'content': f'{pandas_dataframes} are already loaded as pandas dataframe. Please remove the read_csv', 'error': True}
+                                else:
+                                    message = {'role': 'user', 'content': f'{filename} is already loaded as a pandas dataframe. Please remove the read_csv', 'error': True}
+                                st.session_state['messages'].append(message)
+                                st.rerun()
 
-                                pattern = re.compile(r'\b' + re.escape(filename) + r'\b')
-                                python_syntax = pattern.sub(f"st.session_state['vetted_files']['{filename}']['dataframe']", python_syntax)
+                            if python_syntax is not None:
+                                python_syntax = remove_st_set_page_config(python_syntax)
+                                python_syntax = remove_generate_report(python_syntax)
+                                raw_python = "```python"+"\n"+python_syntax+"\n```"
+                                with st.expander('See Python Syntax'):
+                                    st.write(raw_python)
+                                for filename in st.session_state['vetted_files']:
+                                    st.session_state['vetted_files'][f"{filename}"]['dataframe_copy'] = st.session_state['vetted_files'][filename]['dataframe'].copy()
+                                    pattern = re.compile(r'\b' + re.escape(filename) + r'\b')
+                                    python_syntax = pattern.sub(f"st.session_state['vetted_files']['{filename}']['dataframe_copy']", python_syntax)
 
-                            python_syntax += '\n\nst.write(generate_report())'
-                            exec(python_syntax)
-                            # st.write(commentary)
-                        except (SyntaxError, ValueError) as e:
-                            st.write(response)
-                            st.write(e)
-                            st.error('There was an error in the code generated by the AI. Please try again.')
-                            st.button(':red[Reset Chat]', on_click=reset_chat, key='reset_chat_due_error')
+                                if st.session_state['task'] == 'manipulate':
+                                    python_syntax = f"{python_syntax}\noutput = generate_report()\nif isinstance(output, pd.DataFrame):\n   st.dataframe(generate_report(), use_container_width=True)\nelse:\n   st.write(output)"
+                                elif st.session_state['task'] == 'plot':
+                                    python_syntax = f"{python_syntax}\nplot = generate_report()"
+                                exec(python_syntax)
+                        except (SyntaxError, ValueError, TypeError, KeyError, AttributeError) as e:
+                            st.write('There was an error in the code generated by the AI. Please try again.')
+                            st.session_state['count'] += 1
+                            message = {'role': 'assistant', 'content': response, 'error': True}
+                            st.session_state['messages'].append(message)
+                            error_message = f"""{type(e).__name__}: {str(e)}
+                            {e.__traceback__}
+                            """
+                            message = {'role': 'user', 'content': error_message, 'error': True}
+                            st.session_state['messages'].append(message)
+                            st.rerun()
+
+
+                            # st.button(':red[Reset Chat]', on_click=reset_chat, key='reset_chat_due_error')
+
                     st.session_state['count'] += 1
-                    message = {'role': 'assistant', 'content': response, 'count': st.session_state['count'], 'python_syntax': python_syntax, 'commentary': commentary}
+                    message = {'role': 'assistant', 'content': response, 'count': st.session_state['count'], 'raw_python': raw_python, 'python_syntax': python_syntax, 'commentary': commentary}
                     st.session_state['messages'].append(message)
