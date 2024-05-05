@@ -8,11 +8,14 @@ def render_uploaded_data():
 
     for filename in st.session_state['vetted_files']:
         df = st.session_state['vetted_files'][filename]['dataframe']
+        st.subheader(f':blue[{filename}]')
         st.dataframe(
             data=df,
             hide_index=True,
             height=500
         )
+        st.write(df.dtypes)
+        st.divider()
     
     back_col, proceed_col = st.columns(2)
     with back_col:

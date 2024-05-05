@@ -41,7 +41,7 @@ def render_data_dictionary_widget():
                     label='Data Type',
                     help='Select the data type for the column.',
                     required=True,
-                    options=['Int64', 'Float64', 'string', 'datetime64', 'bool', 'category', 'object'],
+                    options=['Int64', 'Float64', 'string', 'bool', 'category', 'object'],
                 ),
                 'Primary Key': {'disabled': True},
             }

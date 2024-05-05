@@ -11,7 +11,7 @@ def gather_metadata():
     vetted_files = {}
     for uploaded_file in st.session_state['uploaded_files']:
         filename, _ = os.path.splitext(uploaded_file.name)
-        filename = filename.replace(' ', '_').replace('-', '_')
+        filename = filename.replace(' ', '_').replace('-', '_').lower()
         vetted_files[filename] = {}
         df = pd.read_csv(
             filepath_or_buffer=uploaded_file, 
@@ -53,7 +53,7 @@ def convert_data_dictionary_to_json(vetted_files):
     Convert data dictionary to JSON.
     """
     for filename in vetted_files:
-        vetted_files[filename]['data_dictionary_json'] = vetted_files[filename]['data_dictionary'].to_json(orient='table')
+        vetted_files[filename]['data_dictionary_json'] = vetted_files[filename]['data_dictionary'].to_json(orient='index')
         del st.session_state['vetted_files'][filename]['data_dictionary']
 
     return vetted_files
@@ -63,7 +63,7 @@ def convert_pandas_describe_to_json(vetted_files):
     Convert pandas describe to JSON.
     """
     for filename in vetted_files:
-        vetted_files[filename]['pandas_describe_json'] = vetted_files[filename]['pandas_describe'].to_json(orient='table')
+        vetted_files[filename]['pandas_describe_json'] = vetted_files[filename]['pandas_describe'].to_json(orient='index')
         del st.session_state['vetted_files'][filename]['pandas_describe']
 
     return vetted_files
@@ -88,10 +88,6 @@ def check_datatypes(vetted_files):
             elif vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'bool':
                 vetted_files[filename]['dataframe'][column] = vetted_files[filename]['dataframe'][column].astype('bool')
 
-            elif vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'datetime64[ns]':
-                vetted_files[filename]['dataframe'][column] = pd.to_datetime(vetted_files[filename]['dataframe'][column])
-                vetted_files[filename]['dataframe'][column] = datetime.strftime(vetted_files[filename]['dataframe'][column], '%Y-%m-%d %H:%M:%S%z')
-
             elif vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'category':
                 vetted_files[filename]['dataframe'][column] = vetted_files[filename]['dataframe'][column].astype('category')
     return vetted_files
@@ -105,10 +101,3 @@ def process_data_dictionaries(vetted_files):
     vetted_files=convert_pandas_describe_to_json(vetted_files)
     st.session_state['vetted_files'] = vetted_files
     st.session_state['data_dictionaries_loaded'] = True
-
-
-def generate_report(): 
-    st.session_state['vetted_files']['open_ai_chatcompletions']['dataframe']['COST'] = st.session_state['vetted_files']['open_ai_chatcompletions']['dataframe']['COST'] / 1000000 
-    monthly_cost = st.session_state['vetted_files']['open_ai_chatcompletions']['dataframe'].groupby('DTTM')['COST'].sum().reset_index() 
-    monthly_cost.rename(columns={'COST': 'MONTHLY_COST'}, inplace=True) 
-    return monthly_cost

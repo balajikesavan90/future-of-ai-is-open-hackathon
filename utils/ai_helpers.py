@@ -16,8 +16,7 @@ welcome_message = f"""What kind of analytics would you like to perform?
 def construct_system_message():
     system_message = """You are an automated system that generates python syntax that is executed on a cloud server. 
 You must generate your output in JSON format with the keys 'python_syntax' and 'commentary'.
-The python version environment has the latest versions of streamlit, pandas and numpy installed.
-streamlit, pandas and numpy libraries have already been imported.
+The python version environment has the latest versions of streamlit, pandas, numpy and scikit-learn installed.
 
 Here is the metadata of the files uploaded by the user.
     """
@@ -27,11 +26,17 @@ Here is the metadata of the files uploaded by the user.
         system_message += f'Description: {st.session_state["vetted_files"][filename]["dataset_description"]}\n'
         system_message += f'Data Dictionary:\n'
         system_message += st.session_state['vetted_files'][filename]['data_dictionary_json']+'\n'
-        system_message += f'The dataset has been loaded into a pandas DataFrame named {filename}\n\n'
+        system_message += f'Pandas Describe:\n'
+        system_message += st.session_state['vetted_files'][filename]['pandas_describe_json']+'\n'
+        system_message += f'First 5 rows of the dataset:\n'
+        system_message += st.session_state['vetted_files'][filename]['dataframe'].head().to_json(orient='index')+'\n'
+        # system_message += f'Last 5 rows of the dataset:\n'
+        # system_message += st.session_state['vetted_files'][filename]['dataframe'].tail().to_json(orient='index')+'\n'
+        system_message += f'The dataset has already been loaded as a global pandas DataFrame named {filename}\n\n'
 
     system_message += """The 'python_syntax' should be a single python function named 'generate_report' that takes in 0 arguments and must returns a single pandas dataframe.
+You can generate plots using the streamlit API.
 The 'commentary' should be a string with your message to the user."""
-
 
     return system_message
 
@@ -55,6 +60,11 @@ def extract_python_syntax(text):
         return match.group(1).strip()
     else:
         return None
+
+def extract_commentary(text):
+    pattern = r'```python.*?```'
+    commentary = re.sub(pattern, '', text, flags=re.DOTALL)
+    return commentary.strip()
     
 def construct_prompt(messages):
     prompt = [f'<|im_start|>{construct_system_message()}<|im_end|>']

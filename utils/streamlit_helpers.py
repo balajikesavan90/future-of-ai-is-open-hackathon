@@ -11,3 +11,4 @@ def goto_data_analysis_widget():
 
 def reset_chat():
     st.session_state['messages'] = []
+    st.session_state['count'] = 0
