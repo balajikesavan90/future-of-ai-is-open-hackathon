@@ -8,6 +8,7 @@ def goto_data_dictionary_widget():
 
 def goto_data_analysis_widget():
     st.session_state['datasets_vetted'] = True
+    del st.session_state['uploaded_files']
 
 def reset_chat():
     st.session_state['messages'] = []

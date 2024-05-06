@@ -50,7 +50,7 @@ This is a very serious requirement for all of your responses.\n\n"""
         system_message += f'Data Dictionary:\n'
         system_message += st.session_state['vetted_files'][filename]['data_dictionary_json']+'\n'
         # system_message += f'Pandas Describe:\n'
-        # system_message += st.session_state['vetted_files'][filename]['pandas_describe_json']+'\n'
+        # system_message += st.session_state['vetted_files'][filename]['dataframe'].describe().to_json(orient='index')+'\n'
         system_message += f'First 5 rows of the dataset:\n'
         system_message += st.session_state['vetted_files'][filename]['dataframe'].head().to_json(orient='index')+'\n'
         # system_message += f'Last 5 rows of the dataset:\n'
