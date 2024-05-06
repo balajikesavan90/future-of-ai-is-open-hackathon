@@ -3,7 +3,7 @@ import streamlit as st
 from utils.data_analysis_helpers import gather_metadata
 
 def render_uploader():
-        st.subheader(':blue[Auto Analytics is your one stop shop for all your data analysis needs!]')
+        st.subheader(':blue[Arctic Analytics is your one stop shop for all your data analytics needs!]')
         st.write(':blue[Upload your csv files to get started!]')
 
         st.session_state['uploaded_files'] = st.file_uploader(
