@@ -40,7 +40,7 @@ This is a very serious requirement for all of your responses.\n\n"""
     
     system_message += """The 'commentary should be a string with your message to the user. 
 In the commentary you must explain your thought process to the user. 
-You must focus your attention on the reasoning of the logic used to create the 'generate_report' function instead of the syntax itself. 
+You must focus your attention on the reasoning and the logic used to create the 'generate_report' function instead of the syntax itself. 
 This is a very serious requirement for all of your responses.\n\n"""
 
     system_message += "Here is the metadata of the files uploaded by the user.\n"
@@ -49,8 +49,8 @@ This is a very serious requirement for all of your responses.\n\n"""
         system_message += f'Description: {st.session_state["vetted_files"][filename]["dataset_description"]}\n'
         system_message += f'Data Dictionary:\n'
         system_message += st.session_state['vetted_files'][filename]['data_dictionary_json']+'\n'
-        system_message += f'Pandas Describe:\n'
-        system_message += st.session_state['vetted_files'][filename]['pandas_describe_json']+'\n'
+        # system_message += f'Pandas Describe:\n'
+        # system_message += st.session_state['vetted_files'][filename]['pandas_describe_json']+'\n'
         system_message += f'First 5 rows of the dataset:\n'
         system_message += st.session_state['vetted_files'][filename]['dataframe'].head().to_json(orient='index')+'\n'
         # system_message += f'Last 5 rows of the dataset:\n'
@@ -122,6 +122,9 @@ def construct_prompt(messages):
             st.session_state['task'] = 'manipulate'
             prompt = [f"<|im_start|>{construct_analyst_system_message('manipulate')}<|im_end|>"]
         elif any(x in task for x in ['consult', '3']):
+            st.session_state['task'] = 'consult'
+            prompt = [f"<|im_start|>{construct_analyst_system_message('consult')}<|im_end|>"]
+        else:
             st.session_state['task'] = 'consult'
             prompt = [f"<|im_start|>{construct_analyst_system_message('consult')}<|im_end|>"]
     else:
