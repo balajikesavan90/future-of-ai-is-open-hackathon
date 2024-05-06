@@ -101,7 +101,7 @@ def render_chat():
                         python_syntax = pattern.sub(f"st.session_state['vetted_files']['{filename}']['dataframe_copy']", python_syntax)
 
                     if st.session_state['task'] in ['manipulate', 'consult']:
-                        python_syntax = f"{python_syntax}\noutput = generate_report()\nif isinstance(output, pd.DataFrame):\n   st.dataframe(output, use_container_width=True, hide_index=True)\nelse:\n   st.write(output)"
+                        python_syntax = f"{python_syntax}\noutput = generate_report()\nif isinstance(output, pd.DataFrame):\n   st.dataframe(output.reset_index(), use_container_width=True, hide_index=True)\nelse:\n   st.write(output)"
                     elif st.session_state['task'] == 'plot':
                         python_syntax = f"{python_syntax}\nplot = generate_report()"
                     exec(python_syntax)

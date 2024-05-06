@@ -119,7 +119,7 @@ def construct_prompt(messages):
             st.session_state['task'] = 'plot'
             prompt = [f"<|im_start|>{construct_analyst_system_message('plot')}<|im_end|>"]
         elif any(x in task for x in ['manipulate', '1']):
-            st.session_state['task'] in ['manipulate']
+            st.session_state['task'] = 'manipulate'
             prompt = [f"<|im_start|>{construct_analyst_system_message('manipulate')}<|im_end|>"]
         elif any(x in task for x in ['consult', '3']):
             st.session_state['task'] = 'consult'
