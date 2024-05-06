@@ -1,11 +1,10 @@
 import streamlit as st
 
-from utils.data_analysis import gather_metadata
+from utils.data_analysis_helpers import gather_metadata
 
 def render_uploader():
-        st.subheader(':blue[Auto Analytics is your one stop shop for all your data analysis needs!]')
-        st.write(':blue[Upload your csv files to get started!]')
 
+        st.write(':blue[Upload your csv files to get started!]')
         st.session_state['uploaded_files'] = st.file_uploader(
             label='Upload Your Files in .csv format:', 
             type=['csv'],
@@ -16,5 +15,6 @@ def render_uploader():
         st.button(
             label=':green[Lets Go!]',
             on_click=gather_metadata,
-            use_container_width=True
+            use_container_width=True,
+            args=('upload',)
         )
