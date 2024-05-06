@@ -1,5 +1,7 @@
 import streamlit as st
 
+from utils.data_analysis_helpers import gather_metadata
+
 def reset_app():
     st.session_state = {}
 
