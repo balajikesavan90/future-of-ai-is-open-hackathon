@@ -8,6 +8,7 @@ def remove_st_set_page_config(input_string):
     return output_string
 
 def remove_generate_report(input_string):
+    """removes the function call (if present) because function call is done deliberately to avoid double outputs"""
     # This regex pattern matches the line 'generate_report()'
     pattern = r"generate_report\(\)\n"
     # Substitute the matched pattern with an empty string

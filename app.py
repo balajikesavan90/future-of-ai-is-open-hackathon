@@ -5,10 +5,13 @@ from widgets.home import setup_home, render_home
 
 # App title
 st.set_page_config(
-    page_title="Data Analyst",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_title='Arctic Analytics',
+    layout='wide',
+    page_icon='❄️',
+    initial_sidebar_state='expanded'
 )
+
+# st.sidebar.write(st.session_state)
 
 render_reset()
 setup_home()
