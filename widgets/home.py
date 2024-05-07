@@ -18,9 +18,6 @@ def setup_home():
         st.session_state['datasets_vetted'] = False
 
 def render_home():
-    st.title(':blue[Arctic Analytics]')
-    st.divider()
-
     if st.session_state['vetted_files'] == {}:
 
         render_snowflake_connection()
