@@ -20,7 +20,75 @@ You must generate one of these outputs
 3. 'consult' if the user's request is a question that requires a text response.
 """
 
-def construct_analyst_system_message(task):
+def generate_arctic_analyst_response():
+    with st.spinner('Generating Python Syntax...'):
+        prompt_str = construct_prompt(st.session_state['messages'])
+        return generate_arctic_response(prompt_str)
+    
+def construct_prompt(messages):
+    if 'error' not in messages[-1]:
+        task = identify_task(messages[-1]['content'])
+        if any(x in task for x in ['plot', '2']):
+            st.session_state['task'] = 'plot'
+            prompt = [f"<|im_start|>{construct_arctic_analyst_system_message('plot')}<|im_end|>"]
+        elif any(x in task for x in ['manipulate', '1']):
+            st.session_state['task'] = 'manipulate'
+            prompt = [f"<|im_start|>{construct_arctic_analyst_system_message('manipulate')}<|im_end|>"]
+        elif any(x in task for x in ['consult', '3']):
+            st.session_state['task'] = 'consult'
+            prompt = [f"<|im_start|>{construct_arctic_analyst_system_message('consult')}<|im_end|>"]
+        else:
+            st.session_state['task'] = 'consult'
+            prompt = [f"<|im_start|>{construct_arctic_analyst_system_message('consult')}<|im_end|>"]
+    else:
+        prompt = [f"<|im_start|>{construct_arctic_analyst_system_message(st.session_state['task'])}<|im_end|>"]
+
+    for dict_message in messages:
+        if dict_message['role'] == 'user':
+            prompt.append('<|im_start|>user\n' + dict_message['content'] + '<|im_end|>')
+        else:
+            prompt.append('<|im_start|>assistant\n' + dict_message['content'] + '<|im_end|>')
+    
+    prompt.append('<|im_start|>assistant')
+    prompt.append('')
+    return '\n'.join(prompt)
+
+def identify_task(text):
+    with st.spinner('Thinking...'):
+        prompt = [f'<|im_start|>{task_identifier_system_message}<|im_end|>']
+        prompt.append('<|im_start|>user\n' + text + '<|im_end|>')
+        prompt.append('<|im_start|>assistant')
+        prompt.append('')
+        prompt_str = '\n'.join(prompt)
+        return generate_arctic_response(prompt_str)
+
+def generate_arctic_response(prompt_str):
+        token_count = get_num_tokens(prompt_str)
+        print(token_count)
+        
+        if token_count >= 3072:
+            st.error('Conversation length too long. Please keep it under 3072 tokens.')
+            st.button('Reset', on_click=reset_app, key='reset')
+            st.stop()
+
+        events = []
+        for event in replicate.stream('snowflake/snowflake-arctic-instruct',
+                            input={'prompt': prompt_str,
+                                    'prompt_template': r"{prompt}",
+                                    'temperature': 0,
+                                    'top_p': top_p,
+                                    }):
+            events.append(str(event))
+        return ''.join(events)
+
+
+def get_num_tokens(prompt):
+    """Get the number of tokens in a given prompt"""
+    tokenizer = get_tokenizer()
+    tokens = tokenizer.tokenize(prompt)
+    return len(tokens)
+
+def construct_arctic_analyst_system_message(task):
     system_message = """You are an automated system that generates python syntax that is executed on a cloud server. 
 The python virtual environment has the latest versions of streamlit, pandas, numpy, scikit-learn installed.
 
@@ -66,39 +134,6 @@ def get_tokenizer():
     """
     return AutoTokenizer.from_pretrained('huggyllama/llama-7b')
 
-def get_num_tokens(prompt):
-    """Get the number of tokens in a given prompt"""
-    tokenizer = get_tokenizer()
-    tokens = tokenizer.tokenize(prompt)
-    return len(tokens)
-
-def identify_task(text):
-    with st.spinner('Thinking...'):
-        prompt = [f'<|im_start|>{task_identifier_system_message}<|im_end|>']
-        prompt.append('<|im_start|>user\n' + text + '<|im_end|>')
-        prompt.append('<|im_start|>assistant')
-        prompt.append('')
-        prompt_str = '\n'.join(prompt)
-
-        token_count = get_num_tokens(prompt_str)
-        print(token_count)
-
-        if token_count >= 3072:
-            st.error('Conversation length too long. Please keep it under 3072 tokens.')
-            st.button('Reset', on_click=reset_app, key='reset')
-            st.stop()
-
-        events = []
-        for event in replicate.stream('snowflake/snowflake-arctic-instruct',
-                            input={'prompt': prompt_str,
-                                    'prompt_template': r"{prompt}",
-                                    'temperature': temperature,
-                                    'top_p': top_p,
-                                    }):
-            events.append(str(event))
-        return ''.join(events)
-    
-
 def extract_python_syntax(text):
     pattern = r'```python(.*?)```'
     match = re.search(pattern, text, re.DOTALL)
@@ -111,52 +146,3 @@ def extract_commentary(text):
     pattern = r'```python.*?```'
     commentary = re.sub(pattern, '', text, flags=re.DOTALL)
     return commentary.strip()
-    
-def construct_prompt(messages):
-    if 'error' not in messages[-1]:
-        task = identify_task(messages[-1]['content'])
-        if any(x in task for x in ['plot', '2']):
-            st.session_state['task'] = 'plot'
-            prompt = [f"<|im_start|>{construct_analyst_system_message('plot')}<|im_end|>"]
-        elif any(x in task for x in ['manipulate', '1']):
-            st.session_state['task'] = 'manipulate'
-            prompt = [f"<|im_start|>{construct_analyst_system_message('manipulate')}<|im_end|>"]
-        elif any(x in task for x in ['consult', '3']):
-            st.session_state['task'] = 'consult'
-            prompt = [f"<|im_start|>{construct_analyst_system_message('consult')}<|im_end|>"]
-        else:
-            st.session_state['task'] = 'consult'
-            prompt = [f"<|im_start|>{construct_analyst_system_message('consult')}<|im_end|>"]
-    else:
-        prompt = [f"<|im_start|>{construct_analyst_system_message(st.session_state['task'])}<|im_end|>"]
-    for dict_message in messages:
-        if dict_message['role'] == 'user':
-            prompt.append('<|im_start|>user\n' + dict_message['content'] + '<|im_end|>')
-        else:
-            prompt.append('<|im_start|>assistant\n' + dict_message['content'] + '<|im_end|>')
-    
-    prompt.append('<|im_start|>assistant')
-    prompt.append('')
-    return '\n'.join(prompt)    
-
-# Function for generating Snowflake Arctic response
-def generate_arctic_response():
-    with st.spinner('Generating Python Syntax...'):
-        prompt_str = construct_prompt(st.session_state['messages'])
-        token_count = get_num_tokens(prompt_str)
-        print(token_count)
-        
-        if token_count >= 3072:
-            st.error('Conversation length too long. Please keep it under 3072 tokens.')
-            st.button('Reset', on_click=reset_app, key='reset')
-            st.stop()
-
-        events = []
-        for event in replicate.stream('snowflake/snowflake-arctic-instruct',
-                            input={'prompt': prompt_str,
-                                    'prompt_template': r"{prompt}",
-                                    'temperature': 0,
-                                    'top_p': top_p,
-                                    }):
-            events.append(str(event))
-        return ''.join(events)

@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.ai_helpers import welcome_message, generate_arctic_response, extract_python_syntax, extract_commentary
+from utils.ai_helpers import welcome_message, generate_arctic_analyst_response, extract_python_syntax, extract_commentary
 import json
 from utils.python_helpers import remove_st_set_page_config, remove_generate_report
 import re
@@ -43,7 +43,7 @@ def render_chat():
     if st.session_state['messages'][-1]['role'] != 'assistant':
         with st.chat_message('assistant'):
             try:
-                response = generate_arctic_response()
+                response = generate_arctic_analyst_response()
                 try:
                     response_dict = json.loads(response)
                     python_syntax = response_dict['python_syntax']
@@ -61,9 +61,9 @@ def render_chat():
                         if len(st.session_state['vetted_files']) > 1:
                             for filename in st.session_state['vetted_files']:
                                 pandas_dataframes += f", {filename}"  
-                            message = {'role': 'user', 'content': f'{pandas_dataframes} are already loaded as pandas dataframe. Please remove the read_csv', 'error': True}
+                            message = {'role': 'user', 'content': f'{pandas_dataframes} are already loaded as pandas dataframe. Please remove the read_csv statement', 'error': True}
                         else:
-                            message = {'role': 'user', 'content': f'{filename} is already loaded as a pandas dataframe. Please remove the read_csv', 'error': True}
+                            message = {'role': 'user', 'content': f'{filename} is already loaded as a pandas dataframe. Please remove the read_csv statement', 'error': True}
                         st.session_state['messages'].append(message)
                         st.rerun()
 
@@ -75,9 +75,9 @@ def render_chat():
                         if len(st.session_state['vetted_files']) > 1:
                             for filename in st.session_state['vetted_files']:
                                 pandas_dataframes += f", {filename}"  
-                            message = {'role': 'user', 'content': f'{pandas_dataframes} are already loaded as pandas dataframe. Please remove the read_csv', 'error': True}
+                            message = {'role': 'user', 'content': f'{pandas_dataframes} are already loaded as pandas dataframe. Please remove the read_json statement', 'error': True}
                         else:
-                            message = {'role': 'user', 'content': f'{filename} is already loaded as a pandas dataframe. Please remove the read_csv', 'error': True}
+                            message = {'role': 'user', 'content': f'{filename} is already loaded as a pandas dataframe. Please remove the read_json statement', 'error': True}
                         st.session_state['messages'].append(message)
                         st.rerun()
 
