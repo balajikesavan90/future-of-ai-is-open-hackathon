@@ -17,18 +17,10 @@ render_reset()
 
 st.title(':blue[Arctic Analytics]')
 
-home, create_documentation, about = st.tabs(['Analyze Data', 'Create Documentation', 'About'])
 
-with home:
-    setup_home()
-    if st.session_state['datasets_vetted']:
-        render_reset_chat()
-    render_home()
-
-with create_documentation:
-    st.write('Create Documentation')
-
-with about:
-    st.write('About')
+setup_home()
+if st.session_state['datasets_vetted']:
+    render_reset_chat()
+render_home()
 
 render_session_state()

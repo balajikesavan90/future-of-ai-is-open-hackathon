@@ -28,7 +28,7 @@ def render_chat():
                         if message['python_syntax'] is not None:
                             with st.expander('See Python Syntax'):
                                 st.write(message['raw_python'])
-                            exec(message['python_syntax'])
+                            st.dataframe(message['output'])
                         else:
                             st.write(message['content'])
                     else:
@@ -100,11 +100,19 @@ def render_chat():
                         pattern = re.compile(r'\b' + re.escape(filename) + r'\b')
                         python_syntax = pattern.sub(f"st.session_state['vetted_files']['{filename}']['dataframe_copy']", python_syntax)
 
-                    if st.session_state['task'] in ['manipulate', 'consult']:
-                        python_syntax = f"{python_syntax}\noutput = generate_report()\nif isinstance(output, pd.DataFrame):\n   st.dataframe(output.reset_index(), use_container_width=True, hide_index=True)\nelse:\n   st.write(output)"
-                    elif st.session_state['task'] == 'plot':
-                        python_syntax = f"{python_syntax}\nplot = generate_report()"
                     exec(python_syntax)
+                    output = eval('generate_report()')
+                    if st.session_state['task'] in ['manipulate', 'consult']:
+                        if isinstance(output, pd.DataFrame):
+                            st.dataframe(output.reset_index(), use_container_width=True, hide_index=True)
+                        else:
+                            st.session_state['count'] += 1
+                            message = {'role': 'assistant', 'content': response, 'error': True}
+                            st.session_state['messages'].append(message)
+                            message = {'role': 'user', 'content': 'The generate_report() function must return a single pandas DataFrame', 'error': True}
+                            st.session_state['messages'].append(message)
+                            st.rerun()
+                            
                 else:
                     raw_python = None
                     st.write(response)
@@ -121,9 +129,6 @@ def render_chat():
                 st.session_state['messages'].append(message)
                 st.rerun()
 
-
-                # st.button(':red[Reset Chat]', on_click=reset_chat, key='reset_chat_due_error')
-
         st.session_state['count'] += 1
-        message = {'role': 'assistant', 'content': response, 'count': st.session_state['count'], 'raw_python': raw_python, 'python_syntax': python_syntax, 'commentary': commentary}
+        message = {'role': 'assistant', 'content': response, 'count': st.session_state['count'], 'raw_python': raw_python, 'python_syntax': python_syntax, 'commentary': commentary, 'output': output}
         st.session_state['messages'].append(message)
