@@ -40,7 +40,7 @@ def render_create_documentation():
                     )
         with document_col:
             if st.button(
-                label=':blue[Generate Comments and Doc Strings]',
+                label=':blue[Generate Docstrings]',
                 use_container_width=True
             ):
                 response = generate_documentation_response(code_snippet)
