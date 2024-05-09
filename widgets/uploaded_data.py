@@ -12,7 +12,7 @@ def render_uploaded_data():
         st.dataframe(
             data=df,
             hide_index=True,
-            height=300,
+            height=250,
             use_container_width=True
         )
         st.divider()
