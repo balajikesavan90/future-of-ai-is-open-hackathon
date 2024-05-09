@@ -1,10 +1,6 @@
 import streamlit as st
-from utils.ai_helpers import welcome_message, generate_arctic_analyst_response, extract_python_syntax, extract_commentary
-import json
-from utils.python_helpers import remove_st_set_page_config, remove_generate_report
-import re
-import pandas as pd
-import numpy as np
+from utils.ai_helpers import welcome_message, generate_arctic_analyst_response
+from utils.chat_helpers import *
 
 def render_chat():
     st.success(':green[Arctic Analytics AI now has access to the metadata of the files you uploaded. Arctic Analytics will use that to generate code snippets.]')
@@ -44,50 +40,12 @@ def render_chat():
         with st.chat_message('assistant'):
             try:
                 response = generate_arctic_analyst_response()
-                try:
-                    response_dict = json.loads(response)
-                    python_syntax = response_dict['python_syntax']
-                    commentary = response_dict['commentary']
-                except json.JSONDecodeError as e:
-                    python_syntax = extract_python_syntax(response)
-                    commentary = extract_commentary(response)
+                python_syntax, commentary = extract_python_syntax_and_commetary(response)
                 
                 if python_syntax is not None:
-                    if 'read_csv' in python_syntax:
-                        st.session_state['count'] += 1
-                        message = {'role': 'assistant', 'content': response, 'error': True}
-                        st.session_state['messages'].append(message)
-                        pandas_dataframes = ''
-                        if len(st.session_state['vetted_files']) > 1:
-                            for filename in st.session_state['vetted_files']:
-                                pandas_dataframes += f", {filename}"  
-                            message = {'role': 'user', 'content': f'{pandas_dataframes} are already loaded as pandas dataframe. Please remove the read_csv statement', 'error': True}
-                        else:
-                            message = {'role': 'user', 'content': f'{filename} is already loaded as a pandas dataframe. Please remove the read_csv statement', 'error': True}
-                        st.session_state['messages'].append(message)
-                        st.rerun()
-
-                    if 'read_json' in python_syntax:
-                        st.session_state['count'] += 1
-                        message = {'role': 'assistant', 'content': response, 'error': True}
-                        st.session_state['messages'].append(message)
-                        pandas_dataframes = ''
-                        if len(st.session_state['vetted_files']) > 1:
-                            for filename in st.session_state['vetted_files']:
-                                pandas_dataframes += f", {filename}"  
-                            message = {'role': 'user', 'content': f'{pandas_dataframes} are already loaded as pandas dataframe. Please remove the read_json statement', 'error': True}
-                        else:
-                            message = {'role': 'user', 'content': f'{filename} is already loaded as a pandas dataframe. Please remove the read_json statement', 'error': True}
-                        st.session_state['messages'].append(message)
-                        st.rerun()
-
-                    if 'def generate_report():' not in python_syntax:
-                        st.session_state['count'] += 1
-                        message = {'role': 'assistant', 'content': response, 'error': True}
-                        st.session_state['messages'].append(message)
-                        message = {'role': 'user', 'content': 'The function should be called "generate_report". It must take 0 arguments.', 'error': True}
-                        st.session_state['messages'].append(message)
-                        st.rerun()
+                    check_read_csv_error_and_give_feedback(python_syntax, response)
+                    check_read_json_error_and_give_feedback(python_syntax, response)
+                    check_function_definition_error_and_give_feedback(python_syntax, response)
 
                     python_syntax = remove_st_set_page_config(python_syntax)
                     python_syntax = remove_generate_report(python_syntax)
@@ -95,39 +53,16 @@ def render_chat():
 
                     with st.expander('See Python Syntax'):
                         st.write(raw_python)
-                    for filename in st.session_state['vetted_files']:
-                        st.session_state['vetted_files'][f"{filename}"]['dataframe_copy'] = st.session_state['vetted_files'][filename]['dataframe'].copy()
-                        pattern = re.compile(r'\b' + re.escape(filename) + r'\b')
-                        python_syntax = pattern.sub(f"st.session_state['vetted_files']['{filename}']['dataframe_copy']", python_syntax)
-
+                    python_syntax = update_python_syntax_with_correct_dataframe_names(python_syntax)
                     exec(python_syntax)
                     output = eval('generate_report()')
-                    if st.session_state['task'] in ['manipulate', 'consult']:
-                        if isinstance(output, pd.DataFrame):
-                            st.dataframe(output.reset_index(), use_container_width=True, hide_index=True)
-                        else:
-                            st.session_state['count'] += 1
-                            message = {'role': 'assistant', 'content': response, 'error': True}
-                            st.session_state['messages'].append(message)
-                            message = {'role': 'user', 'content': 'The generate_report() function must return a single pandas DataFrame', 'error': True}
-                            st.session_state['messages'].append(message)
-                            st.rerun()
-                            
+                    check_outputs_and_give_feedback(output)
                 else:
                     raw_python = None
                     st.write(response)
 
             except (SyntaxError, ValueError, TypeError, KeyError, AttributeError) as e:
-                st.write('There was an error in the code generated by the AI. Please try again.')
-                st.session_state['count'] += 1
-                message = {'role': 'assistant', 'content': response, 'error': True}
-                st.session_state['messages'].append(message)
-                error_message = f"""{type(e).__name__}: {str(e)}
-                {e.__traceback__}
-                """
-                message = {'role': 'user', 'content': error_message, 'error': True}
-                st.session_state['messages'].append(message)
-                st.rerun()
+                handle_all_other_errors(e, response)
 
         st.session_state['count'] += 1
         message = {'role': 'assistant', 'content': response, 'count': st.session_state['count'], 'raw_python': raw_python, 'python_syntax': python_syntax, 'commentary': commentary, 'output': output}

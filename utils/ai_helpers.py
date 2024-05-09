@@ -195,16 +195,3 @@ def get_tokenizer():
     text to the Model. Eventually we will replace this with ArcticTokenizer
     """
     return AutoTokenizer.from_pretrained('huggyllama/llama-7b')
-
-def extract_python_syntax(text):
-    pattern = r'```python(.*?)```'
-    match = re.search(pattern, text, re.DOTALL)
-    if match:
-        return match.group(1).strip()
-    else:
-        return None
-
-def extract_commentary(text):
-    pattern = r'```python.*?```'
-    commentary = re.sub(pattern, '', text, flags=re.DOTALL)
-    return commentary.strip()
