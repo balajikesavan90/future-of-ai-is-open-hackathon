@@ -6,16 +6,12 @@ def render_create_documentation():
     
     code_snippet_col, output_col = st.columns(2)
 
-    if 'code_snippet' not in st.session_state.keys():
-        st.session_state['code_snippet'] = ''
-
     with code_snippet_col:
-        st.session_state['code_snippet'] = st.text_area(
+        code_snippet = st.text_area(
             label='Codebase',
             placeholder='Add your code snippet here',
             height=500,
-            label_visibility='collapsed',
-            key='code_snippet'
+            label_visibility='collapsed'
         )
         with st.expander('Add Error Message'):
             st.text_area(
@@ -34,7 +30,7 @@ def render_create_documentation():
                 label=':green[Explain the code snippet]',
                 use_container_width=True
             ):
-                response = generate_explanation_response()
+                response = generate_explanation_response(code_snippet)
                 with st.session_state['output_container']:
                     st.markdown(response)
                     st.button(
@@ -47,7 +43,7 @@ def render_create_documentation():
                 label=':blue[Generate Comments and Doc Strings]',
                 use_container_width=True
             ):
-                response = generate_documentation_response()
+                response = generate_documentation_response(code_snippet)
                 with st.session_state['output_container']:
                     st.code(response)
                     st.button(
