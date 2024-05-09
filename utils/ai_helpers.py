@@ -3,6 +3,7 @@ import replicate
 import os
 import re
 from transformers import AutoTokenizer
+import json
 
 from utils.streamlit_helpers import reset_app
 
@@ -28,12 +29,20 @@ You must generate your output in bullet points with short sentences.
 Your output must be in github markdown format.
 """
 
-generate_documentation_system_message = """You are an automated system that generates comments and docstrings for the computer code inputted by the user.
+generate_docstring_system_message = """You are an automated system that generates comments and docstrings for the computer code inputted by the user.
 Your output must be a version of the user's code with comments and docstrings added.
 The doc strings must include the function name, the purpose of the function, and the input and output parameters.
 The comments must explain the logic and reasoning behind the code.
 You must include comments for each line of code.
 The comments must be written in a way that is easy to understand for someone who is not familiar with the code.
+"""
+
+generate_debugger_system_message = """You are an automated system that generates a response to a user's code snippet and error message.
+You must generate a response that helps the user debug their code.
+You must provide a detailed explanation of the error message and suggest possible solutions.
+You must generate your output in markdown format.
+You must include code snippets and explanations in your response.
+You must focus on helping the user understand the error message and how to fix it.
 """
 
 def construct_arctic_analyst_system_message(task):
@@ -132,11 +141,23 @@ def generate_explanation_response(code_snippet):
             prompt_str = '\n'.join(prompt)
             return generate_arctic_response(prompt_str)
     
-def generate_documentation_response(code_snippet):
+def generate_docstring_response(code_snippet):
     with st.session_state['output_container']:
-        with st.spinner('Generating Documentation...'):
-            prompt = [f"<|im_start|>system\n{generate_documentation_system_message}<|im_end|>"]
+        with st.spinner('Generating Docstrings...'):
+            prompt = [f"<|im_start|>system\n{generate_docstring_system_message}<|im_end|>"]
             prompt.append('<|im_start|>user\n' + code_snippet + '<|im_end|>')
+            prompt.append('<|im_start|>assistant')
+            prompt.append('')
+            prompt_str = '\n'.join(prompt)
+            return generate_arctic_response(prompt_str)
+
+def generate_debugger_response(code_snippet, error_message):
+    with st.session_state['output_container']:
+        with st.spinner('Generating Debugger Response...'):
+            prompt = [f"<|im_start|>system\n{generate_debugger_system_message}<|im_end|>"]
+            input = {'code_snippet': code_snippet, 'error_message': error_message}
+            input_json = json.dumps(input)
+            prompt.append('<|im_start|>user\n' + input_json + '<|im_end|>')
             prompt.append('<|im_start|>assistant')
             prompt.append('')
             prompt_str = '\n'.join(prompt)

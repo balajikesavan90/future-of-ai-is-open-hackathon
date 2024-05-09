@@ -5,7 +5,7 @@ from widgets.uploader import render_uploader
 from widgets.data_dictionary import render_data_dictionary_widget
 from widgets.uploaded_data import render_uploaded_data
 from widgets.chat import render_chat
-from widgets.create_documentation import render_create_documentation
+from widgets.document_and_debug import render_document_and_debug_code_widget
 
 
 def setup_home():
@@ -21,12 +21,12 @@ def setup_home():
 def render_home():
     if st.session_state['vetted_files'] == {}:
 
-        analyze_data, create_documentation, about = st.tabs(['Analyze Data', 'Create Documentation', 'About'])
+        analyze_data, document_debug_code, about = st.tabs(['Analyze Data', 'Document & Debug Code', 'About'])
         with analyze_data:
             render_snowflake_connection()
             render_uploader()
-        with create_documentation:
-            render_create_documentation()
+        with document_debug_code:
+            render_document_and_debug_code_widget()
         with about:
             st.write('About')
 
