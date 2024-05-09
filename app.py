@@ -15,7 +15,7 @@ st.set_page_config(
 
 render_reset()
 
-st.title(':blue[Arctic Analytics]')
+st.header(':blue[Arctic Analytics]')
 
 
 setup_home()

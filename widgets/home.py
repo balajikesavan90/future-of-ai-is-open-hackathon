@@ -20,8 +20,14 @@ def setup_home():
 def render_home():
     if st.session_state['vetted_files'] == {}:
 
-        render_snowflake_connection()
-        render_uploader()
+        analyze_data, create_documentation, about = st.tabs(['Analyze Data', 'Create Documentation', 'About'])
+        with analyze_data:
+            render_snowflake_connection()
+            render_uploader()
+        with create_documentation:
+            st.write('Create Documentation')
+        with about:
+            st.write('About')
 
     else:
         if not st.session_state['data_dictionaries_loaded']:

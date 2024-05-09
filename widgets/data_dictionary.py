@@ -29,12 +29,13 @@ def render_data_dictionary_widget():
             label_visibility='collapsed'
         )
         with st.expander('See uploaded Dataset'):
-            st.dataframe(st.session_state['vetted_files'][filename]['dataframe'])
+            st.dataframe(st.session_state['vetted_files'][filename]['dataframe'], use_container_width=True)
         st.session_state['vetted_files'][filename]['data_dictionary'] = st.data_editor(
             data=df,
             use_container_width=True,
             hide_index=True,
             key=filename,
+            height=300,
             column_config={
                 'Column Name': {'disabled': True},
                 'Data Type': st.column_config.SelectboxColumn(
