@@ -6,6 +6,9 @@ def render_create_documentation():
     
     code_snippet_col, output_col = st.columns(2)
 
+    if 'code_snippet' not in st.session_state.keys():
+        st.session_state['code_snippet'] = ''
+
     with code_snippet_col:
         st.session_state['code_snippet'] = st.text_area(
             label='Codebase',
