@@ -122,21 +122,21 @@ def identify_task(text):
         prompt_str = '\n'.join(prompt)
         return generate_arctic_response(prompt_str)
 
-def generate_explanation_response():
+def generate_explanation_response(code_snippet):
     with st.session_state['output_container']:
         with st.spinner('Generating Explanation...'):
             prompt = [f"<|im_start|>system\n{generate_explanation_system_message}<|im_end|>"]
-            prompt.append('<|im_start|>user\n' + st.session_state['code_snippet'] + '<|im_end|>')
+            prompt.append('<|im_start|>user\n' + code_snippet + '<|im_end|>')
             prompt.append('<|im_start|>assistant')
             prompt.append('')
             prompt_str = '\n'.join(prompt)
             return generate_arctic_response(prompt_str)
     
-def generate_documentation_response():
+def generate_documentation_response(code_snippet):
     with st.session_state['output_container']:
         with st.spinner('Generating Documentation...'):
             prompt = [f"<|im_start|>system\n{generate_documentation_system_message}<|im_end|>"]
-            prompt.append('<|im_start|>user\n' + st.session_state['code_snippet'] + '<|im_end|>')
+            prompt.append('<|im_start|>user\n' + code_snippet + '<|im_end|>')
             prompt.append('<|im_start|>assistant')
             prompt.append('')
             prompt_str = '\n'.join(prompt)
