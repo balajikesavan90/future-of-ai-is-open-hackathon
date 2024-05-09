@@ -10,7 +10,7 @@ def render_create_documentation():
         code_snippet = st.text_area(
             label='Codebase',
             placeholder='Add your code snippet here',
-            height=500,
+            height=300,
             label_visibility='collapsed'
         )
         with st.expander('Add Error Message'):
