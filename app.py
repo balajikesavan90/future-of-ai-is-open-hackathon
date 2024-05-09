@@ -14,8 +14,13 @@ st.set_page_config(
 # st.sidebar.write(st.session_state)
 
 render_reset()
+
+st.header(':blue[Arctic Analytics]')
+
+
 setup_home()
 if st.session_state['datasets_vetted']:
     render_reset_chat()
 render_home()
+
 render_session_state()

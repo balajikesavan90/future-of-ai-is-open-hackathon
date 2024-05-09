@@ -3,8 +3,8 @@ import streamlit as st
 from utils.data_analysis_helpers import gather_metadata
 
 def render_uploader():
-
-        st.write(':blue[Upload your csv files to get started!]')
+    with st.form(key='upload_files'):
+        st.caption(':blue[or upload your csv files]')
         st.session_state['uploaded_files'] = st.file_uploader(
             label='Upload Your Files in .csv format:', 
             type=['csv'],
@@ -12,9 +12,9 @@ def render_uploader():
             label_visibility='collapsed'
         )
 
-        st.button(
+        if st.form_submit_button(
             label=':green[Lets Go!]',
-            on_click=gather_metadata,
             use_container_width=True,
-            args=('upload',)
-        )
+        ):
+            gather_metadata(source='upload')
+            st.rerun()
