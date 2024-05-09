@@ -5,6 +5,7 @@ from widgets.uploader import render_uploader
 from widgets.data_dictionary import render_data_dictionary_widget
 from widgets.uploaded_data import render_uploaded_data
 from widgets.chat import render_chat
+from widgets.create_documentation import render_create_documentation
 
 
 def setup_home():
@@ -25,7 +26,7 @@ def render_home():
             render_snowflake_connection()
             render_uploader()
         with create_documentation:
-            st.write('Create Documentation')
+            render_create_documentation()
         with about:
             st.write('About')
 
