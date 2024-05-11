@@ -103,9 +103,11 @@ This is a very serious requirement for all of your responses.\n\n"""
 
 def generate_arctic_analyst_response():
     print('generate_arctic_analyst_response')
-    with st.spinner('Generating Python Syntax...'):
+    with st.spinner('Constructing Prompt...'):
         prompt_str = construct_arctic_analyst_prompt(st.session_state['messages'])
-        return generate_ai_response(prompt_str)
+    with st.spinner('Generating Response...'):
+        response = generate_ai_response(prompt_str)
+        return response
     
 def construct_arctic_analyst_prompt(messages):
     print('construct_arctic_analyst_prompt')
@@ -143,13 +145,12 @@ def construct_arctic_analyst_prompt(messages):
 
 def identify_task(text):
     print('identify_task')
-    with st.spinner('Thinking...'):
-        prompt = [f'<|im_start|>system\n{task_identifier_system_message}<|im_end|>']
-        prompt.append('<|im_start|>user\n' + text + '<|im_end|>')
-        prompt.append('<|im_start|>assistant')
-        prompt.append('')
-        prompt_str = '\n'.join(prompt)
-        return generate_ai_response(prompt_str)
+    prompt = [f'<|im_start|>system\n{task_identifier_system_message}<|im_end|>']
+    prompt.append('<|im_start|>user\n' + text + '<|im_end|>')
+    prompt.append('<|im_start|>assistant')
+    prompt.append('')
+    prompt_str = '\n'.join(prompt)
+    return generate_ai_response(prompt_str)
 
 def generate_explanation_response(code_snippet):
     print('generate_explanation_response')

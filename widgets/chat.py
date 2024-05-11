@@ -39,33 +39,35 @@ def render_chat():
     if st.session_state['messages'][-1]['role'] != 'assistant':
         with st.chat_message('assistant'):
             response = generate_arctic_analyst_response()
-            python_syntax, commentary = extract_python_syntax_and_commetary(response)
-            
-            if python_syntax is not None:
-                check_read_csv_error_and_give_feedback(python_syntax, response)
-                check_read_json_error_and_give_feedback(python_syntax, response)
-                check_function_definition_error_and_give_feedback(python_syntax, response)
+            with st.spinner('Evaluating the AI\'s response...'):
+                python_syntax, commentary = extract_python_syntax_and_commetary(response)
+                
+                if python_syntax is not None:
+                    check_read_csv_error_and_give_feedback(python_syntax, response)
+                    check_read_json_error_and_give_feedback(python_syntax, response)
+                    check_function_definition_error_and_give_feedback(python_syntax, response)
 
-                python_syntax = remove_st_set_page_config(python_syntax)
-                python_syntax = remove_generate_report(python_syntax)
-                raw_python = "```python"+"\n"+python_syntax+"\n```"
+                    python_syntax = remove_st_set_page_config(python_syntax)
+                    python_syntax = remove_generate_report(python_syntax)
+                    raw_python = "```python"+"\n"+python_syntax+"\n```"
 
-                with st.expander('See Python Syntax'):
-                    st.write(raw_python)
-                python_syntax = update_python_syntax_with_correct_dataframe_names(python_syntax)
+                    with st.expander('See Python Syntax'):
+                        st.write(raw_python)
+                    python_syntax = update_python_syntax_with_correct_dataframe_names(python_syntax)
+                else:
+                    raw_python = None
+                    output = None
+                    st.write(response)
 
-                try:
-                    exec(python_syntax)
-                    output = eval('generate_report()')
-                except (SyntaxError, ValueError, TypeError, KeyError, AttributeError, IndexError, NameError) as e:
-                    handle_all_other_errors(e, response)
+                if python_syntax is not None:
+                    with st.spinner('Running the code snippet...'):
+                        try:
+                            exec(python_syntax)
+                            output = eval('generate_report()')
+                        except (SyntaxError, ValueError, TypeError, KeyError, AttributeError, IndexError, NameError) as e:
+                            handle_all_other_errors(e, response)
 
                 check_outputs_and_give_feedback(output, response)
-            else:
-                raw_python = None
-                output = None
-                st.write(response)
-
         st.session_state['count'] += 1
         message = {'role': 'assistant', 'content': response, 'count': st.session_state['count'], 'raw_python': raw_python, 'python_syntax': python_syntax, 'commentary': commentary, 'output': output}
         st.session_state['messages'].append(message)

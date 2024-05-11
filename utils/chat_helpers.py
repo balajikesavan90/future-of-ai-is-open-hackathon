@@ -41,7 +41,7 @@ def check_read_csv_error_and_give_feedback(python_syntax, response):
                 pandas_dataframes += f", {filename}"  
             message = {'role': 'user', 'content': f'{pandas_dataframes} are already loaded as pandas dataframe. Please remove the read_csv statement', 'error': True}
         st.session_state['messages'].append(message)
-        print('rerun')
+        print('rerun - check_read_csv_error_and_give_feedback - failure')
         st.rerun()
 
 def check_read_json_error_and_give_feedback(python_syntax, response):
@@ -56,7 +56,7 @@ def check_read_json_error_and_give_feedback(python_syntax, response):
                 pandas_dataframes += f", {filename}"  
             message = {'role': 'user', 'content': f'{pandas_dataframes} are already loaded as pandas dataframe. Please remove the read_json statement', 'error': True}
         st.session_state['messages'].append(message)
-        print('rerun')
+        print('rerun - check_read_json_error_and_give_feedback - failure')
         st.rerun()
 
 def check_function_definition_error_and_give_feedback(python_syntax, response):
@@ -67,7 +67,7 @@ def check_function_definition_error_and_give_feedback(python_syntax, response):
         st.session_state['messages'].append(message)
         message = {'role': 'user', 'content': 'The function should be called "generate_report". It must take 0 arguments. The function must return a single pandas DataFrame', 'error': True}
         st.session_state['messages'].append(message)
-        print('rerun')
+        print('rerun - check_function_definition_error_and_give_feedback - failure')
         print()
         st.rerun()
 
@@ -108,7 +108,7 @@ def check_outputs_and_give_feedback(output, response):
             st.session_state['messages'].append(message)
             message = {'role': 'user', 'content': 'The generate_report() function must return a single pandas DataFrame', 'error': True}
             st.session_state['messages'].append(message)
-            print('rerun')
+            print('rerun - check_outputs_and_give_feedback - failure')
             st.rerun()
 
 def handle_all_other_errors(e, response):
@@ -121,5 +121,5 @@ def handle_all_other_errors(e, response):
     """
     message = {'role': 'user', 'content': error_message, 'error': True}
     st.session_state['messages'].append(message)
-    print('rerun')
+    print(f'rerun - {type(e).__name__}: {str(e)}\n\n{e.__traceback__}')
     st.rerun()
