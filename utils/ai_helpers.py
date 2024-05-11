@@ -11,9 +11,6 @@ os.environ['REPLICATE_API_TOKEN'] = st.secrets['REPLICATE_API_TOKEN']
 temperature = 0
 top_p = 0.9
 
-welcome_message = f"""Hello! I am the Arctic Analytics AI. I can help you analyze your data and generate plots.
-"""
-
 task_identifier_system_message = """You are an automated system that detects if the task requested by the user.
 You must generate one of these outputs: 'manipulate', 'plot', or 'consult'.
 1. 'manipulate' if the user's request can be fulfilled by generating a pandas DataFrame.
@@ -45,14 +42,34 @@ You must include code snippets and explanations in your response.
 You must focus on helping the user understand the error message and how to fix it.
 """
 
+def construct_welcome_message():
+    print('construct_welcome_message')
+
+    welcome_message = f"""Hello! I am the Arctic Analytics AI. I can help you analyze your data and generate plots.
+I have access to the metadata of the files you uploaded. I will use that to generate code snippets and execute them in a sandbox environment.
+\n\n"""
+    
+    if len(st.session_state['vetted_files']) == 1:
+        welcome_message += 'I have found the following pandas dataframes:\n'
+        for file_name in st.session_state['vetted_files']:
+            column_names = ', '.join(st.session_state["vetted_files"][file_name]["columns_names"])
+            welcome_message += f'The pandas dataframe :blue[{file_name}] has the columns: :blue[{column_names}].'
+    else:
+        welcome_message += 'I have detected the following pandas dataframes:\n'
+        for file_name in st.session_state['vetted_files']:
+            column_names = ', '.join(st.session_state["vetted_files"][file_name]["columns_names"])
+            welcome_message += f'\n- The pandas dataframe :blue[{file_name}] has the columns: :blue[{column_names}].'
+
+    return welcome_message
+
 def construct_arctic_analyst_system_message(task):
+    print('construct_arctic_analyst_system_message')
     system_message = """You are an automated system that generates python syntax that is executed on a cloud server. 
 The python virtual environment has the latest versions of streamlit, pandas, numpy, scikit-learn installed.
 
 You must always generate your output in JSON format with the keys 'python_syntax' and 'commentary'. 
 This is a very serious requirement for all of your responses. 
     """
-
     if task in ['manipulate', 'consult']:
         system_message += """The 'python_syntax' should be a single python function named 'generate_report' that takes in 0 arguments. 
 The 'generate_report' function must return a single pandas DataFrame. 
@@ -85,11 +102,13 @@ This is a very serious requirement for all of your responses.\n\n"""
     return system_message
 
 def generate_arctic_analyst_response():
+    print('generate_arctic_analyst_response')
     with st.spinner('Generating Python Syntax...'):
         prompt_str = construct_arctic_analyst_prompt(st.session_state['messages'])
-        return generate_arctic_response(prompt_str)
+        return generate_ai_response(prompt_str)
     
 def construct_arctic_analyst_prompt(messages):
+    print('construct_arctic_analyst_prompt')
     if 'error' not in messages[-1]:
         task = identify_task(messages[-1]['content'])
 
@@ -123,15 +142,17 @@ def construct_arctic_analyst_prompt(messages):
     return '\n'.join(prompt)
 
 def identify_task(text):
+    print('identify_task')
     with st.spinner('Thinking...'):
         prompt = [f'<|im_start|>system\n{task_identifier_system_message}<|im_end|>']
         prompt.append('<|im_start|>user\n' + text + '<|im_end|>')
         prompt.append('<|im_start|>assistant')
         prompt.append('')
         prompt_str = '\n'.join(prompt)
-        return generate_arctic_response(prompt_str)
+        return generate_ai_response(prompt_str)
 
 def generate_explanation_response(code_snippet):
+    print('generate_explanation_response')
     with st.session_state['output_container']:
         with st.spinner('Generating Explanation...'):
             prompt = [f"<|im_start|>system\n{generate_explanation_system_message}<|im_end|>"]
@@ -139,9 +160,10 @@ def generate_explanation_response(code_snippet):
             prompt.append('<|im_start|>assistant')
             prompt.append('')
             prompt_str = '\n'.join(prompt)
-            return generate_arctic_response(prompt_str)
+            return generate_ai_response(prompt_str)
     
 def generate_docstring_response(code_snippet):
+    print('generate_docstring_response')
     with st.session_state['output_container']:
         with st.spinner('Generating Docstrings...'):
             prompt = [f"<|im_start|>system\n{generate_docstring_system_message}<|im_end|>"]
@@ -149,9 +171,10 @@ def generate_docstring_response(code_snippet):
             prompt.append('<|im_start|>assistant')
             prompt.append('')
             prompt_str = '\n'.join(prompt)
-            return generate_arctic_response(prompt_str)
+            return generate_ai_response(prompt_str)
 
 def generate_debugger_response(code_snippet, error_message):
+    print('generate_debugger_response')
     with st.session_state['output_container']:
         with st.spinner('Generating Debugger Response...'):
             prompt = [f"<|im_start|>system\n{generate_debugger_system_message}<|im_end|>"]
@@ -161,15 +184,19 @@ def generate_debugger_response(code_snippet, error_message):
             prompt.append('<|im_start|>assistant')
             prompt.append('')
             prompt_str = '\n'.join(prompt)
-            return generate_arctic_response(prompt_str)
+            return generate_ai_response(prompt_str)
 
-def generate_arctic_response(prompt_str):
+def generate_ai_response(prompt_str):
+        print('generate_ai_response')
         token_count = get_num_tokens(prompt_str)
         print(token_count)
         
         if token_count >= 3072:
             st.error('Conversation length too long. Please keep it under 3072 tokens.')
             st.button('Reset', on_click=reset_app, key='reset')
+            if st.secrets['evn'] == 'dev':
+                st.write(st.session_state)
+            st.write(st.session_state)
             st.stop()
 
         events = []
@@ -184,6 +211,7 @@ def generate_arctic_response(prompt_str):
 
 
 def get_num_tokens(prompt):
+    print('get_num_tokens')
     """Get the number of tokens in a given prompt"""
     tokenizer = get_tokenizer()
     tokens = tokenizer.tokenize(prompt)
@@ -191,6 +219,7 @@ def get_num_tokens(prompt):
 
 @st.cache_resource(show_spinner=False)
 def get_tokenizer():
+    print('get_tokenizer')
     """Get a tokenizer to make sure we're not sending too much text
     text to the Model. Eventually we will replace this with ArcticTokenizer
     """
