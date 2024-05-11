@@ -42,10 +42,15 @@ You must include code snippets and explanations in your response.
 You must focus on helping the user understand the error message and how to fix it.
 """
 
-def construct_welcome_message():
+def construct_welcome_message(page):
     print('construct_welcome_message')
 
-    welcome_message = f"""Hello! I am the Arctic Analytics AI. I can help you analyze your data and generate plots.
+    if page == 'data_analyst':
+        welcome_message = f"""Hello! I am the Arctic Analytics AI. I can help you analyze your data.
+I have access to the metadata of the files you uploaded. I will use that to generate code snippets and execute them in a sandbox environment.
+\n\n"""
+    elif page == 'chart_builder':
+        welcome_message = f"""Hello! I am the Arctic Analytics AI. I can help you generate plots from your data.
 I have access to the metadata of the files you uploaded. I will use that to generate code snippets and execute them in a sandbox environment.
 \n\n"""
     
@@ -60,9 +65,10 @@ I have access to the metadata of the files you uploaded. I will use that to gene
             column_names = ', '.join(st.session_state["vetted_files"][file_name]["columns_names"])
             welcome_message += f'\n- The pandas dataframe :blue[{file_name}] has the columns: :blue[{column_names}].'
 
+
     return welcome_message
 
-def construct_arctic_analyst_system_message(task):
+def construct_system_message(page):
     print('construct_arctic_analyst_system_message')
     system_message = """You are an automated system that generates python syntax that is executed on a cloud server. 
 The python virtual environment has the latest versions of streamlit, pandas, numpy, scikit-learn installed.
@@ -70,18 +76,19 @@ The python virtual environment has the latest versions of streamlit, pandas, num
 You must always generate your output in JSON format with the keys 'python_syntax' and 'commentary'. 
 This is a very serious requirement for all of your responses. 
     """
-    if task in ['manipulate', 'consult']:
+    if page == 'data_analyst':
         system_message += """The 'python_syntax' should be a single python function named 'generate_report' that takes in 0 arguments. 
-The 'generate_report' function must return a single pandas DataFrame. 
-This is a very serious requirement for all of your responses.\n\n"""
-    elif task == 'plot':
+    The 'generate_report' function must return a single pandas DataFrame. 
+    This is a very serious requirement for all of your responses.\n\n"""
+    elif page == 'chart_builder':
         system_message += """The 'python_syntax' should be a single python function named 'generate_report' that takes in 0 arguments. 
-The 'generate_report' function must generate plots using the streamlit chart API elements with appropriate subheaders. 
-The 'generate_report' function must return None. 
-This is a very serious requirement for all of your responses.\n\n"""
+    The 'generate_report' function must generate plots using the streamlit chart API elements with appropriate subheaders. 
+    The 'generate_report' function must return a single Streamlit Chart element. 
+    This is a very serious requirement for all of your responses.\n\n"""
     
     system_message += """The 'commentary should be a string with your message to the user. 
-In the commentary you must explain your thought process to the user. 
+In the commentary you must explain your thought process to the user.
+You must use the commentary to respond to the user's error messages. 
 You must focus your attention on the reasoning and the logic used to create the 'generate_report' function instead of the syntax itself. 
 This is a very serious requirement for all of your responses.\n\n"""
 
@@ -99,39 +106,26 @@ This is a very serious requirement for all of your responses.\n\n"""
         # system_message += st.session_state['vetted_files'][filename]['dataframe'].tail().to_json(orient='index')+'\n'
         system_message += f'The dataset has already been loaded as a pandas DataFrame named {filename}\n\n'
 
+    st.session_state['system_message'] = system_message
+
     return system_message
 
-def generate_arctic_analyst_response():
+
+def generate_arctic_analyst_response(page):
     print('generate_arctic_analyst_response')
     with st.spinner('Constructing Prompt...'):
-        prompt_str = construct_arctic_analyst_prompt(st.session_state['messages'])
+        prompt_str = construct_prompt(page, st.session_state['messages'])
     with st.spinner('Generating Response...'):
         response = generate_ai_response(prompt_str)
         return response
     
-def construct_arctic_analyst_prompt(messages):
+def construct_prompt(page, messages):
     print('construct_arctic_analyst_prompt')
-    if 'error' not in messages[-1]:
-        task = identify_task(messages[-1]['content'])
 
-        if any(x in task for x in ['plot', '2']):
-            st.session_state['task'] = 'plot'
-            prompt = [f"<|im_start|>system\n{construct_arctic_analyst_system_message('plot')}<|im_end|>"]
-
-        elif any(x in task for x in ['manipulate', '1']):
-            st.session_state['task'] = 'manipulate'
-            prompt = [f"<|im_start|>system\n{construct_arctic_analyst_system_message('manipulate')}<|im_end|>"]
-
-        elif any(x in task for x in ['consult', '3']):
-            st.session_state['task'] = 'consult'
-            prompt = [f"<|im_start|>system\n{construct_arctic_analyst_system_message('consult')}<|im_end|>"]
-
-        else:
-            st.session_state['task'] = 'consult'
-            prompt = [f"<|im_start|>system\n{construct_arctic_analyst_system_message('consult')}<|im_end|>"]
-
-    else:
-        prompt = [f"<|im_start|>system\n{construct_arctic_analyst_system_message(st.session_state['task'])}<|im_end|>"]
+    if page == 'data_analyst':
+        prompt = [f"<|im_start|>system\n{construct_system_message(page)}<|im_end|>"]
+    elif page == 'chart_builder':
+        prompt = [f"<|im_start|>system\n{construct_system_message(page)}<|im_end|>"]
 
     for dict_message in messages:
         if dict_message['role'] == 'user':
@@ -142,15 +136,6 @@ def construct_arctic_analyst_prompt(messages):
     prompt.append('<|im_start|>assistant')
     prompt.append('')
     return '\n'.join(prompt)
-
-def identify_task(text):
-    print('identify_task')
-    prompt = [f'<|im_start|>system\n{task_identifier_system_message}<|im_end|>']
-    prompt.append('<|im_start|>user\n' + text + '<|im_end|>')
-    prompt.append('<|im_start|>assistant')
-    prompt.append('')
-    prompt_str = '\n'.join(prompt)
-    return generate_ai_response(prompt_str)
 
 def generate_explanation_response(code_snippet):
     print('generate_explanation_response')

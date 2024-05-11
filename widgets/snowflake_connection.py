@@ -1,9 +1,9 @@
 import streamlit as st
 
-from utils.data_analysis_helpers import gather_metadata
+from utils.data_import_helpers import gather_metadata
 
-def render_snowflake_connection():
-    with st.form(key='connect_to_snowflake'):
+def render_snowflake_connection(page):
+    with st.form(key=f'connect_to_snowflake_{page}'):
         with st.expander(':blue[Import your data from Snowflake]'):
             col1, col2 = st.columns(2)
             username = col1.text_input('Enter your username:')
@@ -17,7 +17,8 @@ def render_snowflake_connection():
             if st.form_submit_button(
                 label=':green[Connect to Snowflake]',
                 use_container_width=True
-            ):
+            ):  
+                st.session_state['active_page'] = page
                 gather_metadata(
                     source='snowflake',
                     params={
