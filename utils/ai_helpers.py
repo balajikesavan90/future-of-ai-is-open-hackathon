@@ -194,7 +194,7 @@ def generate_ai_response(prompt_str):
         if token_count >= 3072:
             st.error('Conversation length too long. Please keep it under 3072 tokens.')
             st.button('Reset', on_click=reset_app, key='reset')
-            if st.secrets['evn'] == 'dev':
+            if st.secrets['ENV'] == 'dev':
                 st.write(st.session_state)
             st.write(st.session_state)
             st.stop()

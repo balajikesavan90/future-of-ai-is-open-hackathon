@@ -23,5 +23,5 @@ if st.session_state['datasets_vetted']:
     render_reset_chat()
 render_home()
 
-if st.secrets['env'] == 'dev':
+if st.secrets['ENV'] == 'dev':
     render_session_state()
