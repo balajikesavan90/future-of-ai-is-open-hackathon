@@ -1,6 +1,6 @@
 import streamlit as st
 
-from widgets.sidebar import render_reset, render_reset_chat, render_session_state
+from utils.streamlit_helpers import render_reset, render_reset_chat, render_session_state
 from widgets.home import setup_home, render_home
 
 # App title
@@ -23,4 +23,5 @@ if st.session_state['datasets_vetted']:
     render_reset_chat()
 render_home()
 
-render_session_state()
+if st.secrets['ENV'] == 'dev':
+    render_session_state()
