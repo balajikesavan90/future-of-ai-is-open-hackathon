@@ -5,7 +5,7 @@ import re
 from transformers import AutoTokenizer
 import json
 
-from utils.streamlit_helpers import reset_app
+from utils.streamlit_helpers import reset_chat
 
 os.environ['REPLICATE_API_TOKEN'] = st.secrets['REPLICATE_API_TOKEN']
 temperature = 0
@@ -176,13 +176,24 @@ def generate_ai_response(prompt_str):
         print('generate_ai_response')
         token_count = get_num_tokens(prompt_str)
         print(token_count)
+        error_count = 0
+        for message in st.session_state['messages']:
+            if 'error' in message.keys():
+                if message['role'] == 'assistant':
+                    error_count += 1
         
-        if token_count >= 3072:
-            st.error('Conversation length too long. Please keep it under 3072 tokens.')
-            st.button('Reset', on_click=reset_app, key='reset')
+        if error_count >= 3:
+            st.error('Oops! Something went wrong. Try rephrasing your question in a different way.')
+            st.button(':red[Reset]', on_click=reset_chat, key='reset')
             if st.secrets['ENV'] == 'dev':
                 st.write(st.session_state)
-            st.write(st.session_state)
+            st.stop()
+
+        if token_count >= 3072:
+            st.error('Conversation length too long. Please keep it under 3072 tokens.')
+            st.button(':reset[Reset]', on_click=reset_chat, key='reset')
+            if st.secrets['ENV'] == 'dev':
+                st.write(st.session_state)
             st.stop()
 
         events = []

@@ -3,29 +3,18 @@ import re
 import json
 import pandas as pd
 
-def extract_inner_text(s):
-    print('extract_inner_text')
-    
-    if not s.endswith('}'):
-        s += '}'
-    matches = re.findall(r'\{([^}]*)\}', s)
-    if matches:
-        return ['{' + match + '}' for match in matches][0]
-    else:
-        return s
-
 def extract_python_syntax(text):
-    pattern = r'```python(.*?)```'
+    pattern = r'```(python|json)(.*?)```'
     match = re.search(pattern, text, re.DOTALL)
     if match:
-        print('extract_python_syntax')
-        return match.group(1).strip()
+        print('extract_python_or_json_syntax')
+        return match.group(2).strip()
     else:
         return None
-
+    
 def extract_commentary(text):
     print('extract_commentary')
-    pattern = r'```python.*?```'
+    pattern = r'```(python|json).*?```'
     commentary = re.sub(pattern, '', text, flags=re.DOTALL)
     return commentary.strip()
 
@@ -36,15 +25,8 @@ def extract_python_syntax_and_commetary(response):
         python_syntax = response_dict['python_syntax']
         commentary = response_dict['commentary']
     except json.JSONDecodeError as e:
-        response = extract_inner_text(response)
-        try:
-            print(response)
-            response_dict = json.loads(response)
-            python_syntax = response_dict['python_syntax']
-            commentary = response_dict['commentary']
-        except json.JSONDecodeError as e:
-            python_syntax = extract_python_syntax(response)
-            commentary = extract_commentary(response)
+        python_syntax = extract_python_syntax(response)
+        commentary = extract_commentary(response)
 
     print(python_syntax)
     return python_syntax, commentary
@@ -122,7 +104,7 @@ def check_outputs_and_give_feedback(output, plot, response):
             print(f'check_outputs_and_give_feedback - success - {st.session_state["active_page"]}')
             st.session_state['count'] += 1
             hide_index = st.checkbox('Hide Index', key=str(st.session_state['count']), value=False)
-            st.dataframe(output.reset_index(), use_container_width=True, hide_index=hide_index)
+            st.dataframe(output, use_container_width=True, hide_index=hide_index)
             # if st.secrets['ENV'] == 'dev':
             #     for message in st.session_state['messages']:
             #         if 'error' in message.keys():
