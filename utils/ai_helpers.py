@@ -186,14 +186,14 @@ def generate_ai_response(prompt_str):
             st.error('Oops! Something went wrong. Try rephrasing your question in a different way.')
             st.button(':red[Reset]', on_click=reset_chat, key='reset')
             if st.secrets['ENV'] == 'dev':
-                st.write(st.session_state)
+                st.write(st.session_state['messages'])
             st.stop()
 
         if token_count >= 3072:
             st.error('Conversation length too long. Please keep it under 3072 tokens.')
             st.button(':reset[Reset]', on_click=reset_chat, key='reset')
             if st.secrets['ENV'] == 'dev':
-                st.write(st.session_state)
+                st.write(st.session_state['messages'])
             st.stop()
 
         events = []

@@ -20,6 +20,10 @@ def extract_commentary(text):
 
 def extract_python_syntax_and_commetary(response):
     print('extract_python_syntax_and_commetary')
+    opening_braces = response.count('{')
+    closing_braces = response.count('}')
+    if closing_braces < opening_braces:
+        response += '}' * (opening_braces - closing_braces)
     try:
         response_dict = json.loads(response)
         python_syntax = response_dict['python_syntax']
