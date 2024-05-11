@@ -176,18 +176,20 @@ def generate_ai_response(prompt_str):
         print('generate_ai_response')
         token_count = get_num_tokens(prompt_str)
         print(token_count)
-        error_count = 0
-        for message in st.session_state['messages']:
-            if 'error' in message.keys():
-                if message['role'] == 'assistant':
-                    error_count += 1
-        
-        if error_count >= 3:
-            st.error('Oops! Something went wrong. Try rephrasing your question in a different way.')
-            st.button(':red[Reset]', on_click=reset_chat, key='reset')
-            if st.secrets['ENV'] == 'dev':
-                st.write(st.session_state['messages'])
-            st.stop()
+
+        if st.session_state['active_page'] in ['data_analyst', 'chart_builder']:
+            error_count = 0
+            for message in st.session_state['messages']:
+                if 'error' in message.keys():
+                    if message['role'] == 'assistant':
+                        error_count += 1
+            
+            if error_count >= 3:
+                st.error('Oops! Something went wrong. Try rephrasing your question in a different way.')
+                st.button(':red[Reset]', on_click=reset_chat, key='reset')
+                if st.secrets['ENV'] == 'dev':
+                    st.write(st.session_state['messages'])
+                st.stop()
 
         if token_count >= 3072:
             st.error('Conversation length too long. Please keep it under 3072 tokens.')

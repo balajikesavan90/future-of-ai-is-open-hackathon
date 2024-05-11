@@ -3,6 +3,10 @@ import streamlit as st
 from utils.streamlit_helpers import goto_data_dictionary_widget, goto_data_analysis_widget
 
 def render_uploaded_data(page):
+    if page == 'data_analyst':
+        st.subheader(':blue[Data Analyst]')
+    elif page == 'chart_builder':
+        st.subheader(':blue[Chart Builder]')
     st.toast(':blue[Data Dictionaries have been saved!]')
     st.success(':green[Make sure your data looks good especially if you changed the data types]')
 

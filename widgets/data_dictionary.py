@@ -4,6 +4,10 @@ import pandas as pd
 from utils.data_import_helpers import process_data_dictionaries
 
 def render_data_dictionary_widget(page):
+    if page == 'data_analyst':
+        st.subheader(':blue[Data Analyst]')
+    elif page == 'chart_builder':
+        st.subheader(':blue[Chart Builder]')
     uploaded_file_count = len(st.session_state['vetted_files'])
     if uploaded_file_count == 1:
         st.toast(':green[Lets create a data dictionary for your file]')

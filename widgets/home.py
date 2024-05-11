@@ -24,12 +24,15 @@ def render_home():
 
         analyze_data, build_charts, document_debug_code, about = st.tabs(['Analyze Data', 'Build Charts', 'Document & Debug Code', 'About'])
         with analyze_data:
+            st.subheader(':blue[Data Analyst]')
             render_snowflake_connection(page = 'data_analyst')
             render_uploader(page = 'data_analyst')
         with build_charts:
+            st.subheader(':blue[Chart Builder]')
             render_snowflake_connection(page = 'chart_builder')
             render_uploader(page = 'chart_builder')
         with document_debug_code:
+            st.subheader(':blue[Document & Debug Code]')
             render_document_and_debug_code_widget()
         with about:
             st.write('About')

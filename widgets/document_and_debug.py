@@ -24,6 +24,7 @@ def render_document_and_debug_code_widget():
                 label=':green[Debug]',
                 use_container_width=True,
             ):
+                st.session_state['active_page'] = 'debugger'
                 if code_snippet and error_message:
                     response = generate_debugger_response(code_snippet, error_message)
                     with st.session_state['output_container']:
@@ -45,6 +46,7 @@ def render_document_and_debug_code_widget():
                 label=':green[Explain the code snippet]',
                 use_container_width=True
             ):
+                st.session_state['active_page'] = 'explainer'
                 if code_snippet:
                     response = generate_explanation_response(code_snippet)
                     with st.session_state['output_container']:
@@ -61,6 +63,7 @@ def render_document_and_debug_code_widget():
                 label=':blue[Generate Docstrings]',
                 use_container_width=True
             ):
+                st.session_state['active_page'] = 'docstrings_generator'
                 if code_snippet:
                     response = generate_docstring_response(code_snippet)
                     with st.session_state['output_container']:
