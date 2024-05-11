@@ -2,6 +2,9 @@ import streamlit as st
 
 def reset_app():
     st.session_state = {}
+    print('###############################')
+    print('reset_app')
+    print('###############################')
 
 def goto_data_dictionary_widget():
     st.session_state['data_dictionaries_loaded'] = False
@@ -13,6 +16,9 @@ def goto_data_analysis_widget():
 def reset_chat():
     st.session_state['messages'] = []
     st.session_state['count'] = 0
+    print('###############################')
+    print('reset_chat')
+    print('###############################')
 
 def render_reset():
     st.sidebar.button(':red[Reset]', on_click=reset_app)

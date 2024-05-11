@@ -46,7 +46,6 @@ def render_data_analyst():
     if st.session_state['messages'][-1]['role'] != 'assistant':
         with st.chat_message('assistant'):
             response = generate_arctic_analyst_response('data_analyst')
-            print(response)
             with st.spinner('Evaluating the AI\'s response...'):
                 python_syntax, commentary = extract_python_syntax_and_commetary(response)
                 

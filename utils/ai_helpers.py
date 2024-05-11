@@ -77,14 +77,16 @@ You must always generate your output in JSON format with the keys 'python_syntax
 This is a very serious requirement for all of your responses. 
     """
     if page == 'data_analyst':
-        system_message += """The 'python_syntax' should be a single python function named 'generate_report' that takes in 0 arguments. 
-    The 'generate_report' function must return a single pandas DataFrame. 
-    This is a very serious requirement for all of your responses.\n\n"""
+        system_message += """Your input will be a JSON string with the key 'user_input' and the value as a string of the user's request.
+The 'python_syntax' should be a single python function named 'generate_report' that takes in 0 arguments. 
+The 'generate_report' function must return a single pandas DataFrame. 
+This is a very serious requirement for all of your responses.\n\n"""
     elif page == 'chart_builder':
-        system_message += """The 'python_syntax' should be a single python function named 'generate_report' that takes in 0 arguments. 
-    The 'generate_report' function must generate plots using the streamlit chart API elements with appropriate subheaders. 
-    The 'generate_report' function must return a single Streamlit Chart element. 
-    This is a very serious requirement for all of your responses.\n\n"""
+        system_message += """
+The 'python_syntax' should be a single python function named 'generate_report' that takes in 0 arguments. 
+The 'generate_report' function must generate plots using the streamlit chart API elements with appropriate subheaders. 
+The 'generate_report' function must return a single Streamlit Chart element. 
+This is a very serious requirement for all of your responses.\n\n"""
     
     system_message += """The 'commentary should be a string with your message to the user. 
 In the commentary you must explain your thought process to the user.
@@ -124,16 +126,23 @@ def construct_prompt(page, messages):
 
     if page == 'data_analyst':
         prompt = [f"<|im_start|>system\n{construct_system_message(page)}<|im_end|>"]
+        for dict_message in messages:
+            if dict_message['role'] == 'user':
+                user_input = json.dumps({'user_input': dict_message['content']})
+                prompt.append('<|im_start|>user\n' + user_input + '<|im_end|>\n')
+            else:
+                prompt.append('<|im_start|>assistant\n' + dict_message['content'] + '<|im_end|>\n')
+    
     elif page == 'chart_builder':
+        for dict_message in messages:
+            if dict_message['role'] == 'user':
+                user_input = json.dumps({'user_input': dict_message['content']})
+                prompt.append('<|im_start|>user\n' + user_input + '<|im_end|>')
+            else:
+                prompt.append('<|im_start|>assistant\n' + dict_message['content'] + '<|im_end|>')
         prompt = [f"<|im_start|>system\n{construct_system_message(page)}<|im_end|>"]
 
-    for dict_message in messages:
-        if dict_message['role'] == 'user':
-            prompt.append('<|im_start|>user\n' + dict_message['content'] + '<|im_end|>')
-        else:
-            prompt.append('<|im_start|>assistant\n' + dict_message['content'] + '<|im_end|>')
-    
-    prompt.append('<|im_start|>assistant')
+    prompt.append('<|im_start|>assistant\n')
     prompt.append('')
     return '\n'.join(prompt)
 
