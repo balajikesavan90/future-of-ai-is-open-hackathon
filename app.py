@@ -11,7 +11,8 @@ st.set_page_config(
     initial_sidebar_state='expanded'
 )
 
-# st.sidebar.write(st.session_state)
+
+st.sidebar.write(st.session_state)
 
 render_reset()
 
