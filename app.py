@@ -11,13 +11,9 @@ st.set_page_config(
     initial_sidebar_state='expanded'
 )
 
-
-st.sidebar.write(st.session_state)
-
 render_reset()
 
 st.header(':blue[Arctic Analytics]')
-
 
 setup_home()
 if st.session_state['datasets_vetted']:
