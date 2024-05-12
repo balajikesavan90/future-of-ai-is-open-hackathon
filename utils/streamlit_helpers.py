@@ -28,7 +28,7 @@ def reset_chart_builder():
     print('###############################')
 
 def render_reset():
-    st.sidebar.button(':red[Reset]', on_click=reset_app)
+    st.sidebar.button(':red[Reset App]', on_click=reset_app)
 
 def render_reset_data_analyst():
     st.sidebar.button(':red[Reset Data Analyst]', on_click=reset_data_analyst, key='reset_chat_sidebar')
