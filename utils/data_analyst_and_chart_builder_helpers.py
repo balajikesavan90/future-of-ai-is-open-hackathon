@@ -69,10 +69,27 @@ def check_function_definition_error_and_give_feedback(python_syntax, response):
         st.session_state['count'] += 1
         message = {'role': 'assistant', 'content': response, 'error': True, 'count': st.session_state['count']}
         st.session_state['messages'].append(message)
-        error_message = 'The function should be called "generate_report". It must take 0 arguments. The function must return a single pandas DataFrame'
+        if st.session_state['active_page'] == 'data_analyst':
+            error_message = 'The function should be called "generate_report". It must take 0 arguments. The function must return a single pandas DataFrame'
+        elif st.session_state['active_page'] == 'chart_builder':
+            error_message = 'The function should be called "generate_report". It must take 0 arguments. The function must return a single Streamlit Chart element'
         message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
         st.session_state['messages'].append(message)
         print(f'rerun - check_function_definition_error_and_give_feedback - failure - {st.session_state["active_page"]}')
+        st.rerun()
+
+def check_return_statement_error_and_give_feedback(python_syntax, response):
+    if 'return ' not in python_syntax:
+        st.session_state['count'] += 1
+        message = {'role': 'assistant', 'content': response, 'error': True, 'count': st.session_state['count']}
+        st.session_state['messages'].append(message)
+        if st.session_state['active_page'] == 'data_analyst':
+            error_message = 'Please add a return statement to the function generate_report() that returns a single pandas DataFrame'
+        elif st.session_state['active_page'] == 'chart_builder':
+            error_message = 'Please add a return statement to the function generate_report() that returns a single Streamlit Chart element'
+        message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
+        st.session_state['messages'].append(message)
+        print(f'rerun - check_return_statement_error_and_give_feedback - failure - {st.session_state["active_page"]}')
         st.rerun()
 
 def remove_st_set_page_config(input_string):
@@ -121,12 +138,11 @@ def check_outputs_and_give_feedback(output, plot, response):
             print(f'rerun - check_outputs_and_give_feedback - error - {st.session_state["active_page"]}')
             st.rerun()
     if plot is not None:
-        print(type(plot))
         if isinstance(plot, st.delta_generator.DeltaGenerator):
-            if st.secrets['EVN'] == 'dev':
-                for message in st.session_state['messages']:
-                    if 'error' in message.keys():
-                        st.session_state['messages'].remove(message)
+            # if st.secrets['ENV'] == 'dev':
+            #     for message in st.session_state['messages']:
+            #         if 'error' in message.keys():
+            #             st.session_state['messages'].remove(message)
             plot
         else:
             print(f'check_outputs_and_give_feedback - error - {st.session_state["active_page"]}')

@@ -1,6 +1,6 @@
 import streamlit as st
 
-from utils.ai_helpers import construct_welcome_message, generate_arctic_analyst_response
+from utils.ai_helpers import construct_welcome_message, generate_arctic_response
 from utils.data_analyst_and_chart_builder_helpers import *
 
 def render_chart_builder():
@@ -11,114 +11,102 @@ def render_chart_builder():
         st.session_state['messages'] = [{'role': 'assistant', 'content': construct_welcome_message('data_analyst'), 'count': 0}]
         st.session_state['count'] = 0   
 
+    welcome_message = construct_welcome_message('chart_builder')
+
+
     with st.expander('See uploaded Datasets'):
         for filename in st.session_state['vetted_files']:
             st.subheader(f':blue[{filename}]')
             st.dataframe(st.session_state['vetted_files'][filename]['dataframe'], use_container_width=True)
 
-    for message in st.session_state['messages']:
-        if 'error' not in message.keys():
-            with st.chat_message(message['role']):
-                if message['role'] == 'user':
-                    st.write(message['content'])
-                if message['role'] == 'assistant':
-                    if 'python_syntax' in message.keys():
-                        if message['python_syntax'] is not None:
-                            with st.expander('See Python Syntax'):
-                                st.write(message['raw_python'])
-                            if message['output'] is not None:
-                                hide_index = st.checkbox('Hide Index', key=str(message['count']), value=False)
-                                st.dataframe(message['output'], hide_index=hide_index, use_container_width=True)
-                            if message['plot'] is not None:
-                                st.write(message['plot'])
-                                # st.pyplot(message['plot'])
-                        else:
-                            st.write(message['content'])
-                    else:
-                        st.write(message['content'])
+    with st.form(key='chart_builder_form'):
 
-    col1, col2 = st.columns(2)
-    with col1:
-        x_axis_description = st.text_input(
-            label='Describe what you want on the X-axis:',
-        )
-        color_description = st.text_input(
-            label='Describe the color schema (Optional):',
-        )
-    with col2:
-        y_axis_description = st.text_input(
-            label='Describe what you want on the Y-axis:',
-        )
-        secondary_y_axis_description = st.text_input(
-        label='Describe what you want on the Secondary Y-axis (Optional) :',
-    )
-    col1, col2 = st.columns([1,3])
-    with col1:
-        chart_type = st.selectbox(
-            label='Select the chart type:',
-            options=['Bar', 'Line', 'Scatter', 'Area'],
-        )
-    with col2:
-        additional_instructions = st.text_input(
-            label='Additional Instructions (Optional):',
-        )
-    if st.button(
-        label=':green[Generate Chart]',
-        use_container_width=True
-    ):
-        st.session_state['active_page'] = 'chart_builder'
-        # generate_chart(
-        #     x_axis_description,
-        #     y_axis_description,
-        #     secondary_y_axis_description,
-        #     color_description,
-        #     chart_type,
-        #     additional_instructions
-        # )
-        # st.rerun()
+        st.write(welcome_message)
+        st.divider()
 
-    # if user_input := st.chat_input():
-    #     st.session_state['messages'].append({'role': 'user', 'content': user_input})
-    #     with st.chat_message('user'):
-    #         st.write(user_input)
+        col1, col2 = st.columns(2)
+        with col1:
+            x_axis_description = st.text_input(
+                label='Describe what you want on the X-axis:',
+            )
+        with col2:
+            y_axis_description = st.text_input(
+                label='Describe what you want on the Y-axis:',
+            )
+        col1, col2, col3 = st.columns([1,1,3])
+        with col1:
+            chart_type = st.selectbox(
+                label='Select the chart type:',
+                options=['Bar', 'Line', 'Scatter', 'Area'],
+            )
+        with col2:
+            color = st.color_picker(
+                label='Select a color for the chart:',
+                value='#1f77b4'
+            )
 
-    # # Generate a new response if last message is not from assistant
-    # if st.session_state['messages'][-1]['role'] != 'assistant':
-    #     with st.chat_message('assistant'):
-    #         response = generate_arctic_analyst_response('data_analyst')
-    #         print(response)
-    #         with st.spinner('Evaluating the AI\'s response...'):
-    #             python_syntax, commentary = extract_python_syntax_and_commetary(response)
+        with col3:
+            additional_instructions = st.text_input(
+                label='Additional Instructions (Optional):',
+            )
+        if st.form_submit_button(
+            label=':green[Generate Chart]',
+            use_container_width=True
+        ):
+            st.session_state['active_page'] = 'chart_builder'
+            st.session_state['messages'] = [{'role': 'assistant', 'content': welcome_message, 'count': 0}]
+            st.session_state['count'] = 0   
+            if x_axis_description.strip() == '' or y_axis_description.strip() == '':
+                st.warning('Please provide a description for the X-axis and Y-axis.')
+                st.stop()
+            inputs = {
+                'x_axis_description': x_axis_description,
+                'y_axis_description': y_axis_description,
+                'chart_type': chart_type,
+                'color': color,
+                'additional_instructions': additional_instructions
+            }
+            chart_builder_inputs = {k: v for k, v in inputs.items() if v != '' or k in ['x_axis_description', 'y_axis_description', 'chart_type']}
+            st.session_state['messages'].append({'role': 'user', 'content': chart_builder_inputs})
+        chart_container = st.container()
+
+    with chart_container:
+        # Generate a new response if last message is not from assistant
+        if st.session_state['messages'][-1]['role'] != 'assistant':
+            response = generate_arctic_response('chart_builder')
+            with st.spinner('Evaluating the AI\'s response...'):
+                python_syntax, commentary = extract_python_syntax_and_commetary(response)
                 
-    #             if python_syntax is not None:
-    #                 check_read_csv_error_and_give_feedback(python_syntax, response)
-    #                 check_read_json_error_and_give_feedback(python_syntax, response)
-    #                 check_function_definition_error_and_give_feedback(python_syntax, response)
+                if python_syntax is not None:
+                    check_read_csv_error_and_give_feedback(python_syntax, response)
+                    check_read_json_error_and_give_feedback(python_syntax, response)
+                    check_function_definition_error_and_give_feedback(python_syntax, response)
+                    check_return_statement_error_and_give_feedback(python_syntax, response)
 
-    #                 python_syntax = remove_st_set_page_config(python_syntax)
-    #                 python_syntax = remove_generate_report(python_syntax)
-    #                 raw_python = "```python"+"\n"+python_syntax+"\n```"
+                    python_syntax = remove_st_set_page_config(python_syntax)
+                    python_syntax = remove_generate_report(python_syntax)
+                    raw_python = "```python"+"\n"+python_syntax+"\n```"
 
-    #                 with st.expander('See Python Syntax'):
-    #                     st.write(raw_python)
-    #                 python_syntax = update_python_syntax_with_correct_dataframe_names(python_syntax)
-    #             else:
-    #                 check_response_error_and_give_feedback(response)
-    #                 raw_python = None
-    #                 output = None
-    #                 plot = None
-    #                 st.write(response)
+                    with st.expander('See Python Syntax'):
+                        st.write(raw_python)
+                    python_syntax = update_python_syntax_with_correct_dataframe_names(python_syntax)
+                else:
+                    check_response_error_and_give_feedback(response)
+                    raw_python = None
+                    output = None
+                    plot = None
+                    st.write(response)
 
-    #             if python_syntax is not None:
-    #                 with st.spinner('Running the code snippet...'):
-    #                     try:
-    #                         exec(python_syntax)
-    #                         plot = eval('generate_report()')
-    #                         output = None
-    #                     except (SyntaxError, ValueError, TypeError, KeyError, AttributeError, IndexError, NameError, ModuleNotFoundError) as e:
-    #                         handle_all_other_errors(e, response)
+                if python_syntax is not None:
+                    with st.spinner('Running the code snippet...'):
+                        try:
+                            exec(python_syntax)
+                            print(python_syntax)
+                            plot = eval('generate_report()')
+                            output = None
+                        except (SyntaxError, ValueError, TypeError, KeyError, AttributeError, IndexError, NameError, ModuleNotFoundError) as e:
+                            handle_all_other_errors(e, response)
 
-    #             check_outputs_and_give_feedback(output, plot, response)
-
-    #     message = {'role': 'assistant', 'content': response, 'count': st.session_state['count'], 'raw_python': raw_python, 'python_syntax': python_syntax, 'commentary': commentary, 'output': output, 'plot': plot}
-    #     st.session_state['messages'].append(message)
+                check_outputs_and_give_feedback(output, plot, response)
+            message = {'role': 'assistant', 'content': response, 'count': st.session_state['count'], 'raw_python': raw_python, 'python_syntax': python_syntax, 'commentary': commentary, 'output': output, 'plot': plot}
+            st.session_state['messages'].append(message)

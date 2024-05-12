@@ -5,18 +5,11 @@ import re
 from transformers import AutoTokenizer
 import json
 
-from utils.streamlit_helpers import reset_chat
+from utils.streamlit_helpers import reset_data_analyst, reset_chart_builder
 
 os.environ['REPLICATE_API_TOKEN'] = st.secrets['REPLICATE_API_TOKEN']
 temperature = 0
 top_p = 0.9
-
-task_identifier_system_message = """You are an automated system that detects if the task requested by the user.
-You must generate one of these outputs: 'manipulate', 'plot', or 'consult'.
-1. 'manipulate' if the user's request can be fulfilled by generating a pandas DataFrame.
-2. 'plot' if the user's request can be fulfilled by generating a plot.
-3. 'consult' if the user's request is a question that requires a text response.
-"""
 
 generate_explanation_system_message = """You are an automated system that explains the computer code inputted by the user.
 You must explain the code in a way that is easy to understand for a non-technical audience.
@@ -69,23 +62,26 @@ I have access to the metadata of the files you uploaded. I will use that to gene
     return welcome_message
 
 def construct_system_message(page):
-    print('construct_arctic_analyst_system_message')
+    print('construct_system_message')
     system_message = """You are an automated system that generates python syntax that is executed on a cloud server. 
 The python virtual environment has the latest versions of streamlit, pandas, numpy, scikit-learn installed.
-
-You must always generate your output in JSON format with the keys 'python_syntax' and 'commentary'. 
-This is a very serious requirement for all of your responses. 
-    """
+\n\n"""
     if page == 'data_analyst':
         system_message += """Your input will be a JSON string with the key 'user_input' and the value as a string of the user's request.
+
+Your ouput must be a JSON string with the keys 'python_syntax' and 'commentary'.
 The 'python_syntax' should be a single python function named 'generate_report' that takes in 0 arguments. 
 The 'generate_report' function must return a single pandas DataFrame. 
 This is a very serious requirement for all of your responses.\n\n"""
     elif page == 'chart_builder':
-        system_message += """
+        system_message += """Your input will be a JSON string with the keys 'x_axis_description', 'y_axis_description', 'chart_type', 'color'.
+Your input could also contain the optional key 'additional_instuctions'.
+
+Your ouput must be a JSON string with the keys 'python_syntax' and 'commentary'.
 The 'python_syntax' should be a single python function named 'generate_report' that takes in 0 arguments. 
 The 'generate_report' function must generate plots using the streamlit chart API elements with appropriate subheaders. 
-The 'generate_report' function must return a single Streamlit Chart element. 
+The 'generate_report' function must return a single Streamlit Chart element.
+You can use one of the following Streamlit Chart elements: st.bar_chart, st.line_chart, st.area_chart, st.scatter_chart.
 This is a very serious requirement for all of your responses.\n\n"""
     
     system_message += """The 'commentary should be a string with your message to the user. 
@@ -113,20 +109,20 @@ This is a very serious requirement for all of your responses.\n\n"""
     return system_message
 
 
-def generate_arctic_analyst_response(page):
-    print('generate_arctic_analyst_response')
+def generate_arctic_response(page):
+    print('generate_arctic_response')
     with st.spinner('Constructing Prompt...'):
-        prompt_str = construct_prompt(page, st.session_state['messages'])
+        prompt_str = construct_prompt(page)
     with st.spinner('Generating Response...'):
         response = generate_ai_response(prompt_str)
         return response
     
-def construct_prompt(page, messages):
-    print('construct_arctic_analyst_prompt')
+def construct_prompt(page):
+    print('construct_prompt')
 
+    prompt = [f"<|im_start|>system\n{construct_system_message(page)}<|im_end|>"]
     if page == 'data_analyst':
-        prompt = [f"<|im_start|>system\n{construct_system_message(page)}<|im_end|>"]
-        for dict_message in messages:
+        for dict_message in st.session_state['messages']:
             if dict_message['role'] == 'user':
                 user_input = json.dumps({'user_input': dict_message['content']})
                 prompt.append('<|im_start|>user\n' + user_input + '<|im_end|>\n')
@@ -134,13 +130,14 @@ def construct_prompt(page, messages):
                 prompt.append('<|im_start|>assistant\n' + dict_message['content'] + '<|im_end|>\n')
     
     elif page == 'chart_builder':
-        for dict_message in messages:
+        for dict_message in st.session_state['messages']:
             if dict_message['role'] == 'user':
-                user_input = json.dumps({'user_input': dict_message['content']})
-                prompt.append('<|im_start|>user\n' + user_input + '<|im_end|>')
+                if 'error' not in dict_message.keys():
+                    prompt.append('<|im_start|>user\n' + json.dumps(dict_message['content']) + '<|im_end|>\n')
+                else:
+                    prompt.append('<|im_start|>user\n' + dict_message['content'] + '<|im_end|>\n')
             else:
-                prompt.append('<|im_start|>assistant\n' + dict_message['content'] + '<|im_end|>')
-        prompt = [f"<|im_start|>system\n{construct_system_message(page)}<|im_end|>"]
+                prompt.append('<|im_start|>assistant\n' + dict_message['content'] + '<|im_end|>\n')
 
     prompt.append('<|im_start|>assistant\n')
     prompt.append('')
@@ -186,7 +183,7 @@ def generate_ai_response(prompt_str):
         token_count = get_num_tokens(prompt_str)
         print(token_count)
 
-        if st.session_state['active_page'] in ['data_analyst', 'chart_builder']:
+        if st.session_state['active_page'] == 'data_analyst':
             error_count = 0
             for message in st.session_state['messages']:
                 if 'error' in message.keys():
@@ -194,18 +191,37 @@ def generate_ai_response(prompt_str):
                         error_count += 1
             
             if error_count >= 3:
-                st.error('Oops! Something went wrong. Try rephrasing your question in a different way.')
-                st.button(':red[Reset]', on_click=reset_chat, key='reset')
+                st.error('Oops! Something went wrong. Try rephrasing your prompt in a different way.')
+                st.button(':red[Reset Data Analyst]', on_click=reset_data_analyst, key='reset')
                 if st.secrets['ENV'] == 'dev':
                     st.write(st.session_state['messages'])
                 st.stop()
 
-        if token_count >= 3072:
-            st.error('Conversation length too long. Please keep it under 3072 tokens.')
-            st.button(':reset[Reset]', on_click=reset_chat, key='reset')
-            if st.secrets['ENV'] == 'dev':
-                st.write(st.session_state['messages'])
-            st.stop()
+            if token_count >= 3072:
+                st.error('Conversation length too long. Please keep it under 3072 tokens.')
+                st.button(':red[Reset Data Analyst]', on_click=reset_data_analyst, key='reset')
+                if st.secrets['ENV'] == 'dev':
+                    st.write(st.session_state['messages'])
+                st.stop()
+        
+        if st.session_state['active_page'] == 'chart_builder':
+            error_count = 0
+            for message in st.session_state['messages']:
+                if 'error' in message.keys():
+                    if message['role'] == 'assistant':
+                        error_count += 1
+
+            if error_count >= 3:
+                st.error('Oops! Something went wrong. Try rephrasing your instructions in a different way.')
+                st.form_submit_button(':red[Reset Chart Builder]', on_click=reset_chart_builder)
+                if st.secrets['ENV'] == 'dev':
+                    st.write(st.session_state['messages'])
+                st.stop()
+
+            if token_count >= 3072:
+                st.error('Instructions too long. Please keep it under 3072 tokens.')
+                st.form_submit_button(':red[Reset Chart Builder]', on_click=reset_chart_builder)
+                st.stop()
 
         events = []
         for event in replicate.stream('snowflake/snowflake-arctic-instruct',
