@@ -1,6 +1,6 @@
 import streamlit as st
 
-from utils.ai_helpers import construct_welcome_message, generate_arctic_analyst_response
+from utils.ai_helpers import construct_welcome_message, generate_arctic_response
 from utils.data_analyst_and_chart_builder_helpers import *
 
 def render_data_analyst():
@@ -45,8 +45,7 @@ def render_data_analyst():
     # Generate a new response if last message is not from assistant
     if st.session_state['messages'][-1]['role'] != 'assistant':
         with st.chat_message('assistant'):
-            response = generate_arctic_analyst_response('data_analyst')
-            print(response)
+            response = generate_arctic_response('data_analyst')
             with st.spinner('Evaluating the AI\'s response...'):
                 python_syntax, commentary = extract_python_syntax_and_commetary(response)
                 
@@ -54,6 +53,7 @@ def render_data_analyst():
                     check_read_csv_error_and_give_feedback(python_syntax, response)
                     check_read_json_error_and_give_feedback(python_syntax, response)
                     check_function_definition_error_and_give_feedback(python_syntax, response)
+                    check_return_statement_error_and_give_feedback(python_syntax, response)
 
                     python_syntax = remove_st_set_page_config(python_syntax)
                     python_syntax = remove_generate_report(python_syntax)
