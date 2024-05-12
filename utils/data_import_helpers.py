@@ -7,6 +7,86 @@ import snowflake.connector
 # from sklearn.datasets import load_iris, load_diabetes, load_wine, load_breast_cancer
 from seaborn import load_dataset
 
+datasets = {
+    'tips': {
+        'description': 'This dataset contains data on tips given to waitstaff at a restaurant.',
+        'column_descriptions': {
+            'total_bill': 'The total bill for the meal.',
+            'tip': 'The tip given to the waitstaff.',
+            'sex': 'The gender of the person paying the bill',
+            'smoker': 'Indicates whether the person was smoking or not',
+            'day': 'The day of the week the meal took place.',
+            'time': 'The time of day, either Dinner or Lunch.',
+            'size': 'The size of the party.'
+        }
+    },
+    'planets': {
+        'description': 'This dataset contains data on planets discovered outside of our solar system.',
+        'column_descriptions': {
+            'method': 'The method used to discover the planet.',
+            'number': 'The number of planets in the planetary system',
+            'orbital_period': 'The orbital period of the planet in days.',
+            'mass': 'The mass of the planet in Jupiter masses.',
+            'distance': 'The distance from the planet to its star in parsecs.',
+            'year': 'The year the planet was discovered.'
+        }
+    },
+    'penguins': {
+        'description': 'This dataset contains data on penguins in the Palmer Archipelago, Antarctica.',
+        'column_descriptions': {
+            'species': 'The species of penguin.',
+            'island': 'The island where the penguin was observed.',
+            'bill_length_mm': 'The length of the penguin\'s bill in millimeters.',
+            'bill_depth_mm': 'The depth of the penguin\'s bill in millimeters.',
+            'flipper_length_mm': 'The length of the penguin\'s flipper in millimeters.',
+            'body_mass_g': 'The body mass of the penguin in grams.',
+            'sex': 'The sex of the penguin.',
+        },
+    },
+    'car_crashes': {
+        'description': 'This dataset contains statistics about car crashes in different US states.',
+        'column_descriptions': {
+            'total': 'Total number of fatal collisions per billion miles.',
+            'speeding': 'Percentage of collisions that involved speeding.',
+            'alcohol': 'Percentage of collisions that involved alcohol.',
+            'not_distracted': ' Percentage of collisions that were not caused by a distraction.',
+            'no_previous': ' Percentage of collisions where the driver had no previous accidents.',
+            'ins_premium': 'The average insurance premium in the state.',
+            'ins_losses': 'The average insurance losses in the state.',
+            'abbrev': 'The state abbreviation.'
+        }
+    },
+    'diamonds': {
+        'description': 'This dataset contains data on diamonds.',
+        'column_descriptions': {
+            'carat': 'Weight of the diamond measured in carats.',
+            'cut': 'The quality of the cut.',
+            'color': 'The color of the diamond, from J (worst) to D (best)',
+            'clarity': 'A measurement of how clear the diamond is (I1 (worst), SI2, SI1, VS2, VS1, VVS2, VVS1, IF (best))',
+            'depth': 'Total depth percentage.',
+            'table': 'The width of the diamond\'s top relative to its widest point, measured as a percentage.',
+            'price': 'The price of the diamond.',
+            'x': 'The length of the diamond in mm.',
+            'y': 'The width of the diamond in mm.',
+            'z': 'The depth of the diamond in mm.'
+        }
+    },
+    'mpg': {
+        'description': 'This dataset contains data on fuel economy for cars.',
+        'column_descriptions': {
+            'mpg': 'Miles per gallon, representing the fuel efficiency of the car.',
+            'cylinders': 'The number of cylinders in the engine.',
+            'displacement': 'The engine displacement in cubic inches.',
+            'horsepower': 'The engine horsepower.',
+            'weight': 'The weight of the car.',
+            'acceleration': 'The time it takes for the car to accelerate from 0 to 60 mph.',
+            'model_year': 'The model year of the car.',
+            'origin': 'Region where the car was manufactured.',
+            'name': 'The name of the car.'
+        }
+    }
+}
+
 def gather_metadata(params=None):
     """
     Gather metadata from uploaded files.
@@ -50,39 +130,13 @@ def gather_metadata(params=None):
         vetted_files[filename]['primary_key'] = []
         vetted_files[filename]['dataframe'] = df
     
-    else:
-        if st.session_state['source'] == 'tips':
-            df = load_dataset('tips')
-            filename = 'tips'
-            vetted_files[filename] = {}
-            vetted_files[filename]['dataset_description'] = 'This dataset contains data on tips given to waitstaff at a restaurant.'
-        elif st.session_state['source'] == 'planets':
-            df = load_dataset('planets')
-            filename = 'planets'
-            vetted_files[filename] = {}
-            vetted_files[filename]['dataset_description'] = 'This dataset contains data on planets discovered outside of our solar system.'
-        elif st.session_state['source'] == 'penguins':
-            df = load_dataset('penguins')
-            filename = 'penquins'
-            vetted_files[filename] = {}
-            vetted_files[filename]['dataset_description'] = 'This dataset contains data on penguins in the Palmer Archipelago, Antarctica.'
-        elif st.session_state['source'] == 'car_crashes':
-            df = load_dataset('car_crashes')
-            filename = 'car_crashes'
-            vetted_files[filename] = {}
-            vetted_files[filename]['dataset_description'] = 'This dataset contains data on car crashes in the United States.'
-        elif st.session_state['source'] == 'diamonds':
-            df = load_dataset('diamonds')
-            filename = 'diamonds'
-            vetted_files[filename] = {}
-            vetted_files[filename]['dataset_description'] = 'This dataset contains data on diamonds.'
-        elif st.session_state['source'] == 'mpg':
-            df = load_dataset('mpg')
-            filename = 'mpg'
-            vetted_files[filename] = {}
-            vetted_files[filename]['dataset_description'] = 'This dataset contains data on fuel economy for cars.'
-
+    if st.session_state['source'] in ['tips', 'planets', 'penguins', 'car_crashes', 'diamonds', 'mpg']:
+        filename = st.session_state['source']
+        df = load_dataset(filename)
         df = df.convert_dtypes()
+        vetted_files[filename] = {}
+        vetted_files[filename]['dataset_description'] = datasets[st.session_state['source']]['description']
+
         vetted_files[filename]['columns_names'] = df.columns
         vetted_files[filename]['data_types'] = df.dtypes
         vetted_files[filename]['pandas_describe'] = df.describe(include='all')

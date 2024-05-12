@@ -13,6 +13,16 @@ def render_uploaded_data(page):
     for filename in st.session_state['vetted_files']:
         df = st.session_state['vetted_files'][filename]['dataframe']
         st.subheader(f':blue[{filename}]')
+        data_filter = st.selectbox(
+            label='Select the number of rows to display',
+            options=['First 50 rows', 'Last 50 rows', 'Random 50 rows'],
+        )
+        if data_filter == 'First 50 rows':
+            df = df.head(50)
+        elif data_filter == 'Last 50 rows':
+            df = df.tail(50)
+        elif data_filter == 'Random 50 rows':
+            df = df.sample(50)
         st.dataframe(
             data=df,
             hide_index=True,

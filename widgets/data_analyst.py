@@ -14,7 +14,16 @@ def render_data_analyst():
     with st.expander('See uploaded Datasets'):
         for filename in st.session_state['vetted_files']:
             st.subheader(f':blue[{filename}]')
-            st.dataframe(st.session_state['vetted_files'][filename]['dataframe'], use_container_width=True)
+            data_filter = st.selectbox(
+                label='Select the number of rows to display',
+                options=['First 5 rows', 'Last 5 rows', 'Random 5 rows'],
+            )
+            if data_filter == 'First 5 rows':
+                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].head(), use_container_width=True)
+            elif data_filter == 'Last 5 rows':
+                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].tail(), use_container_width=True)
+            elif data_filter == 'Random 5 rows':
+                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].sample(5), use_container_width=True)
 
     for message in st.session_state['messages']:
         if 'error' not in message.keys():
