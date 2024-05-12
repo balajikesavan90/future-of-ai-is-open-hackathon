@@ -9,39 +9,59 @@ def render_sample_datasets(page):
         col1, col2 = st.columns(2)
         with col1:
             if st.button(
-                label=':blue[Iris Dataset]',
+                label=':blue[Tips Dataset]',
                 use_container_width=True,
-                key=f"Iris_{page}"
+                key=f"tips_{page}"
             ):
                 st.session_state['active_page'] = page
-                st.session_state['source'] = 'load_iris'
+                st.session_state['source'] = 'tips'
                 gather_metadata()
                 st.rerun()
+
             if st.button(
-                label=':blue[Diabetes Dataset]',
+                label=':blue[Planets Dataset]',
                 use_container_width=True,
-                key=f"Diabetes_dataset_{page}"
+                key=f"Planets_{page}"
             ):
                 st.session_state['active_page'] = page
-                st.session_state['source'] = 'load_diabetes'
+                st.session_state['source'] = 'Planets'
+                gather_metadata()
+                st.rerun()
+            
+            if st.button(
+                label=':blue[Penguins Dataset]',
+                use_container_width=True,
+                key=f"penguins_{page}"
+            ):
+                st.session_state['active_page'] = page
+                st.session_state['source'] = 'penguins'
                 gather_metadata()
                 st.rerun()
         with col2:
             if st.button(
-                label=':blue[Wine Dataset]',
+                label=':blue[Car Crashes Dataset]',
                 use_container_width=True,
-                key=f"wine_{page}"
+                key=f"car_crashes_{page}"
             ):
                 st.session_state['active_page'] = page
-                st.session_state['source'] = 'load_wine'
+                st.session_state['source'] = 'car_crashes'
                 gather_metadata()
                 st.rerun()
             if st.button(
-                label=':blue[Breast Cancer Dataset]',
+                label=':blue[Diamonds Dataset]',
                 use_container_width=True,
-                key=f"breast_cancer_dataset_{page}"
+                key=f"diamonds_{page}"
             ):
                 st.session_state['active_page'] = page
-                st.session_state['source'] = 'load_breast_cancer'
+                st.session_state['source'] = 'diamonds'
+                gather_metadata()
+                st.rerun()
+            if st.button(
+                label=':blue[MPG]',
+                use_container_width=True,
+                key=f"mpg_{page}"
+            ):
+                st.session_state['active_page'] = page
+                st.session_state['source'] = 'mpg'
                 gather_metadata()
                 st.rerun()

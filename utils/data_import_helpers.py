@@ -1,9 +1,11 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import itertools
 import os
 import snowflake.connector
-from sklearn.datasets import load_iris, load_diabetes, load_wine, load_breast_cancer
+# from sklearn.datasets import load_iris, load_diabetes, load_wine, load_breast_cancer
+from seaborn import load_dataset
 
 def gather_metadata(params=None):
     """
@@ -49,30 +51,39 @@ def gather_metadata(params=None):
         vetted_files[filename]['dataframe'] = df
     
     else:
-        if st.session_state['source'] == 'load_iris':
-            df = pd.DataFrame(load_iris().data, columns=load_iris().feature_names)
-            filename = 'iris_data'
+        if st.session_state['source'] == 'tips':
+            df = load_dataset('tips')
+            filename = 'tips'
             vetted_files[filename] = {}
-            vetted_files[filename]['dataset_description'] = 'The dataset contains 150 samples from each of three species of Iris flowers (Iris setosa, Iris virginica, and Iris versicolor), with four features measured from each sample: the lengths and the widths of the sepals and petals.'
-        elif st.session_state['source'] == 'load_diabetes':
-            df = pd.DataFrame(load_diabetes().data, columns=load_diabetes().feature_names)
-            filename = 'diabetes_data'
+            vetted_files[filename]['dataset_description'] = 'This dataset contains data on tips given to waitstaff at a restaurant.'
+        elif st.session_state['source'] == 'planets':
+            df = load_dataset('planets')
+            filename = 'planets'
             vetted_files[filename] = {}
-            vetted_files[filename]['dataset_description'] = 'Dataset consists of 442 patients, each characterized by 10 baseline variables: age, sex, body mass index, average blood pressure, and six blood serum measurements.'
-        elif st.session_state['source'] == 'load_wine':
-            df = pd.DataFrame(load_wine().data, columns=load_wine().feature_names)
-            filename = 'wine_data'
+            vetted_files[filename]['dataset_description'] = 'This dataset contains data on planets discovered outside of our solar system.'
+        elif st.session_state['source'] == 'penguins':
+            df = load_dataset('penguins')
+            filename = 'penquins'
             vetted_files[filename] = {}
-            vetted_files[filename]['dataset_description'] = 'The data is the results of a chemical analysis of wines grown in the same region in Italy but derived from three different cultivars.'
-        elif st.session_state['source'] == 'load_breast_cancer':
-            df = pd.DataFrame(load_breast_cancer().data, columns=load_breast_cancer().feature_names)
-            filename = 'breast_cancer_data'
+            vetted_files[filename]['dataset_description'] = 'This dataset contains data on penguins in the Palmer Archipelago, Antarctica.'
+        elif st.session_state['source'] == 'car_crashes':
+            df = load_dataset('car_crashes')
+            filename = 'car_crashes'
             vetted_files[filename] = {}
-            vetted_files[filename]['dataset_description'] = 'The data contains 569 samples of malignant and benign tumor cells. The first two columns in the dataset store the unique ID numbers of the samples and the corresponding diagnosis (M=malignant, B=benign), respectively.'
+            vetted_files[filename]['dataset_description'] = 'This dataset contains data on car crashes in the United States.'
+        elif st.session_state['source'] == 'diamonds':
+            df = load_dataset('diamonds')
+            filename = 'diamonds'
+            vetted_files[filename] = {}
+            vetted_files[filename]['dataset_description'] = 'This dataset contains data on diamonds.'
+        elif st.session_state['source'] == 'mpg':
+            df = load_dataset('mpg')
+            filename = 'mpg'
+            vetted_files[filename] = {}
+            vetted_files[filename]['dataset_description'] = 'This dataset contains data on fuel economy for cars.'
 
         df = df.convert_dtypes()
         vetted_files[filename]['columns_names'] = df.columns
-        print(df.dtypes)
         vetted_files[filename]['data_types'] = df.dtypes
         vetted_files[filename]['pandas_describe'] = df.describe(include='all')
         vetted_files[filename]['primary_key'] = []

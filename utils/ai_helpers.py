@@ -64,7 +64,7 @@ I have access to the metadata of the files you uploaded. I will use that to gene
 def construct_system_message(page):
     print('construct_system_message')
     system_message = """You are an automated system that generates python syntax that is executed on a cloud server. 
-The python virtual environment has the latest versions of streamlit, pandas, numpy, scikit-learn installed.
+The python virtual environment has the latest versions of streamlit, pandas, numpy.
 \n\n"""
     if page == 'data_analyst':
         system_message += """Your input will be a JSON string with the key 'user_input' and the value as a string of the user's request.
