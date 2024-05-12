@@ -17,5 +17,6 @@ def render_uploader(page):
             use_container_width=True,
         ):
             st.session_state['active_page'] = page
-            gather_metadata(source='upload')
+            st.session_state['source'] = 'uploader'
+            gather_metadata()
             st.rerun()

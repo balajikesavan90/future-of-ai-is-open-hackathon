@@ -3,10 +3,10 @@ import pandas as pd
 
 from utils.data_import_helpers import process_data_dictionaries
 
-def render_data_dictionary_widget(page):
-    if page == 'data_analyst':
+def render_data_dictionary_widget():
+    if st.session_state['active_page'] == 'data_analyst':
         st.subheader(':blue[Data Analyst]')
-    elif page == 'chart_builder':
+    elif st.session_state['active_page'] == 'chart_builder':
         st.subheader(':blue[Chart Builder]')
     uploaded_file_count = len(st.session_state['vetted_files'])
     if uploaded_file_count == 1:
@@ -29,11 +29,16 @@ def render_data_dictionary_widget(page):
         st.subheader(f':blue[{filename}]')
         with st.expander('See uploaded Dataset'):
             st.dataframe(st.session_state['vetted_files'][filename]['dataframe'], use_container_width=True)
+        if st.session_state['source'] in (['snowflake', 'uploader']):
+            value = ''
+        else:
+            value = st.session_state['vetted_files'][filename]['dataset_description']
         st.session_state['vetted_files'][filename]['dataset_description'] = st.text_input(
             label='Dataset Description:',
             placeholder='Enter a description for the dataset',
             key=f'{filename}_dataset_description',
-            label_visibility='collapsed'
+            label_visibility='collapsed',
+            value=value,
         )
         st.session_state['vetted_files'][filename]['data_dictionary'] = st.data_editor(
             data=df,
@@ -49,7 +54,10 @@ def render_data_dictionary_widget(page):
                     required=True,
                     options=['Int64', 'Float64', 'datetime64[ns]', 'string', 'bool', 'category', 'object'],
                 ),
-                'Primary Key': {'disabled': True},
+                'Primary Key': st.column_config.CheckboxColumn(
+                    label='Primary Key',
+                    help='Check if the column is a primary key.',
+                ),
             }
         )
         st.divider()
@@ -58,5 +66,5 @@ def render_data_dictionary_widget(page):
         label=':green[Save Data Dictionary and Proceed to Analysis]',
         on_click=process_data_dictionaries,
         use_container_width=True,
-        args=(st.session_state['vetted_files'],page)
+        args=(st.session_state['vetted_files'],st.session_state['active_page'])
     )

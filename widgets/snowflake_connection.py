@@ -19,8 +19,8 @@ def render_snowflake_connection(page):
                 use_container_width=True
             ):  
                 st.session_state['active_page'] = page
+                st.session_state['source'] = 'snowflake'
                 gather_metadata(
-                    source='snowflake',
                     params={
                         'username': username,
                         'password': password,

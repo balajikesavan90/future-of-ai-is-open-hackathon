@@ -11,7 +11,8 @@ def goto_data_dictionary_widget():
 
 def goto_data_analysis_widget():
     st.session_state['datasets_vetted'] = True
-    del st.session_state['uploaded_files']
+    if 'uploaded_files' in st.session_state.keys():
+        del st.session_state['uploaded_files']
 
 def reset_data_analyst():
     st.session_state['messages'] = []
