@@ -101,7 +101,6 @@ def render_chart_builder():
                     with st.spinner('Running the code snippet...'):
                         try:
                             exec(python_syntax)
-                            print(python_syntax)
                             plot = eval('generate_report()')
                             output = None
                         except (SyntaxError, ValueError, TypeError, KeyError, AttributeError, IndexError, NameError, ModuleNotFoundError) as e:
