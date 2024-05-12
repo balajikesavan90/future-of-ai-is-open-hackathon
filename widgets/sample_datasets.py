@@ -24,7 +24,7 @@ def render_sample_datasets(page):
                 key=f"Planets_{page}"
             ):
                 st.session_state['active_page'] = page
-                st.session_state['source'] = 'Planets'
+                st.session_state['source'] = 'planets'
                 gather_metadata()
                 st.rerun()
             
