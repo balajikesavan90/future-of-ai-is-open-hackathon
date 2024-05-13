@@ -131,10 +131,10 @@ def check_outputs_and_give_feedback(output, plot, response):
             st.session_state['count'] += 1
             hide_index = st.checkbox('Hide Index', key=str(st.session_state['count']), value=False)
             st.dataframe(output, use_container_width=True, hide_index=hide_index)
-            # if st.secrets['ENV'] == 'dev':
-            #     for message in st.session_state['messages']:
-            #         if 'error' in message.keys():
-            #             st.session_state['messages'].remove(message)
+            if st.secrets['ENV'] != 'dev':
+                for message in st.session_state['messages']:
+                    if 'error' in message.keys():
+                        st.session_state['messages'].remove(message)
         else:
             st.session_state['count'] += 1
             message = {'role': 'assistant', 'content': response, 'error': True, 'count': st.session_state['count']}
@@ -146,10 +146,10 @@ def check_outputs_and_give_feedback(output, plot, response):
             st.rerun()
     if plot is not None:
         if isinstance(plot, st.delta_generator.DeltaGenerator):
-            # if st.secrets['ENV'] == 'dev':
-            #     for message in st.session_state['messages']:
-            #         if 'error' in message.keys():
-            #             st.session_state['messages'].remove(message)
+            if st.secrets['ENV'] != 'dev':
+                for message in st.session_state['messages']:
+                    if 'error' in message.keys():
+                        st.session_state['messages'].remove(message)
             plot
         else:
             print(f'check_outputs_and_give_feedback - error - {st.session_state["active_page"]}')
