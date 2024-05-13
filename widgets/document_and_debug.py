@@ -35,6 +35,9 @@ def render_document_and_debug_code_widget():
                             use_container_width=True,
                             on_click=lambda: st.session_state.pop('output_container')
                         )
+                    if 'prompt_str' in st.session_state.keys():
+                        with st.sidebar.expander('What does the AI see?'):
+                            st.write(st.session_state['prompt_str'])
                 else:
                     st.error('Please provide a code snippet and error message to debug')
     with code_snippet_container:
@@ -54,6 +57,9 @@ def render_document_and_debug_code_widget():
                             use_container_width=True,
                             on_click=lambda: st.session_state.pop('output_container')
                         )
+                    if 'prompt_str' in st.session_state.keys():
+                        with st.sidebar.expander('What does the AI see?'):
+                            st.write(st.session_state['prompt_str'])
                 else:
                     st.error('Please provide a code snippet to explain')
         with document_col:
@@ -71,5 +77,8 @@ def render_document_and_debug_code_widget():
                             use_container_width=True,
                             on_click=lambda: st.session_state.pop('output_container')
                         )
+                    if 'prompt_str' in st.session_state.keys():
+                        with st.sidebar.expander('What does the AI see?'):
+                            st.write(st.session_state['prompt_str'])
                 else:
                     st.error('Please provide a code snippet to generate docstrings')
