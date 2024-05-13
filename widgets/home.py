@@ -1,12 +1,13 @@
 import streamlit as st
 
-from widgets.snowflake_connection import render_snowflake_connection
-from widgets.uploader import render_uploader
 from widgets.sample_datasets import render_sample_datasets
+from widgets.uploader import render_uploader
+from widgets.snowflake_connection import render_snowflake_connection
+from widgets.document_and_debug import render_document_and_debug_code_widget
+from widgets.about import render_about
 from widgets.data_dictionary import render_data_dictionary_widget
 from widgets.uploaded_data import render_uploaded_data
 from widgets.data_analyst import render_data_analyst
-from widgets.document_and_debug import render_document_and_debug_code_widget
 from widgets.chart_builder import render_chart_builder
 
 
@@ -42,7 +43,7 @@ def render_home():
             st.write(':blue[Document and debug your code using Actic Analytics.]')
             render_document_and_debug_code_widget()
         with about:
-            st.write('About')
+            render_about()
 
     else:
         if not st.session_state['data_dictionaries_loaded']:
