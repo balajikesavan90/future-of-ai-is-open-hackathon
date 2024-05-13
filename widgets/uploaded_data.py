@@ -3,10 +3,11 @@ import streamlit as st
 from utils.streamlit_helpers import goto_data_dictionary_widget, goto_data_analysis_widget
 
 def render_uploaded_data(page):
+    st.divider()
     if page == 'data_analyst':
-        st.subheader(':blue[Data Analyst]')
+        st.subheader('🔍 :blue[Data Analyst]')
     elif page == 'chart_builder':
-        st.subheader(':blue[Chart Builder]')
+        st.subheader('📊 :blue[Chart Builder]')
     st.toast(':blue[Data Dictionaries have been saved!]')
     st.success(':green[Make sure your data looks good especially if you changed the data types]')
 
@@ -15,7 +16,7 @@ def render_uploaded_data(page):
         st.subheader(f':blue[{filename}]')
         data_filter = st.selectbox(
             label='Select the number of rows to display',
-            options=['First 50 rows', 'Last 50 rows', 'Random 50 rows'],
+            options=['First 50 rows', 'Last 50 rows', 'Random 50 rows', 'All rows'],
         )
         if data_filter == 'First 50 rows':
             df = df.head(50)

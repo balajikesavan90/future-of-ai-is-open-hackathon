@@ -4,7 +4,7 @@ from utils.data_import_helpers import gather_metadata
 
 def render_snowflake_connection(page):
     with st.form(key=f'connect_to_snowflake_{page}'):
-        with st.expander(':blue[Import your data from Snowflake]'):
+        with st.expander('❄️:blue[or import your data from Snowflake]'):
             col1, col2 = st.columns(2)
             username = col1.text_input('Enter your username:')
             password = col2.text_input('Enter your password:', type='password')
