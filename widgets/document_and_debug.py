@@ -58,7 +58,7 @@ def render_document_and_debug_code_widget():
                     st.error('Please provide a code snippet to explain')
         with document_col:
             if st.button(
-                label=':blue[Generate Docstrings]',
+                label=':green[Generate Docstrings]',
                 use_container_width=True
             ):
                 st.session_state['active_page'] = 'docstrings_generator'
