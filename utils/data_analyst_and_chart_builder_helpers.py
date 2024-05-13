@@ -18,8 +18,15 @@ def extract_commentary(text):
     commentary = re.sub(pattern, '', text, flags=re.DOTALL)
     return commentary.strip()
 
+def add_closing_backticks(s):
+    if s.count("```") % 2 != 0:  # If the count of ``` is odd
+        print('add_closing_backticks')
+        s += "```"  # Append closing ```
+    return s
+
 def extract_python_syntax_and_commetary(response):
-    print('extract_python_syntax_and_commetary')
+    print('extract_python_syntax_and_commetary') 
+    response = add_closing_backticks(response)  
     opening_braces = response.count('{')
     closing_braces = response.count('}')
     if closing_braces < opening_braces:

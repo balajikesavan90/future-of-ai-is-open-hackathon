@@ -4,9 +4,10 @@ from utils.ai_helpers import generate_debugger_response, generate_explanation_re
 
 def render_document_and_debug_code_widget():
     
-    code_snippet_col, output_col = st.columns(2)
-
-    with code_snippet_col:
+    code_snippet_container = st.container()
+    st.session_state['output_container'] = st.container()
+    
+    with code_snippet_container:
         code_snippet = st.text_area(
             label='Codebase',
             placeholder='Add your code snippet here',
@@ -36,10 +37,7 @@ def render_document_and_debug_code_widget():
                         )
                 else:
                     st.error('Please provide a code snippet and error message to debug')
-    with output_col:
-        st.session_state['output_container'] = st.container()
-
-    with code_snippet_col:
+    with code_snippet_container:
         explain_col, document_col = st.columns(2)
         with explain_col:
             if st.button(
@@ -60,7 +58,7 @@ def render_document_and_debug_code_widget():
                     st.error('Please provide a code snippet to explain')
         with document_col:
             if st.button(
-                label=':blue[Generate Docstrings]',
+                label=':green[Generate Docstrings]',
                 use_container_width=True
             ):
                 st.session_state['active_page'] = 'docstrings_generator'

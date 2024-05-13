@@ -1,12 +1,15 @@
 import streamlit as st
 
-from widgets.snowflake_connection import render_snowflake_connection
+from widgets.sample_datasets import render_sample_datasets
 from widgets.uploader import render_uploader
+from widgets.snowflake_connection import render_snowflake_connection
+from widgets.document_and_debug import render_document_and_debug_code_widget
+from widgets.about import render_about
 from widgets.data_dictionary import render_data_dictionary_widget
 from widgets.uploaded_data import render_uploaded_data
 from widgets.data_analyst import render_data_analyst
-from widgets.document_and_debug import render_document_and_debug_code_widget
 from widgets.chart_builder import render_chart_builder
+
 
 
 def setup_home():
@@ -22,24 +25,29 @@ def setup_home():
 def render_home():
     if st.session_state['vetted_files'] == {}:
 
-        analyze_data, build_charts, document_debug_code, about = st.tabs(['Analyze Data', 'Build Charts', 'Document & Debug Code', 'About'])
+        analyze_data, build_charts, document_debug_code, about = st.tabs(['🔍 Analyze Data', '📊 Build Charts', '🗂️ Document & 🐞 Debug Code', '🤖 About'])
         with analyze_data:
-            st.subheader(':blue[Data Analyst]')
-            render_snowflake_connection(page = 'data_analyst')
+            st.subheader('🔍 :blue[Data Analyst]')
+            st.write(':blue[Answer questions about your data using Actic Analytics.]')
+            render_sample_datasets(page = 'data_analyst')
             render_uploader(page = 'data_analyst')
+            render_snowflake_connection(page = 'data_analyst')
         with build_charts:
-            st.subheader(':blue[Chart Builder]')
-            render_snowflake_connection(page = 'chart_builder')
+            st.subheader('📊 :blue[Chart Builder]')
+            st.write(':blue[Create charts from your data using Actic Analytics.]')
+            render_sample_datasets(page = 'chart_builder')
             render_uploader(page = 'chart_builder')
+            render_snowflake_connection(page = 'chart_builder')
         with document_debug_code:
-            st.subheader(':blue[Document & Debug Code]')
+            st.subheader(':blue[🗂️ Document & 🐞 Debug Code]')
+            st.write(':blue[Document and debug your code using Actic Analytics.]')
             render_document_and_debug_code_widget()
         with about:
-            st.write('About')
+            render_about()
 
     else:
         if not st.session_state['data_dictionaries_loaded']:
-            render_data_dictionary_widget(st.session_state['active_page'])
+            render_data_dictionary_widget()
 
         else:
             if not st.session_state['datasets_vetted']:

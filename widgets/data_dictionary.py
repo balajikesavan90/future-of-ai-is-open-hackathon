@@ -1,13 +1,14 @@
 import streamlit as st
 import pandas as pd
 
-from utils.data_import_helpers import process_data_dictionaries
+from utils.data_import_helpers import process_data_dictionaries, datasets
 
-def render_data_dictionary_widget(page):
-    if page == 'data_analyst':
-        st.subheader(':blue[Data Analyst]')
-    elif page == 'chart_builder':
-        st.subheader(':blue[Chart Builder]')
+def render_data_dictionary_widget():
+    st.divider()
+    if st.session_state['active_page'] == 'data_analyst':
+        st.subheader('🔍 :blue[Data Analyst]')
+    elif st.session_state['active_page'] == 'chart_builder':
+        st.subheader('📊 :blue[Chart Builder]')
     uploaded_file_count = len(st.session_state['vetted_files'])
     if uploaded_file_count == 1:
         st.toast(':green[Lets create a data dictionary for your file]')
@@ -15,26 +16,49 @@ def render_data_dictionary_widget(page):
         st.toast(':green[Lets create data dictionaries for your files]')
     st.toast(':blue[Your files have been uploaded!]')
 
-    st.divider()
     for filename in st.session_state['vetted_files']:
+
         df = pd.DataFrame({
             'Column Name': st.session_state['vetted_files'][filename]['columns_names'],
             'Data Type': st.session_state['vetted_files'][filename]['data_types']
         })
+
         df['Data Type'] = df['Data Type'].astype(str)
         df['Primary Key'] = df['Column Name'].apply(lambda x: x in st.session_state['vetted_files'][filename]['primary_key'])
-        df['Description'] = df['Column Name']
+
+        if st.session_state['source'] in (['snowflake', 'uploader']):
+            df['Description'] = ''
+        elif st.session_state['source'] in ['tips', 'planets', 'penguins', 'car_crashes', 'diamonds', 'mpg']:
+            df['Description'] = df['Column Name'].apply(lambda x: datasets[st.session_state['source']]['column_descriptions'][x])
+
         df = df[['Primary Key', 'Column Name', 'Data Type', 'Description']]
 
         st.subheader(f':blue[{filename}]')
         with st.expander('See uploaded Dataset'):
-            st.dataframe(st.session_state['vetted_files'][filename]['dataframe'], use_container_width=True)
+            data_filter = st.selectbox(
+                label = 'Select the number of rows to display',
+                options = ['First 5 rows', 'Last 5 rows', 'Random 5 rows'],
+            )
+            if data_filter == 'First 5 rows':
+                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].head(), use_container_width=True)
+            elif data_filter == 'Last 5 rows':
+                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].tail(), use_container_width=True)
+            elif data_filter == 'Random 5 rows':
+                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].sample(5), use_container_width=True)
+
+        if st.session_state['source'] in (['snowflake', 'uploader']):
+            value = ''
+        else:
+            value = st.session_state['vetted_files'][filename]['dataset_description']
+
         st.session_state['vetted_files'][filename]['dataset_description'] = st.text_input(
             label='Dataset Description:',
             placeholder='Enter a description for the dataset',
             key=f'{filename}_dataset_description',
-            label_visibility='collapsed'
+            label_visibility='collapsed',
+            value=value,
         )
+
         st.session_state['vetted_files'][filename]['data_dictionary'] = st.data_editor(
             data=df,
             use_container_width=True,
@@ -49,7 +73,10 @@ def render_data_dictionary_widget(page):
                     required=True,
                     options=['Int64', 'Float64', 'datetime64[ns]', 'string', 'bool', 'category', 'object'],
                 ),
-                'Primary Key': {'disabled': True},
+                'Primary Key': st.column_config.CheckboxColumn(
+                    label='Primary Key',
+                    help='Check if the column is a primary key.',
+                ),
             }
         )
         st.divider()
@@ -58,5 +85,5 @@ def render_data_dictionary_widget(page):
         label=':green[Save Data Dictionary and Proceed to Analysis]',
         on_click=process_data_dictionaries,
         use_container_width=True,
-        args=(st.session_state['vetted_files'],page)
+        args=(st.session_state['vetted_files'],st.session_state['active_page'])
     )
