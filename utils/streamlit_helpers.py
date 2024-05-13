@@ -39,3 +39,8 @@ def render_reset_chart_builder():
 
 def render_session_state():
     st.sidebar.write(st.session_state)
+
+def render_ai_prompt():
+    if 'prompt_str' in st.session_state.keys():
+        with st.sidebar.expander('What does the AI see?'):
+            st.write(st.session_state['prompt_str'])

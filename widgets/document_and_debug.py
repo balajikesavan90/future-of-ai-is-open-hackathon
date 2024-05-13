@@ -1,6 +1,7 @@
 import streamlit as st
 
 from utils.ai_helpers import generate_debugger_response, generate_explanation_response, generate_docstring_response
+from utils.streamlit_helpers import render_ai_prompt
 
 def render_document_and_debug_code_widget():
     
@@ -35,9 +36,7 @@ def render_document_and_debug_code_widget():
                             use_container_width=True,
                             on_click=lambda: st.session_state.pop('output_container')
                         )
-                    if 'prompt_str' in st.session_state.keys():
-                        with st.sidebar.expander('What does the AI see?'):
-                            st.write(st.session_state['prompt_str'])
+                    render_ai_prompt()
                 else:
                     st.error('Please provide a code snippet and error message to debug')
     with code_snippet_container:
@@ -57,9 +56,7 @@ def render_document_and_debug_code_widget():
                             use_container_width=True,
                             on_click=lambda: st.session_state.pop('output_container')
                         )
-                    if 'prompt_str' in st.session_state.keys():
-                        with st.sidebar.expander('What does the AI see?'):
-                            st.write(st.session_state['prompt_str'])
+                    render_ai_prompt()
                 else:
                     st.error('Please provide a code snippet to explain')
         with document_col:
@@ -77,8 +74,6 @@ def render_document_and_debug_code_widget():
                             use_container_width=True,
                             on_click=lambda: st.session_state.pop('output_container')
                         )
-                    if 'prompt_str' in st.session_state.keys():
-                        with st.sidebar.expander('What does the AI see?'):
-                            st.write(st.session_state['prompt_str'])
+                    render_ai_prompt()
                 else:
                     st.error('Please provide a code snippet to generate docstrings')
