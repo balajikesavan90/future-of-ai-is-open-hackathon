@@ -3,6 +3,8 @@ import re
 import json
 import pandas as pd
 
+from utils.streamlit_helpers import render_ai_prompt
+
 def extract_python_syntax(text):
     pattern = r'```(python|json)(.*?)```'
     match = re.search(pattern, text, re.DOTALL)
@@ -131,6 +133,7 @@ def check_outputs_and_give_feedback(output, plot, response):
             st.session_state['count'] += 1
             hide_index = st.checkbox('Hide Index', key=str(st.session_state['count']), value=False)
             st.dataframe(output, use_container_width=True, hide_index=hide_index)
+            render_ai_prompt()
             if st.secrets['ENV'] != 'dev':
                 for message in st.session_state['messages']:
                     if 'error' in message.keys():
@@ -146,11 +149,14 @@ def check_outputs_and_give_feedback(output, plot, response):
             st.rerun()
     if plot is not None:
         if isinstance(plot, st.delta_generator.DeltaGenerator):
+            print(f'check_outputs_and_give_feedback - success - {st.session_state["active_page"]}')
+            st.session_state['count'] += 1
+            plot
+            render_ai_prompt()
             if st.secrets['ENV'] != 'dev':
                 for message in st.session_state['messages']:
                     if 'error' in message.keys():
                         st.session_state['messages'].remove(message)
-            plot
         else:
             print(f'check_outputs_and_give_feedback - error - {st.session_state["active_page"]}')
             st.session_state['count'] += 1
