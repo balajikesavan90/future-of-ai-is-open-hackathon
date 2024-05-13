@@ -14,7 +14,7 @@ def render_about():
                 This is my submission for the Future of AI is open hackathon. I hope you like it!
                 """
             )
-            with st.expander(':blue[What is Arctic Analytics?]'):
+            with st.expander(':blue[What is Arctic Analytics?]', expanded=True):
                 st.write(
                     """
                     Arctic Analytics is an AI tool that can 
@@ -23,7 +23,7 @@ def render_about():
                     - help document and debug your codebase.
                         """
                 )
-            with st.expander(':blue[Does the AI have access to my data?]'):
+            with st.expander(':blue[Does the AI have access to my data?]', expanded=True):
                 st.write(
                     """
                     The AI model does not have access to your data. It does however have access to the metadata of your data. In particular, it has access to the 
@@ -35,7 +35,7 @@ def render_about():
                     - first 5 rows of your data. 
                     """
                 )
-            with st.expander(':blue[What can the AI actually see?]'):
+            with st.expander(':blue[What can the AI actually see?]', expanded=True):
                 st.write(
                     """
                     After you load your add and starting engaiging with the AI, you can view the prompt that the AI sees on your sidebar.
