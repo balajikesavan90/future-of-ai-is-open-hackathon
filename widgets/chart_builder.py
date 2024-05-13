@@ -14,6 +14,9 @@ def render_chart_builder():
 
     welcome_message = construct_welcome_message('chart_builder')
 
+    if 'prompt_str' in st.session_state.keys():
+        with st.sidebar.expander('What does the AI see?'):
+            st.write(st.session_state['prompt_str'])
 
     with st.expander('See uploaded Datasets'):
         for filename in st.session_state['vetted_files']:

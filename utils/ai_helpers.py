@@ -224,6 +224,7 @@ def generate_ai_response(prompt_str):
                 st.stop()
 
         events = []
+        st.session_state['prompt_str'] = prompt_str
         for event in replicate.stream('snowflake/snowflake-arctic-instruct',
                             input={'prompt': prompt_str,
                                     'prompt_template': r"{prompt}",
