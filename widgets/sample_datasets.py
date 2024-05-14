@@ -5,7 +5,7 @@ from utils.data_import_helpers import gather_metadata
 def render_sample_datasets(page):
 
     with st.container(border=True):
-        st.write(':blue[Check out Arctic Analytics capabilities with these sample datasets!]')
+        st.write(':blue[Check out Arctic Analytics\' capabilities with these sample datasets!]')
         col1, col2 = st.columns(2)
         with col1:
             if st.button(
@@ -57,7 +57,7 @@ def render_sample_datasets(page):
                 gather_metadata()
                 st.rerun()
             if st.button(
-                label='🚘:green[MPG]',
+                label='🚘:green[MPG Dataset]',
                 use_container_width=True,
                 key=f"mpg_{page}"
             ):
