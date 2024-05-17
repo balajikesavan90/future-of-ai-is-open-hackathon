@@ -40,8 +40,15 @@ def render_uploaded_data(page):
             use_container_width=True
         )
     with proceed_col:
-        st.button(
-            label=':green[Proceed to Analysis]',
-            on_click=goto_data_analysis_widget,
-            use_container_width=True
-        )
+        if page == 'data_analyst':
+            st.button(
+                label=':green[Proceed to Data Analyst]',
+                on_click=goto_data_analysis_widget,
+                use_container_width=True
+            )
+        elif page == 'chart_builder':
+            st.button(
+                label=':green[Proceed to Chart Builder]',
+                on_click=goto_data_analysis_widget,
+                use_container_width=True
+            )

@@ -82,7 +82,7 @@ def render_data_dictionary_widget():
         st.divider()
     
     st.button(
-        label=':green[Save Data Dictionary and Proceed to Analysis]',
+        label=':green[Save Data Dictionary and Proceed]',
         on_click=process_data_dictionaries,
         use_container_width=True,
         args=(st.session_state['vetted_files'],st.session_state['active_page'])
