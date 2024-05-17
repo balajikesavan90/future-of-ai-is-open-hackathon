@@ -42,5 +42,5 @@ def render_session_state():
 
 def render_ai_prompt():
     if 'prompt_str' in st.session_state.keys():
-        with st.sidebar.expander('What does the AI see?'):
-            st.write(st.session_state['prompt_str'])
+        with st.sidebar.expander('What does the AI see?', expanded=True):
+            st.text(st.session_state['prompt_str'])
