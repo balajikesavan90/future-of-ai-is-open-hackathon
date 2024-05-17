@@ -14,6 +14,7 @@ st.set_page_config(
 render_reset()
 
 st.header(':blue[Arctic Analytics]')
+st.caption(':green[THE FUTURE OF AI IS OPEN]')
 
 setup_home()
 if st.session_state['datasets_vetted']:
