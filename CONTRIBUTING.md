@@ -35,6 +35,8 @@ git checkout -b <my-branch-name>
 ```
 
 ## Make your changes
+Apply the fix or make the enhancement you want to perform
+
 
 ## Create a pull request
 A pull request (PR) lets us review the changes you've made and decide if we want to include them in the project.
