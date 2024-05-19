@@ -13,7 +13,7 @@ If this is something you think you can fix, then fork Arctic Analytics and creat
 A good branch name would be (where issue #325 is the ticket you're working on):
 
 ```bash
-git checkout -b 325-add-japanese-localisation
+git checkout -b 325-<descriptive name>
 ```
 
 ## Implement your fix or feature
