@@ -111,11 +111,9 @@ This is a very serious requirement for all of your responses.\n\n"""
 
 def generate_arctic_response(page):
     print('generate_arctic_response')
-    with st.spinner('Constructing Prompt...'):
-        prompt_str = construct_prompt(page)
-    with st.spinner('Generating Response...'):
-        response = generate_ai_response(prompt_str)
-        return response
+    prompt_str = construct_prompt(page)
+    response = generate_ai_response(prompt_str)
+    return response
     
 def construct_prompt(page):
     print('construct_prompt')

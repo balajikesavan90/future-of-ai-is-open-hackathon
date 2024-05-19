@@ -84,8 +84,8 @@ def render_chart_builder():
     with chart_container:
         # Generate a new response if last message is not from assistant
         if st.session_state['messages'][-1]['role'] != 'assistant':
-            response = generate_arctic_response('chart_builder')
-            with st.spinner('Evaluating the AI\'s response...'):
+            with st.spinner('Building Chart...'):
+                response = generate_arctic_response('chart_builder')
                 python_syntax, commentary = extract_python_syntax_and_commetary(response)
                 
                 if python_syntax is not None:
