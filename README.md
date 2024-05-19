@@ -32,8 +32,10 @@ pip install -r requirements.txt
 
 create a secrets.toml and place it in the .streamlit folder. You need to set up 2 keys
 
-- ENV: set this to dev
-- REPLICATE_API_TOKEN: Create a replicate account and add your API key here.
+```bash
+ENV = "dev"
+REPLICATE_API_TOKEN = "<Create a replicate account and add your API key here.>"
+```
 
 
 ### Running the app
