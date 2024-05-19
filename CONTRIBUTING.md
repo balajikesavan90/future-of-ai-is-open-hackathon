@@ -23,13 +23,13 @@ At this point, you're ready to make your changes! Feel free to ask for help; eve
 ```bash
 # Clone your fork of the repo into the current directory
 git clone https://github.com/<your-username>/future-of-ai-is-open-hackathon.git
+
 # Navigate to the newly cloned directory
 cd future-of-ai-is-open-hackathon
+
 # Assign the original repo to a remote called "upstream"
 git remote add upstream https://github.com/balajikesavan90/future-of-ai-is-open-hackathon.git
-```
 
-```bash
 ## Create a new branch
 git checkout -b <my-branch-name>
 ```
@@ -47,6 +47,7 @@ Once your changes and tests are complete, you can commit your changes:
 ```bash
 # Add changes to git
 git add .
+
 # Commit your changes
 git commit -m "Add a brief description of your change"
 ```
