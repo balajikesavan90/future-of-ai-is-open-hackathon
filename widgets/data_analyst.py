@@ -56,8 +56,8 @@ def render_data_analyst():
     # Generate a new response if last message is not from assistant
     if st.session_state['messages'][-1]['role'] != 'assistant':
         with st.chat_message('assistant'):
-            response = generate_arctic_response('data_analyst')
-            with st.spinner('Evaluating the AI\'s response...'):
+            with st.spinner('Generating response...'):
+                response = generate_arctic_response('data_analyst')
                 python_syntax, commentary = extract_python_syntax_and_commetary(response)
                 
                 if python_syntax is not None:
@@ -81,13 +81,12 @@ def render_data_analyst():
                     st.write(response)
 
                 if python_syntax is not None:
-                    with st.spinner('Running the code snippet...'):
-                        try:
-                            exec(python_syntax)
-                            output = eval('generate_report()')
-                            plot = None
-                        except (SyntaxError, ValueError, TypeError, KeyError, AttributeError, IndexError, NameError, ModuleNotFoundError) as e:
-                            handle_all_other_errors(e, response)
+                    try:
+                        exec(python_syntax)
+                        output = eval('generate_report()')
+                        plot = None
+                    except (SyntaxError, ValueError, TypeError, KeyError, AttributeError, IndexError, NameError, ModuleNotFoundError) as e:
+                        handle_all_other_errors(e, response)
 
                 check_outputs_and_give_feedback(output, plot, response)
 
