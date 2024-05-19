@@ -29,8 +29,10 @@ cd future-of-ai-is-open-hackathon
 git remote add upstream https://github.com/balajikesavan90/future-of-ai-is-open-hackathon.git
 ```
 
+```bash
 ## Create a new branch
 git checkout -b <my-branch-name>
+```
 
 ## Make your changes
 
