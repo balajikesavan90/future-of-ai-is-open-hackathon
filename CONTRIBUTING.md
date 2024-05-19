@@ -13,7 +13,7 @@ If this is something you think you can fix, then fork Arctic Analytics and creat
 A good branch name would be (where issue #325 is the ticket you're working on):
 
 ```bash
-git checkout -b 325-add-japanese-localisation
+git checkout -b 325-<descriptive name>
 ```
 
 ## Implement your fix or feature
@@ -23,16 +23,20 @@ At this point, you're ready to make your changes! Feel free to ask for help; eve
 ```bash
 # Clone your fork of the repo into the current directory
 git clone https://github.com/<your-username>/future-of-ai-is-open-hackathon.git
+
 # Navigate to the newly cloned directory
 cd future-of-ai-is-open-hackathon
+
 # Assign the original repo to a remote called "upstream"
 git remote add upstream https://github.com/balajikesavan90/future-of-ai-is-open-hackathon.git
-```
 
 ## Create a new branch
 git checkout -b <my-branch-name>
+```
 
 ## Make your changes
+Apply the fix or make the enhancement you want to perform
+
 
 ## Create a pull request
 A pull request (PR) lets us review the changes you've made and decide if we want to include them in the project.
@@ -43,6 +47,7 @@ Once your changes and tests are complete, you can commit your changes:
 ```bash
 # Add changes to git
 git add .
+
 # Commit your changes
 git commit -m "Add a brief description of your change"
 ```
