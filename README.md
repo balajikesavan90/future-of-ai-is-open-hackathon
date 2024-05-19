@@ -37,7 +37,6 @@ ENV = "dev"
 REPLICATE_API_TOKEN = "<Create a replicate account and add your API key here.>"
 ```
 
-
 ### Running the app
 
 ```bash
