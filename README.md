@@ -26,12 +26,26 @@ cd future-of-ai-is-open-hackathon
 
 # Install requirements
 pip install -r requirements.txt
+```
 
+### Setting up secrets
+
+create a secrets.toml and place it in the .streamlit folder. You need to set up 2 keys
+
+- ENV: set this to dev
+- REPLICATE_API_TOKEN: Create a replicate account and add your API key here.
+
+
+### Running the app
+
+```bash
 # Run the app
 streamlit run app.py
 ```
+
 ### Contributing
-We welcome contributions to Arctic Analytics! Here's how you can help:
+
+I welcome contributions to Arctic Analytics! Here's how you can help:
 
 - Check out our open issues and pick one you'd like to work on.
 - Fork the project, make your changes, and submit a pull request.
