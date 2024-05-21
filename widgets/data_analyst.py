@@ -2,6 +2,7 @@ import streamlit as st
 
 from utils.ai_helpers import construct_welcome_message, generate_arctic_response
 from utils.data_analyst_and_chart_builder_helpers import *
+from widgets.prompt_guide import render_data_analyst_prompt_guide
 
 def render_data_analyst():
     st.divider()
@@ -12,6 +13,8 @@ def render_data_analyst():
     if 'messages' not in st.session_state.keys() or not st.session_state['messages']:
         st.session_state['messages'] = [{'role': 'assistant', 'content': construct_welcome_message('data_analyst'), 'count': 0}]
         st.session_state['count'] = 0   
+
+    render_data_analyst_prompt_guide()
 
     with st.expander('See uploaded Datasets'):
         for filename in st.session_state['vetted_files']:
