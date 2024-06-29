@@ -1,6 +1,6 @@
 import streamlit as st
 
-from utils.ai_helpers import construct_welcome_message, generate_arctic_response
+from utils.ai_helpers import construct_welcome_message, generate_ai_response
 from utils.data_analyst_and_chart_builder_helpers import *
 from widgets.prompt_guide import render_data_analyst_prompt_guide
 
@@ -60,7 +60,7 @@ def render_data_analyst():
     if st.session_state['messages'][-1]['role'] != 'assistant':
         with st.chat_message('assistant'):
             with st.spinner('Generating response...'):
-                response = generate_arctic_response('data_analyst')
+                response = generate_ai_response('data_analyst')
                 python_syntax, commentary = extract_python_syntax_and_commetary(response)
                 
                 if python_syntax is not None:
