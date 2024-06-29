@@ -66,6 +66,17 @@ def construct_system_message(page):
     system_message = """You are an automated system that generates python syntax that is executed on a cloud server. 
 The python virtual environment has the latest versions of streamlit, pandas, numpy.
 \n\n"""
+
+    system_message += """Your task is to complete this code snippet with the appropriate python syntax.\n
+import streamlit as st\n
+import pandas as pd\n
+import numpy as np\n
+\n\n"""
+
+    for filename in st.session_state['vetted_files']:
+        system_message += f'{filename} = pd.read_csv("{filename}.csv")\n\n'
+    
+
     if page == 'data_analyst':
         system_message += """Your input will be a JSON string with the key 'user_input' and the value as a string of the user's request.
 
@@ -102,17 +113,21 @@ This is a very serious requirement for all of your responses.\n\n"""
         system_message += st.session_state['vetted_files'][filename]['dataframe'].head().to_json(orient='index')+'\n'
         # system_message += f'Last 5 rows of the dataset:\n'
         # system_message += st.session_state['vetted_files'][filename]['dataframe'].tail().to_json(orient='index')+'\n'
-        system_message += f'The dataset has already been loaded as a pandas DataFrame named {filename}\n\n'
+        # system_message += f'The dataset has already been loaded as a pandas DataFrame named {filename}\n\n'
+    
+    system_message += "You must use this metadata to generate your response.\n"
 
     st.session_state['system_message'] = system_message
 
     return system_message
 
 
-def generate_arctic_response(page):
+def generate_ai_response(page):
     print('generate_arctic_response')
     prompt_str = construct_prompt(page)
-    response = generate_ai_response(prompt_str)
+    # st.write(prompt_str)
+    # st.stop()
+    response = generate_arctic_response(prompt_str)
     return response
     
 def construct_prompt(page):
@@ -150,7 +165,7 @@ def generate_explanation_response(code_snippet):
             prompt.append('<|im_start|>assistant')
             prompt.append('')
             prompt_str = '\n'.join(prompt)
-            return generate_ai_response(prompt_str)
+            return generate_arctic_response(prompt_str)
     
 def generate_docstring_response(code_snippet):
     print('generate_docstring_response')
@@ -161,7 +176,7 @@ def generate_docstring_response(code_snippet):
             prompt.append('<|im_start|>assistant')
             prompt.append('')
             prompt_str = '\n'.join(prompt)
-            return generate_ai_response(prompt_str)
+            return generate_arctic_response(prompt_str)
 
 def generate_debugger_response(code_snippet, error_message):
     print('generate_debugger_response')
@@ -174,9 +189,9 @@ def generate_debugger_response(code_snippet, error_message):
             prompt.append('<|im_start|>assistant')
             prompt.append('')
             prompt_str = '\n'.join(prompt)
-            return generate_ai_response(prompt_str)
+            return generate_arctic_response(prompt_str)
 
-def generate_ai_response(prompt_str):
+def generate_arctic_response(prompt_str):
         print('generate_ai_response')
         token_count = get_num_tokens(prompt_str)
         print(token_count)
