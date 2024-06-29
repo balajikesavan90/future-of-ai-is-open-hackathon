@@ -3,32 +3,9 @@ import os
 import json
 
 from utils.snowflake_arctic_helpers import construct_arctic_prompt, generate_arctic_response
+from utils.system_messages import generate_explanation_system_message, generate_docstring_system_message, generate_debugger_system_message
 
 os.environ['REPLICATE_API_TOKEN'] = st.secrets['REPLICATE_API_TOKEN']
-
-generate_explanation_system_message = """You are an automated system that explains the computer code inputted by the user.
-You must explain the code in a way that is easy to understand for a non-technical audience.
-You must explain the purpose of the code, the logic behind the code, and the expected output of the code.
-You must use simple language and avoid technical jargon.
-You must generate your output in bullet points with short sentences.
-Your output must be in github markdown format.
-"""
-
-generate_docstring_system_message = """You are an automated system that generates comments and docstrings for the computer code inputted by the user.
-Your output must be a version of the user's code with comments and docstrings added.
-The doc strings must include the function name, the purpose of the function, and the input and output parameters.
-The comments must explain the logic and reasoning behind the code.
-You must include comments for each line of code.
-The comments must be written in a way that is easy to understand for someone who is not familiar with the code.
-"""
-
-generate_debugger_system_message = """You are an automated system that generates a response to a user's code snippet and error message.
-You must generate a response that helps the user debug their code.
-You must provide a detailed explanation of the error message and suggest possible solutions.
-You must generate your output in markdown format.
-You must include code snippets and explanations in your response.
-You must focus on helping the user understand the error message and how to fix it.
-"""
 
 def construct_welcome_message(page):
     print('construct_welcome_message')
@@ -57,9 +34,9 @@ I have access to the metadata of the files you uploaded. I will use that to gene
     return welcome_message
 
 
-def generate_ai_response(page):
+def generate_ai_response(page, vetted_files):
     print('generate_ai_response')
-    prompt_str = construct_arctic_prompt(page)
+    prompt_str = construct_arctic_prompt(page, vetted_files)
     response = generate_arctic_response(prompt_str)
     return response
     
