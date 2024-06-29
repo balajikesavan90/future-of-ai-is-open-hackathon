@@ -123,10 +123,8 @@ This is a very serious requirement for all of your responses.\n\n"""
 
 
 def generate_ai_response(page):
-    print('generate_arctic_response')
+    print('generate_ai_response')
     prompt_str = construct_prompt(page)
-    # st.write(prompt_str)
-    # st.stop()
     response = generate_arctic_response(prompt_str)
     return response
     
@@ -192,7 +190,7 @@ def generate_debugger_response(code_snippet, error_message):
             return generate_arctic_response(prompt_str)
 
 def generate_arctic_response(prompt_str):
-        print('generate_ai_response')
+        print('generate_arctic_response')
         token_count = get_num_tokens(prompt_str)
         print(token_count)
 
