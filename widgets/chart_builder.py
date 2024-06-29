@@ -1,5 +1,9 @@
 import streamlit as st
 
+import warnings
+# Suppress specific FutureWarning from pandas
+warnings.filterwarnings(action='ignore', category=FutureWarning, message="The default of observed=False is deprecated")
+
 from utils.ai_helpers import construct_welcome_message, generate_ai_response
 from utils.data_analyst_and_chart_builder_helpers import *
 
