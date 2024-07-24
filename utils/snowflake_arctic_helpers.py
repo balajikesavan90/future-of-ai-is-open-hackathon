@@ -11,7 +11,7 @@ from utils.streamlit_helpers import reset_data_analyst, reset_chart_builder
 
 
 def construct_arctic_prompt(page, vetted_files):
-    print('construct_prompt')
+    print('construct_arctic_prompt')
 
     prompt = [f"<|im_start|>system\n{construct_system_message(page, vetted_files)}<|im_end|>"]
     if page == 'data_analyst':
