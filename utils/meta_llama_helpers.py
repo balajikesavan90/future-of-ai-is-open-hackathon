@@ -82,7 +82,7 @@ def generate_llama_response(prompt_str):
 
         events = []
         st.session_state['prompt_str'] = prompt_str
-        for event in replicate.stream('meta/meta-llama-3-8b-instruct',
+        for event in replicate.stream('meta/meta-llama-3.1-405b-instruct',
                             input={'prompt': prompt_str,
                                     'prompt_template': r"{prompt}",
                                     'temperature': 0,

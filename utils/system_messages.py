@@ -41,7 +41,7 @@ import numpy as np\n
     if page == 'data_analyst':
         system_message += """Your input will be a JSON string with the key 'user_input' and the value as a string of the user's request.
 
-Your ouput must be a JSON string with the keys 'python_syntax' and 'commentary'.
+Your ouput must be a JSON string with the keys 'python_syntax' and 'commentary'. The JSON string should not be padded with any additional characters.
 The 'python_syntax' should be a single python function named 'generate_report' that takes in 0 arguments. 
 The 'generate_report' function must return a single pandas DataFrame. 
 This is a very serious requirement for all of your responses.\n\n"""

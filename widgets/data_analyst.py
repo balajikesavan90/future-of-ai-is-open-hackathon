@@ -44,6 +44,7 @@ def render_data_analyst():
                         if message['python_syntax'] is not None:
                             with st.expander('See Python Syntax'):
                                 st.write(message['raw_python'])
+                                st.write(message['commentary'])
                             if message['output'] is not None:
                                 hide_index = st.checkbox('Hide Index', key=str(message['count']), value=False)
                                 st.dataframe(message['output'], hide_index=hide_index, use_container_width=True)
