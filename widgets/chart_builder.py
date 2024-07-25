@@ -93,7 +93,7 @@ def render_chart_builder():
         # Generate a new response if last message is not from assistant
         if st.session_state['messages'][-1]['role'] != 'assistant':
             with st.spinner('Building Chart...'):
-                response = generate_ai_response('chart_builder')
+                response = generate_ai_response('chart_builder', st.session_state['vetted_files'])
                 python_syntax, commentary = extract_python_syntax_and_commetary(response)
                 
                 if python_syntax is not None:

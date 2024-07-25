@@ -9,35 +9,34 @@ top_p = 0.9
 from utils.system_messages import construct_system_message
 from utils.streamlit_helpers import reset_data_analyst, reset_chart_builder
 
+def construct_llama_prompt(page, vetted_files):
+    print('construct_llama_prompt')
 
-def construct_arctic_prompt(page, vetted_files):
-    print('construct_arctic_prompt')
-
-    prompt = [f"<|im_start|>system\n{construct_system_message(page, vetted_files)}<|im_end|>"]
+    prompt = [f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n{construct_system_message(page, vetted_files)}<|eot_id|>"]
     if page == 'data_analyst':
         for dict_message in st.session_state['messages']:
             if dict_message['role'] == 'user':
                 user_input = json.dumps({'user_input': dict_message['content']})
-                prompt.append('<|im_start|>user\n' + user_input + '<|im_end|>\n')
+                prompt.append('<|start_header_id|>user<|end_header_id|>\n' + user_input + '<|eot_id|>\n')
             else:
-                prompt.append('<|im_start|>assistant\n' + dict_message['content'] + '<|im_end|>\n')
+                prompt.append('<|start_header_id|>assistant<|end_header_id|>\n' + dict_message['content'] + '<|eot_id|>\n')
     
     elif page == 'chart_builder':
         for dict_message in st.session_state['messages']:
             if dict_message['role'] == 'user':
                 if 'error' not in dict_message.keys():
-                    prompt.append('<|im_start|>user\n' + json.dumps(dict_message['content']) + '<|im_end|>\n')
+                    prompt.append('<|start_header_id|>user<|end_header_id|>\n' + json.dumps(dict_message['content']) + '<|eot_id|>\n')
                 else:
-                    prompt.append('<|im_start|>user\n' + dict_message['content'] + '<|im_end|>\n')
+                    prompt.append('<|start_header_id|>user<|end_header_id|>\n' + dict_message['content'] + '<|eot_id|>\n')
             else:
-                prompt.append('<|im_start|>assistant\n' + dict_message['content'] + '<|im_end|>\n')
+                prompt.append('<|start_header_id|>assistant<|end_header_id|>\n' + dict_message['content'] + '<|eot_id|>\n')
 
-    prompt.append('<|im_start|>assistant\n')
+    prompt.append('<|start_header_id|>assistant<|end_header_id|>\n')
     prompt.append('')
     return '\n'.join(prompt)
 
-def generate_arctic_response(prompt_str):
-        print('generate_arctic_response')
+def generate_llama_response(prompt_str):
+        print('generate_llama_response')
         token_count = get_num_tokens(prompt_str)
         print(token_count)
 
@@ -83,7 +82,7 @@ def generate_arctic_response(prompt_str):
 
         events = []
         st.session_state['prompt_str'] = prompt_str
-        for event in replicate.stream('snowflake/snowflake-arctic-instruct',
+        for event in replicate.stream('meta/meta-llama-3.1-405b-instruct',
                             input={'prompt': prompt_str,
                                     'prompt_template': r"{prompt}",
                                     'temperature': 0,
@@ -91,6 +90,8 @@ def generate_arctic_response(prompt_str):
                                     }):
             events.append(str(event))
         return ''.join(events)
+
+
 
 def get_num_tokens(prompt):
     print('get_num_tokens')
