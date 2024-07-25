@@ -49,7 +49,7 @@ This is a very serious requirement for all of your responses.\n\n"""
         system_message += """Your input will be a JSON string with the keys 'x_axis_description', 'y_axis_description', 'chart_type', 'color'.
 Your input could also contain the optional key 'additional_instuctions'.
 
-Your ouput must be a JSON string with the keys 'python_syntax' and 'commentary'.
+Your ouput must be a JSON string with the keys 'python_syntax' and 'commentary'. The JSON string should not be padded with any additional characters.
 The 'python_syntax' should be a single python function named 'generate_report' that takes in 0 arguments. 
 The 'generate_report' function must generate plots using the streamlit chart API elements with appropriate subheaders. 
 The 'generate_report' function must return a single Streamlit Chart element.
