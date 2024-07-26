@@ -8,7 +8,7 @@ st.set_page_config(
     page_title='Arctic Analytics',
     layout='wide',
     page_icon='❄️',
-    initial_sidebar_state='expanded'
+    initial_sidebar_state='auto'
 )
 
 render_reset()
