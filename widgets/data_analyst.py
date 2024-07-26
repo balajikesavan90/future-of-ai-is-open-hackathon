@@ -48,6 +48,9 @@ def render_data_analyst():
                             if message['output'] is not None:
                                 hide_index = st.checkbox('Hide Index', key=str(message['count']), value=False)
                                 st.dataframe(message['output'], hide_index=hide_index, use_container_width=True)
+                            if 'commentary' in message.keys():
+                                if message['commentary'] is not None:
+                                    st.caption(message['commentary'])
                             if message['plot'] is not None:
                                 st.write(message['plot'])
                                 # st.pyplot(message['plot'])
@@ -96,7 +99,7 @@ def render_data_analyst():
                     except (SyntaxError, ValueError, TypeError, KeyError, AttributeError, IndexError, NameError, ModuleNotFoundError) as e:
                         handle_all_other_errors(e, response)
 
-                check_outputs_and_give_feedback(output, plot, response)
+                check_outputs_and_give_feedback(output, commentary, plot, response)
 
         message = {'role': 'assistant', 'content': response, 'count': st.session_state['count'], 'raw_python': raw_python, 'python_syntax': python_syntax, 'commentary': commentary, 'output': output, 'plot': plot}
         st.session_state['messages'].append(message)

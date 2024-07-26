@@ -43,8 +43,9 @@ import numpy as np\n
 
 Your ouput must be a JSON string with the keys 'python_syntax' and 'commentary'. The JSON string should not be padded with any additional characters.
 The 'python_syntax' should be a single python function named 'generate_report' that takes in 0 arguments. 
-The 'generate_report' function must return a single pandas DataFrame. 
+The 'generate_report' function must return a single pandas DataFrame whose index and column names have been set appropriately.
 This is a very serious requirement for all of your responses.\n\n"""
+
     elif page == 'chart_builder':
         system_message += """Your input will be a JSON string with the keys 'x_axis_description', 'y_axis_description', 'chart_type', 'color'.
 Your input could also contain the optional key 'additional_instuctions'.
@@ -57,9 +58,9 @@ You can use one of the following Streamlit Chart elements: st.bar_chart, st.line
 This is a very serious requirement for all of your responses.\n\n"""
     
     system_message += """The 'commentary should be a string with your message to the user. 
-In the commentary you must explain your thought process to the user.
-You must use the commentary to respond to the user's error messages. 
+In the commentary you must explain your thought process behing the generated 'generate_report' function.
 You must focus your attention on the reasoning and the logic used to create the 'generate_report' function instead of the syntax itself. 
+You must not use the commentary to respond to error messages, rather the commentary must be written for the user to consume. 
 This is a very serious requirement for all of your responses.\n\n"""
 
     system_message += "Here is the metadata of the files uploaded by the user.\n"
