@@ -125,6 +125,6 @@ def render_chart_builder():
                         except (SyntaxError, ValueError, TypeError, KeyError, AttributeError, IndexError, NameError, ModuleNotFoundError) as e:
                             handle_all_other_errors(e, response)
 
-                check_outputs_and_give_feedback(output, plot, response)
+                check_outputs_and_give_feedback(output, commentary, plot, response)
             message = {'role': 'assistant', 'content': response, 'count': st.session_state['count'], 'raw_python': raw_python, 'python_syntax': python_syntax, 'commentary': commentary, 'output': output, 'plot': plot}
             st.session_state['messages'].append(message)

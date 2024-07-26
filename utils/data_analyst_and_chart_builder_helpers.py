@@ -126,13 +126,15 @@ def update_python_syntax_with_correct_dataframe_names(python_syntax):
         python_syntax = pattern.sub(f"st.session_state['vetted_files']['{filename}']['dataframe_copy']", python_syntax)
     return python_syntax
 
-def check_outputs_and_give_feedback(output, plot, response):
+def check_outputs_and_give_feedback(output, commentary, plot, response):
     if output is not None:
         if isinstance(output, pd.DataFrame):
             print(f'check_outputs_and_give_feedback - success - {st.session_state["active_page"]}')
             st.session_state['count'] += 1
             hide_index = st.checkbox('Hide Index', key=str(st.session_state['count']), value=False)
             st.dataframe(output, use_container_width=True, hide_index=hide_index)
+            if commentary is not None:
+                st.caption(commentary)
             render_ai_prompt()
             if st.secrets['ENV'] != 'dev':
                 for message in st.session_state['messages']:
