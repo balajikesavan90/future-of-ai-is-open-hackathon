@@ -2,6 +2,9 @@ import streamlit as st
 import re
 import json
 import pandas as pd
+import plotly.express as px
+import numpy as np
+import plotly.graph_objs as go
 
 from utils.streamlit_helpers import render_ai_prompt
 
@@ -78,7 +81,7 @@ def check_function_definition_error_and_give_feedback(python_syntax, response):
         st.session_state['count'] += 1
         message = {'role': 'assistant', 'content': response, 'error': True, 'count': st.session_state['count']}
         st.session_state['messages'].append(message)
-        error_message = 'The function should be called "generate_report". It must take 0 arguments. The function must return a single pandas DataFrame'
+        error_message = 'The function should be called "generate_report". It must take 0 arguments. The function must return a single pandas DataFrame or a single plotly plot'
         message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
         st.session_state['messages'].append(message)
         print(f'rerun - check_function_definition_error_and_give_feedback - failure')
@@ -89,7 +92,7 @@ def check_return_statement_error_and_give_feedback(python_syntax, response):
         st.session_state['count'] += 1
         message = {'role': 'assistant', 'content': response, 'error': True, 'count': st.session_state['count']}
         st.session_state['messages'].append(message)
-        error_message = 'Please add a return statement to the function generate_report() that returns a single pandas DataFrame'
+        error_message = 'Please add a return statement to the function generate_report() that returns a single pandas DataFrame or a single plotly plot'
         message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
         st.session_state['messages'].append(message)
         print(f'rerun - check_return_statement_error_and_give_feedback - failure')
@@ -120,13 +123,15 @@ def update_python_syntax_with_correct_dataframe_names(python_syntax):
         python_syntax = pattern.sub(f"st.session_state['vetted_files']['{filename}']['dataframe_copy']", python_syntax)
     return python_syntax
 
-def check_outputs_and_give_feedback(output, commentary, plot, response):
+def check_outputs_and_give_feedback(output, commentary, response):
     if output is not None:
-        if isinstance(output, pd.DataFrame):
+        if isinstance(output, pd.DataFrame) or isinstance(output, go.Figure):
             print(f'check_outputs_and_give_feedback - success')
             st.session_state['count'] += 1
-            hide_index = st.checkbox('Hide Index', key=str(st.session_state['count']), value=False)
-            st.dataframe(output, use_container_width=True, hide_index=hide_index)
+            if isinstance(output, pd.DataFrame):
+                st.dataframe(output, use_container_width=True, hide_index=False)
+            elif isinstance(output, go.Figure):
+                st.write(output)
             if commentary is not None:
                 st.caption(commentary)
             render_ai_prompt()
@@ -138,30 +143,10 @@ def check_outputs_and_give_feedback(output, commentary, plot, response):
             st.session_state['count'] += 1
             message = {'role': 'assistant', 'content': response, 'error': True, 'count': st.session_state['count']}
             st.session_state['messages'].append(message)
-            error_message = 'The generate_report() function must return a single pandas DataFrame'
+            error_message = 'The generate_report() function must return a single pandas DataFrame or a single plotly plot'
             message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
             st.session_state['messages'].append(message)
             print(f'rerun - check_outputs_and_give_feedback - error')
-            st.rerun()
-    if plot is not None:
-        if isinstance(plot, st.delta_generator.DeltaGenerator):
-            print(f'check_outputs_and_give_feedback - success')
-            st.session_state['count'] += 1
-            plot
-            render_ai_prompt()
-            if st.secrets['ENV'] != 'dev':
-                for message in st.session_state['messages']:
-                    if 'error' in message.keys():
-                        st.session_state['messages'].remove(message)
-        else:
-            print(f'check_outputs_and_give_feedback - error')
-            st.session_state['count'] += 1
-            message = {'role': 'assistant', 'content': response, 'error': True, 'count': st.session_state['count']}
-            st.session_state['messages'].append(message)
-            error_message = 'The generate_report() function must return a single Streamlit Chart element'
-            message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
-            st.session_state['messages'].append(message)
-            print(f'rerun - check_outputs_and_give_feedback - success')
             st.rerun()
 
 def check_response_error_and_give_feedback(response):

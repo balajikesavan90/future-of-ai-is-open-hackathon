@@ -28,13 +28,14 @@ def construct_system_message(vetted_files):
     print('construct_system_message')
 
     system_message = """You are an automated system that generates python syntax that is executed on a cloud server. 
-The python virtual environment has the latest versions of streamlit, pandas, numpy.
+The python virtual environment has the latest versions of streamlit, pandas, numpy and plotly.
 \n\n"""
 
     system_message += """Your task is to complete this code snippet with the appropriate python syntax.\n
 import streamlit as st\n
 import pandas as pd\n
 import numpy as np\n
+import plotly.express as px\n
 \n\n"""
 
     for filename in vetted_files:
@@ -43,8 +44,9 @@ import numpy as np\n
 
     system_message += """Your input will be a JSON string with the key 'user_input' and the value as a string of the user's request.
 Your ouput must be a JSON string with the keys 'python_syntax' and 'commentary'. The JSON string should not be padded with any additional characters.
-The 'python_syntax' should be a single python function named 'generate_report' that takes in 0 arguments. 
-The 'generate_report' function must return a single pandas DataFrame whose index and column names have been set appropriately.
+
+The 'python_syntax' should be a single python function named 'generate_report' that takes in 0 arguments.
+The 'generate_report' function must return either a single pandas DataFrame whose index and column names have been set appropriately or a single plotly plot that has been formatted neatly.
 This is a very serious requirement for all of your responses.\n\n"""
     
     system_message += """The 'commentary should be a string with your message to the user. 
