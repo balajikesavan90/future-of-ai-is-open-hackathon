@@ -81,5 +81,5 @@ def render_data_dictionary_widget():
         label=':green[Save Data Dictionary and Proceed]',
         on_click=process_data_dictionaries,
         use_container_width=True,
-        args=(st.session_state['vetted_files'],'')
+        args=(st.session_state['vetted_files'], None)
     )
