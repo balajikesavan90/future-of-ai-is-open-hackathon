@@ -5,11 +5,23 @@ from tenacity import (
     stop_after_attempt,
     wait_random_exponential,
 )
-
+import tiktoken
 from utils.system_messages import construct_system_message
-# from utils.streamlit_helpers import reset_data_analyst, reset_chart_builder
+from utils.streamlit_helpers import reset_data_analyst
 
 client = OpenAI()
+enc_gpt4 = tiktoken.encoding_for_model("gpt-4")
+
+def token_count_message(message):
+    print('token_count_message')
+    str = ''
+    for msg in message:
+        if 'content'in msg:
+            str = f"{str}role: {msg['role']}, message: {msg['content']}\n"
+        elif 'tool_calls' in msg:
+            for tool_call in msg['tool_calls']:
+                str = f"{str}role: {msg['role']}, tool_call: {tool_call['function']['name']}, arguments: {tool_call['function']['arguments']}\n"
+    return len(enc_gpt4.encode(str))
 
 @retry(wait=wait_random_exponential(min=5, max=10), stop=stop_after_attempt(5))
 def completion_with_backoff(**kwargs):
@@ -55,13 +67,36 @@ def generate_gpt4o_mini_response(vetted_files):
 
     system_message = construct_system_message(vetted_files)
 
-    message = [{'role': 'system', 'content': system_message}]
+    prompt = [{'role': 'system', 'content': system_message}]
 
     for dict_message in st.session_state['messages']:
-        message.append({'role': dict_message['role'], 'content': dict_message['content']})
+        prompt.append({'role': dict_message['role'], 'content': dict_message['content']})
 
-    response, cost = chatcompletion_APICall(message, model='gpt-4o-mini', temperature=0.1)
+    token_count = token_count_message(prompt)
+    print(token_count)
+
+    error_count = 0
+    for message in st.session_state['messages']:
+        if 'error' in message.keys():
+            if message['role'] == 'assistant':
+                error_count += 1
+
+    if error_count >= 3:
+        st.error('Oops! Something went wrong. Try rephrasing your prompt in a different way.')
+        st.button(':red[Reset Data Analyst]', on_click=reset_data_analyst, key='reset')
+        if st.secrets['ENV'] == 'dev':
+            st.write(st.session_state['messages'])
+        st.stop()
+
+    if token_count >= 3072:
+        st.error('Conversation length too long. Please keep it under 3072 tokens.')
+        st.button(':red[Reset Data Analyst]', on_click=reset_data_analyst, key='reset')
+        if st.secrets['ENV'] == 'dev':
+            st.write(st.session_state['messages'])
+        st.stop()
+
+    response, cost = chatcompletion_APICall(prompt, model='gpt-4o-mini', temperature=0.1)
     st.session_state['prompt_str'] = ""
-    for dict_message in message:
+    for dict_message in prompt:
         st.session_state['prompt_str'] += f"role: {dict_message['role']}\ncontent: {dict_message['content']}\n--\n"
     return response
