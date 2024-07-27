@@ -2,12 +2,8 @@ import streamlit as st
 
 from utils.streamlit_helpers import goto_data_dictionary_widget, goto_data_analysis_widget
 
-def render_uploaded_data(page):
+def render_uploaded_data():
     st.divider()
-    if page == 'data_analyst':
-        st.subheader('🔍 :blue[Data Analyst]')
-    elif page == 'chart_builder':
-        st.subheader('📊 :blue[Chart Builder]')
     st.toast(':blue[Data Dictionaries have been saved!]')
     st.success(':green[Make sure your data looks good especially if you changed the data types]')
 
@@ -40,15 +36,8 @@ def render_uploaded_data(page):
             use_container_width=True
         )
     with proceed_col:
-        if page == 'data_analyst':
-            st.button(
-                label=':green[Proceed to Data Analyst]',
-                on_click=goto_data_analysis_widget,
-                use_container_width=True
-            )
-        elif page == 'chart_builder':
-            st.button(
-                label=':green[Proceed to Chart Builder]',
-                on_click=goto_data_analysis_widget,
-                use_container_width=True
-            )
+        st.button(
+            label=':green[Proceed to Data Analyst]',
+            on_click=goto_data_analysis_widget,
+            use_container_width=True
+        )

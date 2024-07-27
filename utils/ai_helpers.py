@@ -10,15 +10,10 @@ from utils.system_messages import generate_explanation_system_message, generate_
 
 os.environ['REPLICATE_API_TOKEN'] = st.secrets['REPLICATE_API_TOKEN']
 
-def construct_welcome_message(page):
+def construct_welcome_message():
     print('construct_welcome_message')
 
-    if page == 'data_analyst':
-        welcome_message = f"""Hello! I am the Arctic Analytics AI. I can help you analyze your data.
-I have access to the metadata of the files you uploaded. I will use that to generate code snippets and execute them in a sandbox environment.
-\n\n"""
-    elif page == 'chart_builder':
-        welcome_message = f"""Hello! I am the Arctic Analytics AI. I can help you generate plots from your data.
+    welcome_message = f"""Hello! I am the Arctic Analytics AI. I can help you analyze your data.
 I have access to the metadata of the files you uploaded. I will use that to generate code snippets and execute them in a sandbox environment.
 \n\n"""
     
@@ -37,19 +32,19 @@ I have access to the metadata of the files you uploaded. I will use that to gene
     return welcome_message
 
 
-def generate_ai_response(page, vetted_files, model):
+def generate_ai_response(vetted_files, model):
     print('generate_ai_response')
     if model == 'arctic':
-        prompt_str = construct_arctic_prompt(page, vetted_files)
+        prompt_str = construct_arctic_prompt(vetted_files)
         response = generate_arctic_response(prompt_str)
     elif model == 'llama-3.1':
-        prompt_str = construct_llama_prompt(page, vetted_files)
+        prompt_str = construct_llama_prompt(vetted_files)
         response = generate_llama_response(prompt_str)
     elif model == 'mistral':
-        prompt_str = construct_mistral_prompt(page, vetted_files)
+        prompt_str = construct_mistral_prompt(vetted_files)
         response = generate_mistral_response(prompt_str)
     elif model == 'gpt-4o-mini':
-        response = generate_gpt4o_mini_response(page, vetted_files)
+        response = generate_gpt4o_mini_response(vetted_files)
     return response
     
 def generate_explanation_response(code_snippet):

@@ -210,6 +210,6 @@ def process_data_dictionaries(vetted_files, page):
     """
     vetted_files=check_datatypes(vetted_files)
     vetted_files=convert_data_dictionary_to_json(vetted_files)
-    st.session_state['active_page'] = page
+    # st.session_state['active_page'] = page
     st.session_state['vetted_files'] = vetted_files
     st.session_state['data_dictionaries_loaded'] = True
