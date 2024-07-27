@@ -3,8 +3,8 @@ import replicate
 from transformers import AutoTokenizer
 import json
 
-temperature = 0
-top_p = 0.9
+temperature = 0.1
+top_p = 0.1
 
 from utils.system_messages import construct_system_message
 from utils.streamlit_helpers import reset_data_analyst, reset_chart_builder
