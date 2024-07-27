@@ -20,8 +20,6 @@ setup_home()
 if st.session_state['datasets_vetted']:
     if st.session_state['active_page'] == 'data_analyst':
         render_reset_data_analyst()
-    elif st.session_state['active_page'] == 'chart_builder':
-        render_reset_chart_builder()
 render_home()
 
 if st.secrets['ENV'] == 'dev':

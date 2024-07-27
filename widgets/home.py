@@ -25,19 +25,13 @@ def setup_home():
 def render_home():
     if st.session_state['vetted_files'] == {}:
 
-        analyze_data, build_charts, document_debug_code, about = st.tabs(['🔍 Analyze Data', '📊 Build Charts', '🗂️ Document and 🐞 Debug Code', '🤖 About'])
+        analyze_data, document_debug_code, about = st.tabs(['🔍 Analyze Data', '🗂️ Document and 🐞 Debug Code', '🤖 About'])
         with analyze_data:
             st.subheader('🔍 :blue[Data Analyst]')
             st.write(':blue[Answer questions about your data using Actic Analytics.]')
             render_sample_datasets(page = 'data_analyst')
             render_uploader(page = 'data_analyst')
             render_snowflake_connection(page = 'data_analyst')
-        with build_charts:
-            st.subheader('📊 :blue[Chart Builder]')
-            st.write(':blue[Create charts from your data using Actic Analytics.]')
-            render_sample_datasets(page = 'chart_builder')
-            render_uploader(page = 'chart_builder')
-            render_snowflake_connection(page = 'chart_builder')
         with document_debug_code:
             st.subheader(':blue[🗂️ Document and 🐞 Debug Code]')
             st.write(':blue[Document and debug your code using Actic Analytics.]')
