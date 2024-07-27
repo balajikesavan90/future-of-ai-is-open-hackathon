@@ -4,6 +4,7 @@ import json
 
 from utils.snowflake_arctic_helpers import construct_arctic_prompt, generate_arctic_response
 from utils.meta_llama_helpers import construct_llama_prompt, generate_llama_response
+from utils.mistral_helpers import construct_mistral_prompt, generate_mistral_response
 from utils.system_messages import generate_explanation_system_message, generate_docstring_system_message, generate_debugger_system_message
 
 os.environ['REPLICATE_API_TOKEN'] = st.secrets['REPLICATE_API_TOKEN']
@@ -35,12 +36,18 @@ I have access to the metadata of the files you uploaded. I will use that to gene
     return welcome_message
 
 
-def generate_ai_response(page, vetted_files):
+def generate_ai_response(page, vetted_files, model='llama'):
     print('generate_ai_response')
-    # prompt_str = construct_arctic_prompt(page, vetted_files)
-    prompt_str = construct_llama_prompt(page, vetted_files)
-    # response = generate_arctic_response(prompt_str)
-    response = generate_llama_response(prompt_str)
+    if model == 'arctic':
+        prompt_str = construct_arctic_prompt(page, vetted_files)
+        response = generate_arctic_response(prompt_str)
+    elif model == 'llama':
+        prompt_str = construct_llama_prompt(page, vetted_files)
+        response = generate_llama_response(prompt_str)
+    elif model == 'mistral':
+        prompt_str = construct_mistral_prompt(page, vetted_files)
+        print(prompt_str)
+        response = generate_mistral_response(prompt_str)
     return response
     
 def generate_explanation_response(code_snippet):
