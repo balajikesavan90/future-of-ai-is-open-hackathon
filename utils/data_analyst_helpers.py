@@ -1,10 +1,11 @@
 import streamlit as st
 import re
 import json
+import logging
 import pandas as pd
 import plotly.express as px
-import numpy as np
 import plotly.graph_objs as go
+import numpy as np
 
 from utils.streamlit_helpers import render_ai_prompt
 
@@ -12,25 +13,25 @@ def extract_python_syntax(text):
     pattern = r'```(python|json)(.*?)```'
     match = re.search(pattern, text, re.DOTALL)
     if match:
-        print('extract_python_or_json_syntax')
+        logging.info(f'extract_python_or_json_syntax - {st.session_state["session_id"]}')
         return match.group(2).strip()
     else:
         return None
     
 def extract_commentary(text):
-    print('extract_commentary')
+    logging.info(f'extract_commentary - {st.session_state["session_id"]}')
     pattern = r'```(python|json).*?```'
     commentary = re.sub(pattern, '', text, flags=re.DOTALL)
     return commentary.strip()
 
 def add_closing_backticks(s):
     if s.count("```") % 2 != 0:  # If the count of ``` is odd
-        print('add_closing_backticks')
+        logging.info(f'add_closing_backticks - {st.session_state["session_id"]}')
         s += "```"  # Append closing ```
     return s
 
 def extract_python_syntax_and_commetary(response):
-    print('extract_python_syntax_and_commetary') 
+    logging.info(f'extract_python_syntax_and_commetary - {st.session_state["session_id"]}') 
     response = add_closing_backticks(response)  
     opening_braces = response.count('{')
     closing_braces = response.count('}')
@@ -58,7 +59,7 @@ def check_read_csv_error_and_give_feedback(python_syntax, response):
         error_message = f'{pandas_dataframes} are already loaded as pandas dataframe. Please remove the read_csv statement'
         message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
         st.session_state['messages'].append(message)
-        print(f'rerun - check_read_csv_error_and_give_feedback - failure')
+        logging.info(f'rerun - check_read_csv_error_and_give_feedback - failure - {st.session_state["session_id"]}')
         st.rerun()
 
 def check_read_json_error_and_give_feedback(python_syntax, response):
@@ -73,7 +74,7 @@ def check_read_json_error_and_give_feedback(python_syntax, response):
         error_message = f'{pandas_dataframes} are already loaded as pandas dataframe. Please remove the read_json statement'
         message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
         st.session_state['messages'].append(message)
-        print(f'rerun - check_read_json_error_and_give_feedback - failure')
+        logging.info(f'rerun - check_read_json_error_and_give_feedback - failure - {st.session_state["session_id"]}')
         st.rerun()
 
 def check_function_definition_error_and_give_feedback(python_syntax, response):
@@ -84,7 +85,7 @@ def check_function_definition_error_and_give_feedback(python_syntax, response):
         error_message = 'The function should be called "generate_report". It must take 0 arguments. The function must return a single pandas DataFrame or a single plotly plot'
         message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
         st.session_state['messages'].append(message)
-        print(f'rerun - check_function_definition_error_and_give_feedback - failure')
+        logging.info(f'rerun - check_function_definition_error_and_give_feedback - failure - {st.session_state["session_id"]}')
         st.rerun()
 
 def check_return_statement_error_and_give_feedback(python_syntax, response):
@@ -95,11 +96,11 @@ def check_return_statement_error_and_give_feedback(python_syntax, response):
         error_message = 'Please add a return statement to the function generate_report() that returns a single pandas DataFrame or a single plotly plot'
         message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
         st.session_state['messages'].append(message)
-        print(f'rerun - check_return_statement_error_and_give_feedback - failure')
+        logging.info(f'rerun - check_return_statement_error_and_give_feedback - failure - {st.session_state["session_id"]}')
         st.rerun()
 
 def remove_st_set_page_config(input_string):
-    print('remove_st_set_page_config')
+    logging.info(f'remove_st_set_page_config - {st.session_state["session_id"]}')
     # This regex pattern matches 'st.set_page_config()' and its variants with any arguments
     pattern = r"st\.set_page_config\([^\)]*\)"
     # Substitute the matched pattern with an empty string
@@ -107,7 +108,7 @@ def remove_st_set_page_config(input_string):
     return output_string
 
 def remove_generate_report(input_string):
-    print('remove_generate_report')
+    logging.info(f'remove_generate_report - {st.session_state["session_id"]}')
     """removes the function call (if present) because function call is done deliberately to avoid double outputs"""
     # This regex pattern matches the line 'generate_report()'
     pattern = r"generate_report\(\)\n"
@@ -117,7 +118,7 @@ def remove_generate_report(input_string):
 
 def update_python_syntax_with_correct_dataframe_names(python_syntax):
     for filename in st.session_state['vetted_files']:
-        print('update_python_syntax_with_correct_dataframe_names')
+        logging.info(f'update_python_syntax_with_correct_dataframe_names - {st.session_state["session_id"]}')
         st.session_state['vetted_files'][f"{filename}"]['dataframe_copy'] = st.session_state['vetted_files'][filename]['dataframe'].copy()
         pattern = re.compile(r'\b' + re.escape(filename) + r'\b')
         python_syntax = pattern.sub(f"st.session_state['vetted_files']['{filename}']['dataframe_copy']", python_syntax)
@@ -126,12 +127,13 @@ def update_python_syntax_with_correct_dataframe_names(python_syntax):
 def check_outputs_and_give_feedback(output, commentary, response):
     if output is not None:
         if isinstance(output, pd.DataFrame) or isinstance(output, go.Figure):
-            print(f'check_outputs_and_give_feedback - success')
             st.session_state['count'] += 1
             if isinstance(output, pd.DataFrame):
+                logging.info(f'check_outputs_and_give_feedback - dataframe - success - {st.session_state["session_id"]}')
                 st.dataframe(output, use_container_width=True, hide_index=False)
             elif isinstance(output, go.Figure):
-                st.write(output)
+                logging.info(f'check_outputs_and_give_feedback - plot - success - {st.session_state["session_id"]}')
+                st.plotly_chart(output, use_container_width=True)
             if commentary is not None:
                 st.caption(commentary)
             render_ai_prompt()
@@ -146,7 +148,7 @@ def check_outputs_and_give_feedback(output, commentary, response):
             error_message = 'The generate_report() function must return a single pandas DataFrame or a single plotly plot'
             message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
             st.session_state['messages'].append(message)
-            print(f'rerun - check_outputs_and_give_feedback - error')
+            logging.info(f'rerun - check_outputs_and_give_feedback - error - {st.session_state["session_id"]}')
             st.rerun()
 
 def check_response_error_and_give_feedback(response):
@@ -157,7 +159,7 @@ def check_response_error_and_give_feedback(response):
         error_message = 'Your output should be JSON string with the keys "python_syntax" and "commentary"'
         message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
         st.session_state['messages'].append(message)
-        print(f'rerun - check_response_error_and_give_feedback - failure')
+        logging.info(f'rerun - check_response_error_and_give_feedback - failure - {st.session_state["session_id"]}')
         st.rerun()
 
 def handle_all_other_errors(e, response):
@@ -169,5 +171,5 @@ def handle_all_other_errors(e, response):
     """
     message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
     st.session_state['messages'].append(message)
-    print(f'rerun - handle_all_other_errors - failure - {error_message}')
+    logging.info(f'rerun - handle_all_other_errors - failure - {st.session_state["session_id"]}')
     st.rerun()

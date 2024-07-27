@@ -1,8 +1,10 @@
 import streamlit as st
+import logging
 
 from utils.data_import_helpers import gather_metadata
 
 def render_uploader():
+    logging.info(f'render_uploader - {st.session_state["session_id"]}')
     with st.form(key=f'upload_files'):
         st.caption('📁:blue[or upload your own csv files]')
         st.session_state['uploaded_files'] = st.file_uploader(

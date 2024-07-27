@@ -1,8 +1,10 @@
 import streamlit as st
+import logging
 
 from utils.streamlit_helpers import goto_data_dictionary_widget, goto_data_analysis_widget
 
 def render_uploaded_data():
+    logging.info(f'render_uploaded_data - {st.session_state["session_id"]}')
     st.divider()
     st.toast(':blue[Data Dictionaries have been saved!]')
     st.success(':green[Make sure your data looks good especially if you changed the data types]')

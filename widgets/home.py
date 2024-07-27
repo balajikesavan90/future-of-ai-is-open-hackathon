@@ -1,4 +1,5 @@
 import streamlit as st
+import logging
 
 from widgets.sample_datasets import render_sample_datasets
 from widgets.uploader import render_uploader
@@ -11,6 +12,7 @@ from widgets.data_analyst import render_data_analyst
 
 
 def setup_home():
+    logging.info(f'setup_home - {st.session_state["session_id"]}')
     if 'vetted_files' not in st.session_state.keys():
         st.session_state['vetted_files'] = {}
     
@@ -21,6 +23,7 @@ def setup_home():
         st.session_state['datasets_vetted'] = False
 
 def render_home():
+    logging.info(f'render_home - {st.session_state["session_id"]}')
     if st.session_state['vetted_files'] == {}:
 
         analyze_data, document_debug_code, about = st.tabs(['🔍 Analyze Data', '🗂️ Document and 🐞 Debug Code', '🤖 About'])

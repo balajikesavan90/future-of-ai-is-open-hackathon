@@ -1,9 +1,11 @@
 import streamlit as st
+import logging
 
 from utils.ai_helpers import generate_debugger_response, generate_explanation_response, generate_docstring_response
 from utils.streamlit_helpers import render_ai_prompt
 
 def render_document_and_debug_code_widget():
+    logging.info(f'render_document_and_debug_code_widget - {st.session_state["session_id"]}')
     
     code_snippet_container = st.container()
     st.session_state['output_container'] = st.container()
