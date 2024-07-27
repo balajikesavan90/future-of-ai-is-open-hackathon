@@ -1,6 +1,6 @@
 import streamlit as st
 
-from utils.streamlit_helpers import render_reset, render_reset_data_analyst, render_session_state
+from utils.streamlit_helpers import render_reset, render_reset_data_analyst, render_session_state, setup_session_state
 from widgets.home import setup_home, render_home
 
 # App title
@@ -10,6 +10,9 @@ st.set_page_config(
     page_icon='❄️',
     initial_sidebar_state='auto'
 )
+
+if 'session_id' not in st.session_state.keys():
+    st.session_state.update(setup_session_state())
 
 render_reset()
 

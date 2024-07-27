@@ -1,7 +1,14 @@
 import streamlit as st
+import uuid
+
+def setup_session_state():
+    session_page = {}
+    session_page['session_id'] = str(uuid.uuid4())
+    return session_page
 
 def reset_app():
     st.session_state = {}
+    st.session_state['session_id'] = str(uuid.uuid4())
     print('###############################')
     print('reset_app')
     print('###############################')
@@ -17,6 +24,7 @@ def goto_data_analysis_widget():
 def reset_data_analyst():
     st.session_state['messages'] = []
     st.session_state['count'] = 0
+    st.session_state['session_id'] = str(uuid.uuid4())
     print('###############################')
     print('reset_data_analyst')
     print('###############################')
