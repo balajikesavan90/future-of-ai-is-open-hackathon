@@ -1,6 +1,8 @@
 import streamlit as st
+import logging
 
 def render_about():
+    logging.info(f'render_about - {st.session_state["session_id"]}')
 
     about_me_container = st.container()
 

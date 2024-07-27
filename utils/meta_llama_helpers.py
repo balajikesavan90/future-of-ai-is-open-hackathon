@@ -2,6 +2,7 @@ import streamlit as st
 import replicate
 from transformers import AutoTokenizer
 import json
+import logging
 
 from utils.system_messages import construct_system_message
 from utils.streamlit_helpers import reset_data_analyst
@@ -10,7 +11,7 @@ temperature = 0.1
 top_p = 0.1
 
 def construct_llama_prompt(vetted_files):
-    print('construct_llama_prompt')
+    logging.info(f'construct_llama_prompt - {st.session_state["session_id"]}')
 
     prompt = [f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n{construct_system_message(vetted_files)}<|eot_id|>"]
     for dict_message in st.session_state['messages']:
@@ -25,9 +26,9 @@ def construct_llama_prompt(vetted_files):
     return '\n'.join(prompt)
 
 def generate_llama_response(prompt_str):
-        print('generate_llama_response')
+        logging.info(f'generate_llama_response - {st.session_state["session_id"]}')
         token_count = get_num_tokens(prompt_str)
-        print(token_count)
+        logging.info(f'token_count - {token_count} - {st.session_state["session_id"]}')
 
         error_count = 0
         for message in st.session_state['messages']:
@@ -63,7 +64,6 @@ def generate_llama_response(prompt_str):
 
 
 def get_num_tokens(prompt):
-    print('get_num_tokens')
     """Get the number of tokens in a given prompt"""
     tokenizer = get_tokenizer()
     tokens = tokenizer.tokenize(prompt)
@@ -71,7 +71,7 @@ def get_num_tokens(prompt):
 
 @st.cache_resource(show_spinner=False)
 def get_tokenizer():
-    print('get_tokenizer')
+    logging.info(f'get_tokenizer - {st.session_state["session_id"]}')
     """Get a tokenizer to make sure we're not sending too much text
     text to the Model. Eventually we will replace this with ArcticTokenizer
     """

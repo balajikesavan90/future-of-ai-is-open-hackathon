@@ -2,6 +2,7 @@ import streamlit as st
 import replicate
 from transformers import AutoTokenizer
 import json
+import logging
 
 temperature = 0.1
 top_p = 0.1
@@ -11,7 +12,7 @@ from utils.streamlit_helpers import reset_data_analyst
 
 
 def construct_arctic_prompt(page, vetted_files):
-    print('construct_arctic_prompt')
+    logging.info(f'construct_arctic_prompt - {st.session_state["session_id"]}')
 
     prompt = [f"<|im_start|>system\n{construct_system_message(page, vetted_files)}<|im_end|>"]
     for dict_message in st.session_state['messages']:
@@ -26,9 +27,9 @@ def construct_arctic_prompt(page, vetted_files):
     return '\n'.join(prompt)
 
 def generate_arctic_response(prompt_str):
-        print('generate_arctic_response')
+        logging.info(f'generate_arctic_response - {st.session_state["session_id"]}')
         token_count = get_num_tokens(prompt_str)
-        print(token_count)
+        logging.info(f'token_count - {token_count} - {st.session_state["session_id"]}')
 
         error_count = 0
         for message in st.session_state['messages']:
@@ -62,7 +63,6 @@ def generate_arctic_response(prompt_str):
         return ''.join(events)
 
 def get_num_tokens(prompt):
-    print('get_num_tokens')
     """Get the number of tokens in a given prompt"""
     tokenizer = get_tokenizer()
     tokens = tokenizer.tokenize(prompt)
@@ -70,7 +70,7 @@ def get_num_tokens(prompt):
 
 @st.cache_resource(show_spinner=False)
 def get_tokenizer():
-    print('get_tokenizer')
+    logging.info(f'get_tokenizer - {st.session_state["session_id"]}')
     """Get a tokenizer to make sure we're not sending too much text
     text to the Model. Eventually we will replace this with ArcticTokenizer
     """

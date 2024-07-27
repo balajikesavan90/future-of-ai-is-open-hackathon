@@ -1,8 +1,10 @@
 import streamlit as st
+import logging
 
 from utils.data_import_helpers import gather_metadata
 
 def render_sample_datasets():
+    logging.info(f'render_sample_datasets - {st.session_state["session_id"]}')
 
     with st.container(border=True):
         st.write(':blue[Check out Arctic Analytics\' capabilities with these sample datasets!]')

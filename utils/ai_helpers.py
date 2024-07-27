@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import json
+import logging
 
 from utils.snowflake_arctic_helpers import construct_arctic_prompt, generate_arctic_response
 from utils.meta_llama_helpers import construct_llama_prompt, generate_llama_response
@@ -11,7 +12,7 @@ from utils.system_messages import generate_explanation_system_message, generate_
 os.environ['REPLICATE_API_TOKEN'] = st.secrets['REPLICATE_API_TOKEN']
 
 def construct_welcome_message():
-    print('construct_welcome_message')
+    logging.info(f'construct_welcome_message - {st.session_state["session_id"]}')
 
     welcome_message = f"""Hello! I am the Arctic Analytics AI. I can help you analyze your data.
 I have access to the metadata of the files you uploaded. I will use that to generate code snippets and execute them in a sandbox environment.
@@ -33,7 +34,7 @@ I have access to the metadata of the files you uploaded. I will use that to gene
 
 
 def generate_ai_response(vetted_files, model):
-    print('generate_ai_response')
+    logging.info(f'generate_ai_response - {st.session_state["session_id"]}')
     if model == 'arctic':
         prompt_str = construct_arctic_prompt(vetted_files)
         response = generate_arctic_response(prompt_str)
@@ -48,7 +49,7 @@ def generate_ai_response(vetted_files, model):
     return response
     
 def generate_explanation_response(code_snippet):
-    print('generate_explanation_response')
+    logging.info(f'generate_explanation_response - {st.session_state["session_id"]}')
     with st.session_state['output_container']:
         with st.spinner('Generating Explanation...'):
             prompt = [f"<|im_start|>system\n{generate_explanation_system_message}<|im_end|>"]
@@ -59,7 +60,7 @@ def generate_explanation_response(code_snippet):
             return generate_arctic_response(prompt_str)
     
 def generate_docstring_response(code_snippet):
-    print('generate_docstring_response')
+    logging.info(f'generate_docstring_response - {st.session_state["session_id"]}')
     with st.session_state['output_container']:
         with st.spinner('Generating Docstrings...'):
             prompt = [f"<|im_start|>system\n{generate_docstring_system_message}<|im_end|>"]
@@ -70,7 +71,7 @@ def generate_docstring_response(code_snippet):
             return generate_arctic_response(prompt_str)
 
 def generate_debugger_response(code_snippet, error_message):
-    print('generate_debugger_response')
+    logging.info(f'generate_debugger_response - {st.session_state["session_id"]}')
     with st.session_state['output_container']:
         with st.spinner('Generating Debugger Response...'):
             prompt = [f"<|im_start|>system\n{generate_debugger_system_message}<|im_end|>"]
