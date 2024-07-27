@@ -1,4 +1,5 @@
 import streamlit as st
+import plotly.graph_objs as go
 
 import warnings
 # Suppress specific FutureWarning from pandas
@@ -17,8 +18,8 @@ def render_data_analyst():
         st.session_state['messages'] = [{'role': 'assistant', 'content': construct_welcome_message(), 'count': 0}]
         st.session_state['count'] = 0   
 
-    render_data_analyst_prompt_guide()
     st.session_state['model'] = st.sidebar.selectbox('Select the model:', ['llama-3.1', 'gpt-4o-mini'], index=0)
+    render_data_analyst_prompt_guide()
 
     with st.expander('See uploaded Datasets'):
         for filename in st.session_state['vetted_files']:
@@ -46,14 +47,13 @@ def render_data_analyst():
                                 st.write(message['raw_python'])
                                 st.write(message['commentary'])
                             if message['output'] is not None:
-                                hide_index = st.checkbox('Hide Index', key=str(message['count']), value=False)
-                                st.dataframe(message['output'], hide_index=hide_index, use_container_width=True)
+                                if isinstance(message['output'], pd.DataFrame):
+                                    st.dataframe(message['output'], use_container_width=True, hide_index=False)
+                                elif isinstance(message['output'], go.Figure):
+                                    st.write(message['output'])
                             if 'commentary' in message.keys():
                                 if message['commentary'] is not None:
                                     st.caption(message['commentary'])
-                            if message['plot'] is not None:
-                                st.write(message['plot'])
-                                # st.pyplot(message['plot'])
                         else:
                             st.write(message['content'])
                     else:
@@ -95,11 +95,10 @@ def render_data_analyst():
                     try:
                         exec(python_syntax)
                         output = eval('generate_report()')
-                        plot = None
                     except (SyntaxError, ValueError, TypeError, KeyError, AttributeError, IndexError, NameError, ModuleNotFoundError) as e:
                         handle_all_other_errors(e, response)
 
-                check_outputs_and_give_feedback(output, commentary, plot, response)
+                check_outputs_and_give_feedback(output, commentary, response)
 
-        message = {'role': 'assistant', 'content': response, 'count': st.session_state['count'], 'raw_python': raw_python, 'python_syntax': python_syntax, 'commentary': commentary, 'output': output, 'plot': plot}
+        message = {'role': 'assistant', 'content': response, 'count': st.session_state['count'], 'raw_python': raw_python, 'python_syntax': python_syntax, 'commentary': commentary, 'output': output}
         st.session_state['messages'].append(message)
