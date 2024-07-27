@@ -3,7 +3,7 @@ import os
 import json
 import logging
 
-from utils.snowflake_arctic_helpers import construct_arctic_prompt, generate_arctic_response
+# from utils.snowflake_arctic_helpers import construct_arctic_prompt, generate_arctic_response
 from utils.meta_llama_helpers import MetaLlama
 # from utils.mistral_helpers import construct_mistral_prompt, generate_mistral_response
 from utils.open_ai_helpers import generate_gpt4o_mini_response
@@ -44,42 +44,6 @@ def generate_ai_response(vetted_files, model):
     #     prompt_str = construct_arctic_prompt(vetted_files)
     #     response = generate_arctic_response(prompt_str)
     return response
-    
-def generate_explanation_response(code_snippet):
-    logging.info(f'generate_explanation_response - {st.session_state["session_id"]}')
-    with st.session_state['output_container']:
-        with st.spinner('Generating Explanation...'):
-            prompt = [f"<|im_start|>system\n{generate_explanation_system_message}<|im_end|>"]
-            prompt.append('<|im_start|>user\n' + code_snippet + '<|im_end|>')
-            prompt.append('<|im_start|>assistant')
-            prompt.append('')
-            prompt_str = '\n'.join(prompt)
-            return generate_arctic_response(prompt_str)
-    
-def generate_docstring_response(code_snippet):
-    logging.info(f'generate_docstring_response - {st.session_state["session_id"]}')
-    with st.session_state['output_container']:
-        with st.spinner('Generating Docstrings...'):
-            prompt = [f"<|im_start|>system\n{generate_docstring_system_message}<|im_end|>"]
-            prompt.append('<|im_start|>user\n' + code_snippet + '<|im_end|>')
-            prompt.append('<|im_start|>assistant')
-            prompt.append('')
-            prompt_str = '\n'.join(prompt)
-            return generate_arctic_response(prompt_str)
-
-def generate_debugger_response(code_snippet, error_message):
-    logging.info(f'generate_debugger_response - {st.session_state["session_id"]}')
-    with st.session_state['output_container']:
-        with st.spinner('Generating Debugger Response...'):
-            prompt = [f"<|im_start|>system\n{generate_debugger_system_message}<|im_end|>"]
-            input = {'code_snippet': code_snippet, 'error_message': error_message}
-            input_json = json.dumps(input)
-            prompt.append('<|im_start|>user\n' + input_json + '<|im_end|>')
-            prompt.append('<|im_start|>assistant')
-            prompt.append('')
-            prompt_str = '\n'.join(prompt)
-            return generate_arctic_response(prompt_str)
-
 
 
 
