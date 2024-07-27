@@ -18,6 +18,7 @@ def render_chart_builder():
     welcome_message = construct_welcome_message('chart_builder')
 
     render_chart_builder_prompt_guide()
+    st.session_state['model'] = st.sidebar.selectbox('Select the model:', ['llama-3.1', 'gpt-4o-mini'], index=0)
 
     if 'messages' not in st.session_state.keys() or not st.session_state['messages']:
         st.session_state['messages'] = [{'role': 'assistant', 'content': welcome_message, 'count': 0}]
@@ -93,7 +94,7 @@ def render_chart_builder():
         # Generate a new response if last message is not from assistant
         if st.session_state['messages'][-1]['role'] != 'assistant':
             with st.spinner('Building Chart...'):
-                response = generate_ai_response('chart_builder', st.session_state['vetted_files'], model='llama')
+                response = generate_ai_response('chart_builder', st.session_state['vetted_files'], st.session_state['model'])
                 python_syntax, commentary = extract_python_syntax_and_commetary(response)
                 
                 if python_syntax is not None:

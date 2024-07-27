@@ -19,6 +19,7 @@ def render_data_analyst():
         st.session_state['count'] = 0   
 
     render_data_analyst_prompt_guide()
+    st.session_state['model'] = st.sidebar.selectbox('Select the model:', ['llama-3.1', 'gpt-4o-mini'], index=0)
 
     with st.expander('See uploaded Datasets'):
         for filename in st.session_state['vetted_files']:
@@ -68,7 +69,7 @@ def render_data_analyst():
     if st.session_state['messages'][-1]['role'] != 'assistant':
         with st.chat_message('assistant'):
             with st.spinner('Generating response...'):
-                response = generate_ai_response('data_analyst', st.session_state['vetted_files'], model='llama')
+                response = generate_ai_response('data_analyst', st.session_state['vetted_files'], st.session_state['model'])
                 python_syntax, commentary = extract_python_syntax_and_commetary(response)
                 
                 if python_syntax is not None:
