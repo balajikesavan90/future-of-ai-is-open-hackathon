@@ -5,10 +5,6 @@ from utils.data_import_helpers import process_data_dictionaries, datasets
 
 def render_data_dictionary_widget():
     st.divider()
-    if st.session_state['active_page'] == 'data_analyst':
-        st.subheader('🔍 :blue[Data Analyst]')
-    elif st.session_state['active_page'] == 'chart_builder':
-        st.subheader('📊 :blue[Chart Builder]')
     uploaded_file_count = len(st.session_state['vetted_files'])
     if uploaded_file_count == 1:
         st.toast(':green[Lets create a data dictionary for your file]')
@@ -85,5 +81,5 @@ def render_data_dictionary_widget():
         label=':green[Save Data Dictionary and Proceed]',
         on_click=process_data_dictionaries,
         use_container_width=True,
-        args=(st.session_state['vetted_files'],st.session_state['active_page'])
+        args=(st.session_state['vetted_files'], None)
     )

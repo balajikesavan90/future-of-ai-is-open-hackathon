@@ -55,7 +55,7 @@ def check_read_csv_error_and_give_feedback(python_syntax, response):
         error_message = f'{pandas_dataframes} are already loaded as pandas dataframe. Please remove the read_csv statement'
         message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
         st.session_state['messages'].append(message)
-        print(f'rerun - check_read_csv_error_and_give_feedback - failure - {st.session_state["active_page"]}')
+        print(f'rerun - check_read_csv_error_and_give_feedback - failure')
         st.rerun()
 
 def check_read_json_error_and_give_feedback(python_syntax, response):
@@ -70,7 +70,7 @@ def check_read_json_error_and_give_feedback(python_syntax, response):
         error_message = f'{pandas_dataframes} are already loaded as pandas dataframe. Please remove the read_json statement'
         message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
         st.session_state['messages'].append(message)
-        print(f'rerun - check_read_json_error_and_give_feedback - failure - {st.session_state["active_page"]}')
+        print(f'rerun - check_read_json_error_and_give_feedback - failure')
         st.rerun()
 
 def check_function_definition_error_and_give_feedback(python_syntax, response):
@@ -78,13 +78,10 @@ def check_function_definition_error_and_give_feedback(python_syntax, response):
         st.session_state['count'] += 1
         message = {'role': 'assistant', 'content': response, 'error': True, 'count': st.session_state['count']}
         st.session_state['messages'].append(message)
-        if st.session_state['active_page'] == 'data_analyst':
-            error_message = 'The function should be called "generate_report". It must take 0 arguments. The function must return a single pandas DataFrame'
-        elif st.session_state['active_page'] == 'chart_builder':
-            error_message = 'The function should be called "generate_report". It must take 0 arguments. The function must return a single Streamlit Chart element'
+        error_message = 'The function should be called "generate_report". It must take 0 arguments. The function must return a single pandas DataFrame'
         message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
         st.session_state['messages'].append(message)
-        print(f'rerun - check_function_definition_error_and_give_feedback - failure - {st.session_state["active_page"]}')
+        print(f'rerun - check_function_definition_error_and_give_feedback - failure')
         st.rerun()
 
 def check_return_statement_error_and_give_feedback(python_syntax, response):
@@ -92,13 +89,10 @@ def check_return_statement_error_and_give_feedback(python_syntax, response):
         st.session_state['count'] += 1
         message = {'role': 'assistant', 'content': response, 'error': True, 'count': st.session_state['count']}
         st.session_state['messages'].append(message)
-        if st.session_state['active_page'] == 'data_analyst':
-            error_message = 'Please add a return statement to the function generate_report() that returns a single pandas DataFrame'
-        elif st.session_state['active_page'] == 'chart_builder':
-            error_message = 'Please add a return statement to the function generate_report() that returns a single Streamlit Chart element'
+        error_message = 'Please add a return statement to the function generate_report() that returns a single pandas DataFrame'
         message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
         st.session_state['messages'].append(message)
-        print(f'rerun - check_return_statement_error_and_give_feedback - failure - {st.session_state["active_page"]}')
+        print(f'rerun - check_return_statement_error_and_give_feedback - failure')
         st.rerun()
 
 def remove_st_set_page_config(input_string):
@@ -129,7 +123,7 @@ def update_python_syntax_with_correct_dataframe_names(python_syntax):
 def check_outputs_and_give_feedback(output, commentary, plot, response):
     if output is not None:
         if isinstance(output, pd.DataFrame):
-            print(f'check_outputs_and_give_feedback - success - {st.session_state["active_page"]}')
+            print(f'check_outputs_and_give_feedback - success')
             st.session_state['count'] += 1
             hide_index = st.checkbox('Hide Index', key=str(st.session_state['count']), value=False)
             st.dataframe(output, use_container_width=True, hide_index=hide_index)
@@ -147,11 +141,11 @@ def check_outputs_and_give_feedback(output, commentary, plot, response):
             error_message = 'The generate_report() function must return a single pandas DataFrame'
             message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
             st.session_state['messages'].append(message)
-            print(f'rerun - check_outputs_and_give_feedback - error - {st.session_state["active_page"]}')
+            print(f'rerun - check_outputs_and_give_feedback - error')
             st.rerun()
     if plot is not None:
         if isinstance(plot, st.delta_generator.DeltaGenerator):
-            print(f'check_outputs_and_give_feedback - success - {st.session_state["active_page"]}')
+            print(f'check_outputs_and_give_feedback - success')
             st.session_state['count'] += 1
             plot
             render_ai_prompt()
@@ -160,14 +154,14 @@ def check_outputs_and_give_feedback(output, commentary, plot, response):
                     if 'error' in message.keys():
                         st.session_state['messages'].remove(message)
         else:
-            print(f'check_outputs_and_give_feedback - error - {st.session_state["active_page"]}')
+            print(f'check_outputs_and_give_feedback - error')
             st.session_state['count'] += 1
             message = {'role': 'assistant', 'content': response, 'error': True, 'count': st.session_state['count']}
             st.session_state['messages'].append(message)
             error_message = 'The generate_report() function must return a single Streamlit Chart element'
             message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
             st.session_state['messages'].append(message)
-            print(f'rerun - check_outputs_and_give_feedback - success - {st.session_state["active_page"]}')
+            print(f'rerun - check_outputs_and_give_feedback - success')
             st.rerun()
 
 def check_response_error_and_give_feedback(response):
@@ -178,7 +172,7 @@ def check_response_error_and_give_feedback(response):
         error_message = 'Your output should be JSON string with the keys "python_syntax" and "commentary"'
         message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
         st.session_state['messages'].append(message)
-        print(f'rerun - check_response_error_and_give_feedback - failure - {st.session_state["active_page"]}')
+        print(f'rerun - check_response_error_and_give_feedback - failure')
         st.rerun()
 
 def handle_all_other_errors(e, response):
@@ -190,5 +184,5 @@ def handle_all_other_errors(e, response):
     """
     message = {'role': 'user', 'content': json.dumps({'error': error_message}), 'error': True}
     st.session_state['messages'].append(message)
-    print(f'rerun - handle_all_other_errors - failure - {st.session_state["active_page"]} - {error_message}')
+    print(f'rerun - handle_all_other_errors - failure - {error_message}')
     st.rerun()

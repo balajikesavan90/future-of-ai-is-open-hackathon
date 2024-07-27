@@ -8,8 +8,6 @@ from widgets.about import render_about
 from widgets.data_dictionary import render_data_dictionary_widget
 from widgets.uploaded_data import render_uploaded_data
 from widgets.data_analyst import render_data_analyst
-from widgets.chart_builder import render_chart_builder
-
 
 
 def setup_home():
@@ -27,11 +25,9 @@ def render_home():
 
         analyze_data, document_debug_code, about = st.tabs(['🔍 Analyze Data', '🗂️ Document and 🐞 Debug Code', '🤖 About'])
         with analyze_data:
-            st.subheader('🔍 :blue[Data Analyst]')
-            st.write(':blue[Answer questions about your data using Actic Analytics.]')
-            render_sample_datasets(page = 'data_analyst')
-            render_uploader(page = 'data_analyst')
-            render_snowflake_connection(page = 'data_analyst')
+            render_sample_datasets()
+            render_uploader()
+            render_snowflake_connection()
         with document_debug_code:
             st.subheader(':blue[🗂️ Document and 🐞 Debug Code]')
             st.write(':blue[Document and debug your code using Actic Analytics.]')
@@ -45,9 +41,6 @@ def render_home():
 
         else:
             if not st.session_state['datasets_vetted']:
-                render_uploaded_data(st.session_state['active_page'])
+                render_uploaded_data()
             else:
-                if st.session_state['active_page'] == 'data_analyst':
-                    render_data_analyst()
-                elif st.session_state['active_page'] == 'chart_builder':
-                    render_chart_builder()
+                render_data_analyst()

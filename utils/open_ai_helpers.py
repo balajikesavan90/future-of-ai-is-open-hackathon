@@ -50,10 +50,10 @@ def chatcompletion_APICall(message, temperature = 0, model='gpt-4o-mini', respon
 
 
 
-def generate_gpt4o_mini_response(page, vetted_files):
+def generate_gpt4o_mini_response(vetted_files):
     print('generate_gpt4o_mini_response')
 
-    system_message = construct_system_message(page, vetted_files)
+    system_message = construct_system_message(vetted_files)
 
     message = [{'role': 'system', 'content': system_message}]
 

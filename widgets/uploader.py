@@ -2,8 +2,8 @@ import streamlit as st
 
 from utils.data_import_helpers import gather_metadata
 
-def render_uploader(page):
-    with st.form(key=f'upload_files_{page}'):
+def render_uploader():
+    with st.form(key=f'upload_files'):
         st.caption('📁:blue[or upload your own csv files]')
         st.session_state['uploaded_files'] = st.file_uploader(
             label='Upload Your Files in .csv format:', 
@@ -16,7 +16,6 @@ def render_uploader(page):
             label=':green[Lets Go!]',
             use_container_width=True,
         ):
-            st.session_state['active_page'] = page
             st.session_state['source'] = 'uploader'
             gather_metadata()
             st.rerun()

@@ -4,15 +4,15 @@ from transformers import AutoTokenizer
 import json
 
 from utils.system_messages import construct_system_message
-from utils.streamlit_helpers import reset_data_analyst, reset_chart_builder
+from utils.streamlit_helpers import reset_data_analyst
 
 temperature = 0.1
 top_p = 0.1
 
-def construct_mistral_prompt(page, vetted_files):
+def construct_mistral_prompt(vetted_files):
     print('construct_mistral_prompt')
 
-    prompt = [f"<s>[INST]{construct_system_message(page, vetted_files)}[/INST]\n"]
+    prompt = [f"<s>[INST]{construct_system_message(vetted_files)}[/INST]\n"]
     for dict_message in st.session_state['messages'][:-1]:
         if dict_message['role'] == 'user':
             user_input = json.dumps({'user_input': dict_message['content']})
@@ -31,46 +31,26 @@ def generate_mistral_response(prompt_str):
         token_count = get_num_tokens(prompt_str)
         print(token_count)
 
-        if st.session_state['active_page'] == 'data_analyst':
-            error_count = 0
-            for message in st.session_state['messages']:
-                if 'error' in message.keys():
-                    if message['role'] == 'assistant':
-                        error_count += 1
-            
-            if error_count >= 3:
-                st.error('Oops! Something went wrong. Try rephrasing your prompt in a different way.')
-                st.button(':red[Reset Data Analyst]', on_click=reset_data_analyst, key='reset')
-                if st.secrets['ENV'] == 'dev':
-                    st.write(st.session_state['messages'])
-                st.stop()
-
-            if token_count >= 3072:
-                st.error('Conversation length too long. Please keep it under 3072 tokens.')
-                st.button(':red[Reset Data Analyst]', on_click=reset_data_analyst, key='reset')
-                if st.secrets['ENV'] == 'dev':
-                    st.write(st.session_state['messages'])
-                st.stop()
+        error_count = 0
+        for message in st.session_state['messages']:
+            if 'error' in message.keys():
+                if message['role'] == 'assistant':
+                    error_count += 1
         
-        if st.session_state['active_page'] == 'chart_builder':
-            error_count = 0
-            for message in st.session_state['messages']:
-                if 'error' in message.keys():
-                    if message['role'] == 'assistant':
-                        error_count += 1
+        if error_count >= 3:
+            st.error('Oops! Something went wrong. Try rephrasing your prompt in a different way.')
+            st.button(':red[Reset Data Analyst]', on_click=reset_data_analyst, key='reset')
+            if st.secrets['ENV'] == 'dev':
+                st.write(st.session_state['messages'])
+            st.stop()
 
-            if error_count >= 3:
-                st.error('Oops! Something went wrong. Try rephrasing your instructions in a different way.')
-                st.form_submit_button(':red[Reset Chart Builder]', on_click=reset_chart_builder)
-                if st.secrets['ENV'] == 'dev':
-                    st.write(st.session_state['messages'])
-                st.stop()
-
-            if token_count >= 3072:
-                st.error('Instructions too long. Please keep it under 3072 tokens.')
-                st.form_submit_button(':red[Reset Chart Builder]', on_click=reset_chart_builder)
-                st.stop()
-
+        if token_count >= 3072:
+            st.error('Conversation length too long. Please keep it under 3072 tokens.')
+            st.button(':red[Reset Data Analyst]', on_click=reset_data_analyst, key='reset')
+            if st.secrets['ENV'] == 'dev':
+                st.write(st.session_state['messages'])
+            st.stop()
+        
         events = []
         st.session_state['prompt_str'] = prompt_str
         for event in replicate.stream('mistralai/mixtral-8x7b-instruct-v0.1',
