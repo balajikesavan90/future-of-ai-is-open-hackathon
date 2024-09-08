@@ -1,9 +1,11 @@
 import streamlit as st
 import pandas as pd
+import logging
 
 from utils.data_import_helpers import process_data_dictionaries, datasets
 
 def render_data_dictionary_widget():
+    logging.info(f'render_data_dictionary_widget - {st.session_state["session_id"]}')
     st.divider()
     uploaded_file_count = len(st.session_state['vetted_files'])
     if uploaded_file_count == 1:

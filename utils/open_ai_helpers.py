@@ -6,6 +6,7 @@ from tenacity import (
     wait_random_exponential,
 )
 import tiktoken
+import logging
 from utils.system_messages import construct_system_message
 from utils.streamlit_helpers import reset_data_analyst
 
@@ -13,7 +14,6 @@ client = OpenAI()
 enc_gpt4 = tiktoken.encoding_for_model("gpt-4")
 
 def token_count_message(message):
-    print('token_count_message')
     str = ''
     for msg in message:
         if 'content'in msg:
@@ -25,11 +25,11 @@ def token_count_message(message):
 
 @retry(wait=wait_random_exponential(min=5, max=10), stop=stop_after_attempt(5))
 def completion_with_backoff(**kwargs):
-    print('completion_with_backoff')
+    logging.info(f'completion_with_backoff - {st.session_state["session_id"]}')
     return client.chat.completions.create(**kwargs)
 
 def chatcompletion_APICall(message, temperature = 0, model='gpt-4o-mini', response_format = None, max_tokens=None, session_id=''):
-    print('chatcompletion_APICall')
+    logging.info(f'chatcompletion_APICall - {st.session_state["session_id"]}')
     """
     Runs the chat completion API call
     Args:
@@ -63,7 +63,7 @@ def chatcompletion_APICall(message, temperature = 0, model='gpt-4o-mini', respon
 
 
 def generate_gpt4o_mini_response(vetted_files):
-    print('generate_gpt4o_mini_response')
+    logging.info(f'generate_gpt4o_mini_response - {st.session_state["session_id"]}')
 
     system_message = construct_system_message(vetted_files)
 
@@ -73,7 +73,7 @@ def generate_gpt4o_mini_response(vetted_files):
         prompt.append({'role': dict_message['role'], 'content': dict_message['content']})
 
     token_count = token_count_message(prompt)
-    print(token_count)
+    logging.info(f'token_count - {token_count} - {st.session_state["session_id"]}')
 
     error_count = 0
     for message in st.session_state['messages']:

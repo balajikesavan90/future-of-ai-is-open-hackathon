@@ -6,6 +6,7 @@ import os
 import snowflake.connector
 # from sklearn.datasets import load_iris, load_diabetes, load_wine, load_breast_cancer
 from seaborn import load_dataset
+import logging
 
 datasets = {
     'tips': {
@@ -88,6 +89,7 @@ datasets = {
 }
 
 def gather_metadata(params=None):
+    logging.info(f'gather_metadata - {st.session_state["session_id"]}')
     """
     Gather metadata from uploaded files.
     """
@@ -147,6 +149,7 @@ def gather_metadata(params=None):
 
 # Function is too slow for larger datasets. Need to optimize. Not being used currently.
 def detect_primary_keys(df):
+    logging.info(f'detect_primary_keys - {st.session_state["session_id"]}')
     """
     Detect the primary key(s) of a pandas DataFrame.
     """
@@ -168,6 +171,7 @@ def detect_primary_keys(df):
     return primary_keys
 
 def convert_data_dictionary_to_json(vetted_files):
+    logging.info(f'convert_data_dictionary_to_json - {st.session_state["session_id"]}')
     """
     Convert data dictionary to JSON.
     """
@@ -178,6 +182,7 @@ def convert_data_dictionary_to_json(vetted_files):
     return vetted_files
 
 def check_datatypes(vetted_files):
+    logging.info(f'check_datatypes - {st.session_state["session_id"]}')
     """
     Check data types.
     """
@@ -205,6 +210,7 @@ def check_datatypes(vetted_files):
     return vetted_files
 
 def process_data_dictionaries(vetted_files, page):
+    logging.info(f'process_data_dictionaries - {st.session_state["session_id"]}')
     """
     Process data dictionaries.
     """

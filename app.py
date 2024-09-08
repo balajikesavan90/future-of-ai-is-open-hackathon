@@ -1,6 +1,7 @@
 import streamlit as st
+import logging
 
-from utils.streamlit_helpers import render_reset, render_reset_data_analyst, render_session_state
+from utils.streamlit_helpers import render_reset, render_reset_data_analyst, render_session_state, setup_session_state
 from widgets.home import setup_home, render_home
 
 # App title
@@ -10,6 +11,11 @@ st.set_page_config(
     page_icon='❄️',
     initial_sidebar_state='auto'
 )
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+if 'session_id' not in st.session_state.keys():
+    st.session_state.update(setup_session_state())
 
 render_reset()
 
@@ -23,3 +29,5 @@ render_home()
 
 if st.secrets['ENV'] == 'dev':
     render_session_state()
+
+logging.info(f'############################### - {st.session_state["session_id"]}')

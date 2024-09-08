@@ -1,8 +1,10 @@
 import streamlit as st
+import logging
 
 from utils.data_import_helpers import gather_metadata
 
 def render_snowflake_connection():
+    logging.info(f'render_snowflake_connection - {st.session_state["session_id"]}')
     with st.form(key=f'connect_to_snowflake'):
         with st.expander('❄️:blue[or import your data from Snowflake]'):
             col1, col2 = st.columns(2)

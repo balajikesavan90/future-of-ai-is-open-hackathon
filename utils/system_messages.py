@@ -1,4 +1,5 @@
 import streamlit as st
+import logging
 
 generate_explanation_system_message = """You are an automated system that explains the computer code inputted by the user.
 You must explain the code in a way that is easy to understand for a non-technical audience.
@@ -25,7 +26,7 @@ You must focus on helping the user understand the error message and how to fix i
 """
 
 def construct_system_message(vetted_files):
-    print('construct_system_message')
+    logging.info(f'construct_system_message - {st.session_state["session_id"]}')
 
     system_message = """You are an automated system that generates python syntax that is executed on a cloud server. 
 The python virtual environment has the latest versions of streamlit, pandas, numpy and plotly.
@@ -62,11 +63,11 @@ This is a very serious requirement for all of your responses.\n\n"""
         system_message += f'Data Dictionary:\n'
         system_message += vetted_files[filename]['data_dictionary_json']+'\n'
         system_message += f'Pandas Describe:\n'
-        system_message += st.session_state['vetted_files'][filename]['dataframe'].describe().to_json(orient='index')+'\n'
+        system_message += vetted_files[filename]['dataframe'].describe().to_json(orient='index')+'\n'
         system_message += f'First 5 rows of the dataset:\n'
         system_message += vetted_files[filename]['dataframe'].head().to_json(orient='index')+'\n'
         system_message += f'Last 5 rows of the dataset:\n'
-        system_message += st.session_state['vetted_files'][filename]['dataframe'].tail().to_json(orient='index')+'\n'
+        system_message += vetted_files[filename]['dataframe'].tail().to_json(orient='index')+'\n'
         system_message += f'The dataset has already been loaded as a pandas DataFrame named {filename}\n\n'
     
     system_message += "You must use this metadata to generate your response.\n"
