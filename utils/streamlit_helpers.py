@@ -12,7 +12,10 @@ def setup_session_state():
 
 def reset_app():
     logging.info(f'reset_app - {st.session_state["session_id"]}')
-    st.session_state = {}
+    # Clear all keys in st.session_state
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    # Re-initialize session_id
     st.session_state['session_id'] = str(uuid.uuid4())
     print('###############################')
     print('reset_app')
