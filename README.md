@@ -12,6 +12,7 @@ What things you need to install the software and how to install them:
 
 - Python 3.10.14
 - pip (Python Package Installer)
+- Poetry (if not installed, use "pip install poetry" or see https://python-poetry.org/docs/#installation)
 
 ### Installation
 
@@ -24,8 +25,8 @@ git clone https://github.com/balajikesavan90/future-of-ai-is-open-hackathon.git
 # Change directory
 cd future-of-ai-is-open-hackathon
 
-# Install requirements
-pip install -r requirements.txt
+# Install dependencies using poetry
+poetry install
 ```
 
 ### Setting up secrets
