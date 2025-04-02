@@ -31,11 +31,12 @@ poetry install
 
 ### Setting up secrets
 
-create a secrets.toml and place it in the .streamlit folder. You need to set up 2 keys
+create a secrets.toml and place it in the .streamlit folder. You need to set up 3 keys
 
 ```bash
 ENV = "dev"
 REPLICATE_API_TOKEN = "<Create a replicate account and add your API key here.>"
+OPENAI_API_KEY = "<Create an openai account and add your API key here>"
 ```
 
 ### Running the app
