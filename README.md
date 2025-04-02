@@ -10,7 +10,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 What things you need to install the software and how to install them:
 
-- Python 3.10.14
+- Python 3.12
 - pip (Python Package Installer)
 - Poetry (if not installed, use "pip install poetry" or see https://python-poetry.org/docs/#installation)
 
