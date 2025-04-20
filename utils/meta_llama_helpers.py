@@ -62,7 +62,7 @@ class MetaLlama:
             
             events = []
             st.session_state['prompt_str'] = prompt_str
-            for event in replicate.stream('meta/meta-llama-3.1-405b-instruct',
+            for event in replicate.stream('meta/llama-4-scout-instruct',
                                 input={'prompt': prompt_str,
                                         'prompt_template': r"{prompt}",
                                         'temperature': 0,
