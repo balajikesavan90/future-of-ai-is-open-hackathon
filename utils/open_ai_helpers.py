@@ -28,7 +28,7 @@ def completion_with_backoff(**kwargs):
     logging.info(f'completion_with_backoff - {st.session_state["session_id"]}')
     return client.chat.completions.create(**kwargs)
 
-def chatcompletion_APICall(message, temperature = 0, model='gpt-4o-mini', response_format = None, max_tokens=None, session_id=''):
+def chatcompletion_APICall(message, temperature = 0, model='gpt-4.1-mini-2025-04-14', response_format = None, max_tokens=None, session_id=''):
     logging.info(f'chatcompletion_APICall - {st.session_state["session_id"]}')
     """
     Runs the chat completion API call
@@ -52,7 +52,7 @@ def chatcompletion_APICall(message, temperature = 0, model='gpt-4o-mini', respon
     prompt_tokens = response.usage.prompt_tokens
     completion_tokens = response.usage.completion_tokens
 
-    cost_USD = 0.15*prompt_tokens/1000000 + 0.6*completion_tokens/1000000
+    cost_USD = 0.1*prompt_tokens/1000000 + 0.4*completion_tokens/1000000
 
     # api_call_dict = {'env': st.secrets['env'], 'id': st.session_state['id'], 'page': page, 'session_id': session_id, 'prompt_tokens': prompt_tokens, 'completion_tokens': completion_tokens, 'cost_USD': cost_USD, 'model': model}
 
