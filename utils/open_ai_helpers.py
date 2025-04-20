@@ -53,6 +53,7 @@ def chatcompletion_APICall(message, temperature = 0, model='gpt-4.1-mini-2025-04
     completion_tokens = response.usage.completion_tokens
 
     cost_USD = 0.1*prompt_tokens/1000000 + 0.4*completion_tokens/1000000
+    logging.info(f'cost_USD - {cost_USD} - {st.session_state["session_id"]}')
 
     # api_call_dict = {'env': st.secrets['env'], 'id': st.session_state['id'], 'page': page, 'session_id': session_id, 'prompt_tokens': prompt_tokens, 'completion_tokens': completion_tokens, 'cost_USD': cost_USD, 'model': model}
 
