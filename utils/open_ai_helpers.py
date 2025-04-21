@@ -96,7 +96,7 @@ def generate_gpt4o_mini_response(vetted_files):
             st.write(st.session_state['messages'])
         st.stop()
 
-    response, cost = chatcompletion_APICall(prompt, model='gpt-4o-mini', temperature=0.1)
+    response, cost = chatcompletion_APICall(prompt, model='gpt-4.1-mini-2025-04-14', temperature=0.1)
     st.session_state['prompt_str'] = ""
     for dict_message in prompt:
         st.session_state['prompt_str'] += f"role: {dict_message['role']}\ncontent: {dict_message['content']}\n--\n"
