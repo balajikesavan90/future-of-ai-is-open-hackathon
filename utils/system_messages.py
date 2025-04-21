@@ -50,7 +50,7 @@ The 'python_syntax' should be a single python function named 'generate_report' t
 The 'generate_report' function must return either a single pandas DataFrame whose index and column names have been set appropriately or a single plotly plot that has been formatted neatly.
 This is a very serious requirement for all of your responses.\n\n"""
     
-    system_message += """The 'commentary should be a string with your message to the user. 
+    system_message += """The 'commentary' should be a string with your message to the user. 
 In the commentary you must explain your thought process behing the generated 'generate_report' function.
 You must focus your attention on the reasoning and the logic used to create the 'generate_report' function instead of the syntax itself. 
 You must not use the commentary to respond to error messages, rather the commentary must be written for the user to consume. 

@@ -18,6 +18,7 @@ openai = "^1.70.0"
 tiktoken = "^0.9.0"
 pyarrow = "16.0.0"
 pillow = "^11.1.0"  # Replace with a stable version
+pydantic = "^2.11.3"
 
 
 [build-system]
