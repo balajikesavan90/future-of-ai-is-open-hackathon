@@ -53,8 +53,8 @@ class MetaLlama:
                     st.write(st.session_state['messages'])
                 st.stop()
 
-            if token_count >= 3072:
-                st.error('Conversation length too long. Please keep it under 3072 tokens.')
+            if token_count >= 10000:
+                st.error('Conversation length too long. Please keep it under 10000 tokens.')
                 st.button(':red[Reset Data Analyst]', on_click=reset_data_analyst, key='reset')
                 if st.secrets['ENV'] == 'dev':
                     st.write(st.session_state['messages'])
@@ -62,7 +62,7 @@ class MetaLlama:
             
             events = []
             st.session_state['prompt_str'] = prompt_str
-            for event in replicate.stream('meta/meta-llama-3.1-405b-instruct',
+            for event in replicate.stream('meta/llama-4-maverick-instruct',
                                 input={'prompt': prompt_str,
                                         'prompt_template': r"{prompt}",
                                         'temperature': 0,
