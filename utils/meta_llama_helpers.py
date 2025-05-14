@@ -47,7 +47,7 @@ class MetaLlama:
                         error_count += 1
             
             if error_count >= 3:
-                st.error('Oops! Something went wrong. Try rephrasing your prompt in a different way.')
+                st.error('Oops! Something went wrong. Try rephrasing your prompt in a different way. Or try using the OpenAI model from the sidebar.')
                 st.button(':red[Reset Data Analyst]', on_click=reset_data_analyst, key='reset')
                 if st.secrets['ENV'] == 'dev':
                     st.write(st.session_state['messages'])
