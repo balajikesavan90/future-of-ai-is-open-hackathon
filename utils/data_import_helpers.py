@@ -97,12 +97,15 @@ def gather_metadata(params=None):
     if st.session_state['source'] == 'uploader':
         for uploaded_file in st.session_state['uploaded_files']:
             filename, _ = os.path.splitext(uploaded_file.name)
-            filename = filename.replace(' ', '_').replace('-', '_').lower()
+            filename = filename.replace(' ', '_').replace('-', '_').lower().replace('(', '_').replace(')', '_')
             vetted_files[filename] = {}
             df = pd.read_csv(
                 filepath_or_buffer=uploaded_file, 
                 parse_dates=True,
-                low_memory=False)
+                low_memory=False,
+                encoding='utf-8',
+                encoding_errors='replace'
+            )
             df = df.convert_dtypes()
             vetted_files[filename]['columns_names'] = df.columns
             vetted_files[filename]['data_types'] = df.dtypes
