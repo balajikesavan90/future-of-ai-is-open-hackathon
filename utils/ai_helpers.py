@@ -39,9 +39,9 @@ class ResponseFormat(BaseModel):
 
 def generate_ai_response(vetted_files, model):
     logging.info(f'generate_ai_response - {st.session_state["session_id"]}')
-    if model == 'meta/llama-4-maverick-instruct':
-        prompt_str = llama_client.construct_llama_prompt(vetted_files)
-        response = llama_client.generate_llama_response(prompt_str)
+    if model == 'meta/llama-4-scout-instruct':
+        # prompt_str = llama_client.construct_llama_prompt(vetted_files)
+        response = llama_client.generate_llama_response(vetted_files)
     elif model == 'gpt-4.1-mini-2025-04-14':
         response = generate_gpt4o_mini_response(vetted_files)
     # elif model == 'mistral':
