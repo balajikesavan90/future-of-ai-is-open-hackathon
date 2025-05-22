@@ -14,7 +14,7 @@ def extract_python_syntax(text):
     match = re.search(pattern, text, re.DOTALL)
     if match:
         logging.info(f'extract_python_or_json_syntax - {st.session_state["session_id"]}')
-        return match.group(2).strip()
+        return json.loads(match.group(2).strip())['python_syntax']
     else:
         return None
     

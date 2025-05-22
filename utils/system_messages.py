@@ -44,7 +44,7 @@ import plotly.express as px\n
     
 
     system_message += """Your input will be a JSON string with the key 'user_input' and the value as a string of the user's request.
-Your ouput must be a JSON string with the keys 'python_syntax' and 'commentary'. The JSON string should not be padded with any additional characters.
+Your ouput must be a JSON string with the keys 'python_syntax' and 'commentary'. Respond only with valid JSON.
 
 The 'python_syntax' should be a single python function named 'generate_report' that takes in 0 arguments.
 The 'generate_report' function must return either a single pandas DataFrame whose index and column names have been set appropriately or a single plotly plot that has been formatted neatly.
