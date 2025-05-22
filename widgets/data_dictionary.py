@@ -36,6 +36,7 @@ def render_data_dictionary_widget():
             data_filter = st.selectbox(
                 label = 'Select the number of rows to display',
                 options = ['First 5 rows', 'Last 5 rows', 'Random 5 rows'],
+                key = f'{filename}_data_filter',
             )
             if data_filter == 'First 5 rows':
                 st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].head(), use_container_width=True)

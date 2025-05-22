@@ -15,6 +15,7 @@ def render_uploaded_data():
         data_filter = st.selectbox(
             label='Select the number of rows to display',
             options=['First 50 rows', 'Last 50 rows', 'Random 50 rows', 'All rows'],
+            key=f'{filename}_data_filter',
         )
         if data_filter == 'First 50 rows':
             df = df.head(50)
