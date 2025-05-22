@@ -85,7 +85,7 @@ class MetaLlama:
         st.session_state['prompt_str'] = ""
         for dict_message in prompt:
             st.session_state['prompt_str'] += f"role: {dict_message['role']}\ncontent: {dict_message['content']}\n--\n"
-        for event in replicate.stream('meta/llama-4-maverick-instruct',
+        for event in replicate.stream('meta/llama-4-scout-instruct',
                             input={'prompt': st.session_state['prompt_str'],
                                     # 'prompt_template': r"{prompt}",
                                     'temperature': 0,
