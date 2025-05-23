@@ -116,14 +116,6 @@ def remove_generate_report(input_string):
     output_string = re.sub(pattern, '', input_string)
     return output_string
 
-def update_python_syntax_with_correct_dataframe_names(python_syntax):
-    for filename in st.session_state['vetted_files']:
-        logging.info(f'update_python_syntax_with_correct_dataframe_names - {st.session_state["session_id"]}')
-        st.session_state['vetted_files'][f"{filename}"]['dataframe_copy'] = st.session_state['vetted_files'][filename]['dataframe'].copy()
-        pattern = re.compile(r'\b' + re.escape(filename) + r'\b')
-        python_syntax = pattern.sub(f"st.session_state['vetted_files']['{filename}']['dataframe_copy']", python_syntax)
-    return python_syntax
-
 def check_outputs_and_give_feedback(output, commentary, response):
     if output is not None:
         if isinstance(output, pd.DataFrame) or isinstance(output, go.Figure):

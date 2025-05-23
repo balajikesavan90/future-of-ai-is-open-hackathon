@@ -8,6 +8,7 @@ warnings.filterwarnings(action='ignore', category=FutureWarning, message="The de
 from utils.ai_helpers import construct_welcome_message, generate_ai_response
 from utils.data_analyst_helpers import *
 from widgets.prompt_guide import render_data_analyst_prompt_guide
+from utils.security_helpers import SecurityError, safely_execute_code
 
 def render_data_analyst():
     logging.info(f'render_data_analyst - {st.session_state["session_id"]}')
@@ -72,6 +73,9 @@ def render_data_analyst():
             with st.spinner('Generating response...'):
                 response = generate_ai_response(st.session_state['vetted_files'], st.session_state['model'])
                 python_syntax, commentary = extract_python_syntax_and_commetary(response)
+
+                logging.info(f'python_syntax - {python_syntax}')
+                logging.info(f'commentary - {commentary}')
                 
                 if python_syntax is not None:
                     check_read_csv_error_and_give_feedback(python_syntax, response)
@@ -85,7 +89,6 @@ def render_data_analyst():
 
                     with st.expander('See Python Syntax'):
                         st.write(raw_python)
-                    python_syntax = update_python_syntax_with_correct_dataframe_names(python_syntax)
                 else:
                     check_response_error_and_give_feedback(response)
                     raw_python = None
@@ -95,8 +98,15 @@ def render_data_analyst():
 
                 if python_syntax is not None:
                     try:
-                        exec(python_syntax)
-                        output = eval('generate_report()')
+                        # Use the security helper to safely execute code
+                        output, stdout_output, error_message = safely_execute_code(python_syntax, st.session_state['vetted_files'], 'generate_report')
+                        
+                        if error_message:
+                            st.error(error_message)
+                            output = None
+                        elif stdout_output:
+                            st.text(f"Code output:\n{stdout_output}")
+                            
                     except (SyntaxError, ValueError, TypeError, KeyError, AttributeError, IndexError, NameError, ModuleNotFoundError) as e:
                         handle_all_other_errors(e, response)
 
