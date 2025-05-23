@@ -10,7 +10,7 @@ def render_about():
         st.write(
             """
             My name is [Balaji Kesavan](https://www.balajikesavan.com/) and I am passionate about AI. I am always looking for ways to improve my skills and learn new things.
-            This is my submission to [The future of AI is open](https://arctic-streamlit-hackathon.devpost.com/) hackathon. I hope you like it!
+            This is my submission to [The future of AI is open](https://arctic-streamlit-hackathon.devpost.com/) hackathon.
 
             You can access the source code for this project on [GitHub](https://github.com/balajikesavan90/future-of-ai-is-open-hackathon).
             The best way to reach me is on [LinkedIn](https://www.linkedin.com/in/balaji-kesavan/).
