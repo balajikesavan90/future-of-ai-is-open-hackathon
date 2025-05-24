@@ -67,6 +67,11 @@ def render_session_state():
 
 def render_ai_prompt():
     logging.info(f'render_ai_prompt - {st.session_state["session_id"]}')
-    if 'prompt_str' in st.session_state.keys():
-        with st.sidebar.expander('What does the AI see?', expanded=True):
-            st.text(st.session_state['prompt_str'])
+    with st.sidebar.expander('What does the AI see?', expanded=True):
+        if 'system_message' in st.session_state.keys():
+            st.subheader(':blue[System Message]')
+            st.write(st.session_state['system_message'])
+        if 'messages' in st.session_state.keys():
+            st.subheader(':blue[Messages]')
+            messages_wo_system_message = [msg for msg in st.session_state['messages'] if msg['role'] != 'system']
+            st.write(messages_wo_system_message)

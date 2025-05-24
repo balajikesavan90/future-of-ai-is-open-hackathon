@@ -53,6 +53,8 @@ class MetaLlama:
 
         system_message = construct_system_message(vetted_files, agent_model)
 
+        st.session_state['system_message'] = system_message
+
         prompt = [{'role': 'system', 'content': system_message}]
 
         for dict_message in st.session_state['messages']:

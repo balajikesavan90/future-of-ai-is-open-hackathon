@@ -24,9 +24,10 @@ def render_about():
                 - answer questions about your data.
                 - build charts and graphs from your data.
                 - help document and debug your codebase.
-                    """
+                """
             )
         with st.expander(':blue[Does the AI have access to my data?]', expanded=False):
+            st.subheader(':blue[When Agent model is disabled]')
             st.write(
                 """
                 The AI model does not have access to your data. It does however have access to the metadata of your data. In particular, it has access to the 
@@ -37,6 +38,12 @@ def render_about():
                 - column descriptions
                 - output of the pandas describe method on your data
                 - first 5 rows of your data. 
+                """
+            )
+            st.subheader(':blue[When Agent model is enabled]')
+            st.write(
+                """
+                The AI model has access to your data. It can read the data and write code to analyze your data and generate insights.
                 """
             )
         with st.expander(':blue[What can the AI actually see?]', expanded=False):
