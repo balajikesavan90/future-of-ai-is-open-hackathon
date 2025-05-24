@@ -25,32 +25,42 @@ You must include code snippets and explanations in your response.
 You must focus on helping the user understand the error message and how to fix it.
 """
 
-def construct_system_message(vetted_files):
+def construct_system_message(vetted_files, agent_model):
     logging.info(f'construct_system_message - {st.session_state["session_id"]}')
 
-    system_message = """You are an automated system that generates python syntax that is executed on a cloud server. 
+    if agent_model:
+
+        system_message = """You are an automated system that queries the user's data and generates actionable insights from it.
+You must use the run_code_snippet function to query the user's data.
+
+Your response to the user must include the actionable insights from the thought process behind the analysis.
+"""
+
+    else:
+
+        system_message = """You are an automated system that generates python syntax that is executed on a cloud server. 
 The python virtual environment has the latest versions of streamlit, pandas, numpy and plotly.
 \n\n"""
 
-    system_message += """Your task is to complete this code snippet with the appropriate python syntax.\n
+        system_message += """Your task is to complete this code snippet with the appropriate python syntax.\n
 import streamlit as st\n
 import pandas as pd\n
 import numpy as np\n
 import plotly.express as px\n
 \n\n"""
 
-    for filename in vetted_files:
-        system_message += f'{filename} = pd.read_csv("{filename}.csv")\n\n'
-    
+        for filename in vetted_files:
+            system_message += f'{filename} = pd.read_csv("{filename}.csv")\n\n'
+        
 
-    system_message += """Your input will be a JSON string with the key 'user_input' and the value as a string of the user's request.
+        system_message += """Your input will be a JSON string with the key 'user_input' and the value as a string of the user's request.
 Your ouput must be a JSON string with the keys 'python_syntax' and 'commentary'. Respond only with valid JSON.
 
 The 'python_syntax' should be a single python function named 'generate_report' that takes in 0 arguments.
 The 'generate_report' function must return either a single pandas DataFrame whose index and column names have been set appropriately or a single plotly plot that has been formatted neatly.
 This is a very serious requirement for all of your responses.\n\n"""
-    
-    system_message += """The 'commentary' should be a string with your message to the user. 
+        
+        system_message += """The 'commentary' should be a string with your message to the user. 
 In the commentary you must explain your thought process behing the generated 'generate_report' function.
 You must focus your attention on the reasoning and the logic used to create the 'generate_report' function instead of the syntax itself. 
 You must not use the commentary to respond to error messages, rather the commentary must be written for the user to consume. 
@@ -72,6 +82,6 @@ This is a very serious requirement for all of your responses.\n\n"""
     
     system_message += "You must use this metadata to generate your response.\n"
 
-    # st.session_state['system_message'] = system_message
+        # st.session_state['system_message'] = system_message
 
     return system_message

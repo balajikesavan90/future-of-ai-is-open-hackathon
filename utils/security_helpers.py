@@ -96,6 +96,23 @@ def create_safe_execution_environment(vetted_files):
     
     return safe_globals
 
+def is_expression(code):
+    """
+    Check if code is a single expression that can be evaluated.
+    
+    Args:
+        code (str): The Python code to check
+        
+    Returns:
+        bool: True if code is a single expression, False otherwise
+    """
+    try:
+        parsed = ast.parse(code)
+        return (len(parsed.body) == 1 and 
+                isinstance(parsed.body[0], ast.Expr))
+    except SyntaxError:
+        return False
+
 def execute_with_timeout(code, globals_dict, report_function, timeout_sec=10):
     """
     Execute code with a timeout to prevent infinite loops or resource exhaustion.
@@ -121,8 +138,14 @@ def execute_with_timeout(code, globals_dict, report_function, timeout_sec=10):
         try:
             # Execute the code in the restricted environment
             with redirect_stdout(output_buffer), redirect_stderr(output_buffer):
-                exec(code, globals_dict)
-                result[0] = eval(f'{report_function}()', globals_dict)
+                # Check if code is a single expression that can be evaluated directly
+                if is_expression(code):
+                    result[0] = eval(code, globals_dict)
+                else:
+                    exec(code, globals_dict)
+                    # Only try to call the report function if we executed statements
+                    if report_function:
+                        result[0] = eval(f'{report_function}()', globals_dict)
         except Exception as e:
             error[0] = e
     

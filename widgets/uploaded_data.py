@@ -41,7 +41,7 @@ def render_uploaded_data():
         )
     with proceed_col:
         st.button(
-            label=':green[Proceed to Data Analyst]',
+            label=':green[Proceed to Data Analysis]',
             on_click=goto_data_analysis_widget,
             use_container_width=True
         )

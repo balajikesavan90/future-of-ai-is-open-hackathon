@@ -48,10 +48,12 @@ class MetaLlama:
     #     prompt.append('')
     #     return '\n'.join(prompt)
 
-    def generate_llama_response(self, vetted_files):
+    def generate_llama_response(self, vetted_files, model, agent_model):
         logging.info(f'generate_llama_response - {st.session_state["session_id"]}')
 
-        system_message = construct_system_message(vetted_files)
+        system_message = construct_system_message(vetted_files, agent_model)
+
+        st.session_state['system_message'] = system_message
 
         prompt = [{'role': 'system', 'content': system_message}]
 
@@ -85,7 +87,7 @@ class MetaLlama:
         st.session_state['prompt_str'] = ""
         for dict_message in prompt:
             st.session_state['prompt_str'] += f"role: {dict_message['role']}\ncontent: {dict_message['content']}\n--\n"
-        for event in replicate.stream('meta/llama-4-scout-instruct',
+        for event in replicate.stream(model,
                             input={'prompt': st.session_state['prompt_str'],
                                     # 'prompt_template': r"{prompt}",
                                     'temperature': 0,
