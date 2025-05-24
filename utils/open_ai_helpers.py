@@ -274,6 +274,11 @@ class OpenAIUtility:
             logging.info(f'Result is a float, int or str: {result}')
             result = json.dumps(result)
 
+        # allow tuples to be converted to JSON
+        elif isinstance(result, tuple):
+            logging.info(f'Result is a tuple: {result}')
+            result = json.dumps(result)
+
         else:
             logging.info(f'Result is not a pandas df ot a pandas series: {type(result)}')
             result = "Code execution did not return a DataFrame or Series. Please check the code snippet for errors."

@@ -7,6 +7,9 @@ import pandas as pd
 
 from utils.ai_helpers import construct_welcome_message, generate_ai_response
 
+from widgets.prompt_guide import render_analytics_agent_prompt_guide
+from utils.streamlit_helpers import render_ai_prompt
+
 
 def stream_text(text):
     for paragraph in text.split('\n'):
@@ -32,6 +35,9 @@ def render_analytics_agent():
     st.caption(':green[Arctic Analytics AI now has access to files you uploaded. Arctic Analytics will run code to analyze your data and generate insights.]')
     st.session_state['model'] = 'gpt-4.1-nano-2025-04-14'
     st.caption(f':blue[The analytics agent uses the {st.session_state["model"]} model.]')
+
+    render_analytics_agent_prompt_guide()
+    render_ai_prompt()
 
     if 'messages' not in st.session_state.keys() or not st.session_state['messages']:
         st.session_state['messages'] = [{'role': 'assistant', 'content': construct_welcome_message()}]
