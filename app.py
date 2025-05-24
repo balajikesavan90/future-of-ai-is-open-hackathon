@@ -1,7 +1,7 @@
 import streamlit as st
 import logging
 
-from utils.streamlit_helpers import render_reset, render_reset_data_analyst, render_session_state, setup_session_state
+from utils.streamlit_helpers import render_reset, render_reset_data_analyst, render_session_state, setup_session_state, render_reset_analytics_agent
 from widgets.home import setup_home, render_home
 
 # App title
@@ -24,7 +24,10 @@ st.caption(':green[Answer questions about your data using Actic Analytics.]')
 
 setup_home()
 if st.session_state['datasets_vetted']:
-    render_reset_data_analyst()
+    if st.session_state['agent_model']:
+        render_reset_analytics_agent()
+    else:
+        render_reset_data_analyst()
 render_home()
 
 if st.secrets['ENV'] == 'dev':

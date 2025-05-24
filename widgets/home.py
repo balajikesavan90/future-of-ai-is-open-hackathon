@@ -8,7 +8,7 @@ from widgets.about import render_about
 from widgets.data_dictionary import render_data_dictionary_widget
 from widgets.uploaded_data import render_uploaded_data
 from widgets.data_analyst import render_data_analyst
-
+from widgets.analytics_agent import render_analytics_agent
 
 def setup_home():
     logging.info(f'setup_home - {st.session_state["session_id"]}')
@@ -27,6 +27,11 @@ def render_home():
 
         analyze_data, about = st.tabs(['🔍 Analyze Data', '🤖 About'])
         with analyze_data:
+            st.session_state['agent_model'] = st.toggle(
+                label=':blue[Use Agent Model]',
+                value=False,
+                help='Use the agent model to analyze your data. This will allow the AI to see your data.',
+            )
             render_sample_datasets()
             render_uploader()
             render_snowflake_connection()
@@ -41,4 +46,7 @@ def render_home():
             if not st.session_state['datasets_vetted']:
                 render_uploaded_data()
             else:
-                render_data_analyst()
+                if st.session_state['agent_model']:
+                    render_analytics_agent()
+                else:
+                    render_data_analyst()

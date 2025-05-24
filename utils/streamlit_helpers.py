@@ -48,6 +48,19 @@ def render_reset_data_analyst():
     logging.info(f'render_reset_data_analyst - {st.session_state["session_id"]}')
     st.sidebar.button(':red[Reset Data Analyst]', on_click=reset_data_analyst, key='reset_chat_sidebar')
 
+def reset_analytics_agent():
+    logging.info(f'reset_analytics_agent - {st.session_state["session_id"]}')
+    st.session_state['messages'] = []
+    st.session_state['count'] = 0
+    st.session_state['session_id'] = str(uuid.uuid4())
+    print('###############################')
+    print('reset_analytics_agent')
+    print('###############################')
+
+def render_reset_analytics_agent():
+    logging.info(f'render_reset_analytics_agent - {st.session_state["session_id"]}')
+    st.sidebar.button(':red[Reset Analytics Agent]', on_click=reset_analytics_agent, key='reset_agent_sidebar')
+
 def render_session_state():
     logging.info(f'render_session_state - {st.session_state["session_id"]}')
     st.sidebar.write(st.session_state)

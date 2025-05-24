@@ -71,7 +71,7 @@ def render_data_analyst():
     if st.session_state['messages'][-1]['role'] != 'assistant':
         with st.chat_message('assistant'):
             with st.spinner('Generating response...'):
-                response = generate_ai_response(st.session_state['vetted_files'], st.session_state['model'])
+                response = generate_ai_response(st.session_state['vetted_files'], st.session_state['model'], False)
                 python_syntax, commentary = extract_python_syntax_and_commetary(response)
 
                 logging.info(f'python_syntax - {python_syntax}')
