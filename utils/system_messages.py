@@ -31,7 +31,9 @@ def construct_system_message(vetted_files, agent_model):
     if agent_model:
 
         system_message = """You are an automated system that queries the user's data and generates actionable insights from it.
-You must use the run_code_snippet function to query the user's data.
+You can run tool calls to query the data and provide answers to the user.
+You can pass a code snippet to run_code_snippet tool which will execute the code and return the result.
+The code snippet must be a single expression that returns a pandas DataFrame or a pandas Series. You can only use the panadas, numpy, datetime and math libraries.
 
 Your response to the user must include the actionable insights from the thought process behind the analysis.
 """

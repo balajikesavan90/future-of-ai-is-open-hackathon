@@ -269,19 +269,9 @@ class OpenAIUtility:
             logging.info('Result is a pandas Series')
             result = result.to_json(orient='index')
 
-        # allow numpy.float64 and numpy.int64 to be converted to JSON
-        elif isinstance(result, (float, int, str)):
-            logging.info(f'Result is a float, int or str: {result}')
-            result = json.dumps(result)
-
-        # allow tuples to be converted to JSON
-        elif isinstance(result, tuple):
-            logging.info(f'Result is a tuple: {result}')
-            result = json.dumps(result)
-
         else:
             logging.info(f'Result is not a pandas df ot a pandas series: {type(result)}')
-            result = "Code execution did not return a DataFrame or Series. Please check the code snippet for errors."
+            result = "Code execution did not return a DataFrame or Series. The code snippet must be a single expression that returns a pandas DataFrame or a pandas Series. You can only use the pandas, numpy, datetime and math libraries."
 
         logging.info(f'Final execution result - {result[:100]}... - {st.session_state["session_id"]}' 
                     if len(str(result)) > 100 else f'Final execution result - {result} - {st.session_state["session_id"]}')
@@ -345,14 +335,14 @@ class OpenAIUtility:
                 "type": "function",
                 "function": {
                     "name": "run_code_snippet",
-                    "description": "Run a code snippet and return the result. The code snippet must be a single expression that returns a pandas DataFrame or a pandas Series. You can only use the panadas, numpy, datetime and math libraries.",
+                    "description": "Run a code snippet and return the result. The code snippet must be a single expression that returns a pandas DataFrame or a pandas Series. You can only use the pandas, numpy, datetime and math libraries.",
                     "strict": True,
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "code_snippet": {
                                 "type": "string",
-                                "description": "The code snippet to run. The code snippet must be a single expression that returns a pandas DataFrame or a pandas Series. You can only use the panadas, numpy, datetime and math libraries."
+                                "description": "The code snippet to run. The code snippet must be a single expression that returns a pandas DataFrame or a pandas Series. You can only use the pandas, numpy, datetime and math libraries."
                             },
                         },
                         "additionalProperties": False,
