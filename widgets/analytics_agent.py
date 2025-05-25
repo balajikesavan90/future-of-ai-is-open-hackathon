@@ -71,6 +71,7 @@ def render_analytics_agent():
                 for tool_call in msg['tool_calls']:
                     with st.expander('🛠️ See Tool Call', expanded=False):
                         st.code(json.loads(tool_call['function']['arguments'])['code_snippet'])
+                        st.caption(f"Reason: {json.loads(tool_call['function']['arguments'])['reason']}")
         if msg['role'] == 'tool':
             with st.expander('🛠️ See Tool Response', expanded=False):
                 tool_response = msg['content']

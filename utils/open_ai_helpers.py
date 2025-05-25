@@ -342,9 +342,13 @@ class OpenAIUtility:
                                 "type": "string",
                                 "description": "The code snippet to run. The code snippet must be a single expression that returns a pandas DataFrame or a pandas Series. You can only use the pandas, numpy, datetime and math libraries."
                             },
+                            "reason": {
+                                "type": "string",
+                                "description": "The reason for running the code snippet. This will be used to provide context for the code execution and help the user understand the purpose of the code snippet."
+                            }
                         },
                         "additionalProperties": False,
-                        "required": ["code_snippet"],
+                        "required": ["code_snippet", "reason"],
                     },
                 }
             }            # Define tool config with both specs and handlers
