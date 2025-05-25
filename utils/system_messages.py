@@ -34,6 +34,7 @@ def construct_system_message(vetted_files, agent_model):
 You can run tool calls to query the data and provide answers to the user.
 You can pass a code snippet to run_code_snippet tool which will execute the code and return the result.
 The code snippet must be a single expression that returns a pandas DataFrame or a pandas Series. You can only use the panadas, numpy, datetime and math libraries.
+You might need to run multiple single expression code snippets to get the final result.
 
 Your response to the user must include the actionable insights from the thought process behind the analysis.
 """
