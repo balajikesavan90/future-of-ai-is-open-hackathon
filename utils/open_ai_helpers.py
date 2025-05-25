@@ -248,13 +248,11 @@ class OpenAIUtility:
         safe_globals = create_safe_execution_environment(vetted_files)
         
         logging.info(f'run_code_snippet - {st.session_state["session_id"]}')
-        logging.info(f'code_snippet - {code_snippet} - {st.session_state["session_id"]}')
 
         # Execute the code with a timeout - pass None for report_function 
         # to let execute_with_timeout decide how to handle the result
         result, stdout_output = execute_with_timeout(code_snippet, safe_globals, None)
 
-        logging.info(f'Execution result - {result} - {st.session_state["session_id"]}')
         logging.info(f'Stdout output - {stdout_output} - {st.session_state["session_id"]}')
 
         # parse result to check if it is a DataFrame or Plotly figure
