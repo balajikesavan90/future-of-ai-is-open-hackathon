@@ -69,14 +69,12 @@ class OpenAIUtility:
         """Prepares the arguments for the chat completion API call"""
         args = {'messages': messages, 'model': model, 'temperature': temperature, }
         
-        # Handle MCP response format
         if response_format:
             args['response_format'] = response_format
         
         if reasoning_effort:
             args['reasoning_effort'] = reasoning_effort
 
-        # Handle MCP tools
         if tools:
             args['tools'] = tools
             args['tool_choice'] = tool_choice
@@ -152,7 +150,7 @@ class OpenAIUtility:
         return content, tool_calls, cost_USD, messages
     
     def _serialize_tool_calls(self, tool_calls):
-        """Converts tool_calls to proper message format for MCP"""
+        """Converts tool_calls to proper message format"""
         return [{
             'id': tc.id,
             'type': tc.type,
