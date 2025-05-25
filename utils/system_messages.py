@@ -37,6 +37,7 @@ The code snippet must be a single expression that returns a pandas DataFrame or 
 You might need to run multiple single expression code snippets to get the final result.
 
 Your response to the user must include the actionable insights from the thought process behind the analysis.
+\n\n
 """
 
     else:
@@ -71,16 +72,16 @@ This is a very serious requirement for all of your responses.\n\n"""
 
     system_message += "Here is the metadata of the files uploaded by the user.\n"
     for filename in vetted_files:
-        system_message += f'\n\n{filename}:\n'
-        system_message += f'Description: {vetted_files[filename]["dataset_description"]}\n'
-        system_message += f'Data Dictionary:\n'
-        system_message += vetted_files[filename]['data_dictionary_json']+'\n'
-        system_message += f'Pandas Describe:\n'
-        system_message += vetted_files[filename]['dataframe'].describe().to_json(orient='index')+'\n'
-        system_message += f'First 5 rows of the dataset:\n'
-        system_message += vetted_files[filename]['dataframe'].head().to_json(orient='index')+'\n'
-        system_message += f'Last 5 rows of the dataset:\n'
-        system_message += vetted_files[filename]['dataframe'].tail().to_json(orient='index')+'\n'
+        system_message += f'\n\n{filename}:\n\n'
+        system_message += f'Description: {vetted_files[filename]["dataset_description"]}\n\n'
+        system_message += f'Data Dictionary:\n\n'
+        system_message += vetted_files[filename]['data_dictionary_json']+'\n\n'
+        system_message += f'Pandas Describe:\n\n'
+        system_message += vetted_files[filename]['dataframe'].describe().to_json(orient='index')+'\n\n'
+        system_message += f'First 5 rows of the dataset:\n\n'
+        system_message += vetted_files[filename]['dataframe'].head().to_json(orient='index')+'\n\n'
+        system_message += f'Last 5 rows of the dataset:\n\n'
+        system_message += vetted_files[filename]['dataframe'].tail().to_json(orient='index')+'\n\n'
         system_message += f'The dataset has already been loaded as a pandas DataFrame named {filename}\n\n'
     
     system_message += "You must use this metadata to generate your response.\n"
