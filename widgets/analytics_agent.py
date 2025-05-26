@@ -88,12 +88,11 @@ def render_analytics_agent():
             if 'tool_calls' in msg:
                 for tool_call in msg['tool_calls']:
                     with st.expander(f"🛠️ See Tool Call - Tool Name: {tool_call['function']['name']}", expanded=False):
+                        st.caption(f"Reason: {json.loads(tool_call['function']['arguments'])['reason']}")
                         if 'python_expression' in json.loads(tool_call['function']['arguments']):
                             st.code(json.loads(tool_call['function']['arguments'])['python_expression'], language='python')
-                            st.caption(f"Reason: {json.loads(tool_call['function']['arguments'])['reason']}")
                         if 'function_definition' in json.loads(tool_call['function']['arguments']):
                             st.code(json.loads(tool_call['function']['arguments'])['function_definition'], language='python')
-                            st.caption(f"Reason: {json.loads(tool_call['function']['arguments'])['reason']}")
         if msg['role'] == 'tool':
             with st.expander('🛠️ See Tool Response', expanded=False):
                 tool_response = msg['content']
