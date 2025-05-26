@@ -3,7 +3,7 @@ import logging
 
 from widgets.sample_datasets import render_sample_datasets
 from widgets.uploader import render_uploader
-from widgets.snowflake_connection import render_snowflake_connection
+# from widgets.snowflake_connection import render_snowflake_connection
 from widgets.about import render_about
 from widgets.data_dictionary import render_data_dictionary_widget
 from widgets.uploaded_data import render_uploaded_data
@@ -34,7 +34,7 @@ def render_home():
             )
             render_sample_datasets()
             render_uploader()
-            render_snowflake_connection()
+            # render_snowflake_connection()
         with about:
             render_about()
 
