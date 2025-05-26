@@ -428,6 +428,7 @@ class OpenAIUtility:
             response, _, cost = self.chatcompletion_APICall(prompt, model=model, temperature=0.1, response_format=ResponseFormat)
 
         st.session_state['prompt_str'] = ""
+        st.session_state['cost'] += cost
         for dict_message in prompt:
             content_str = "None"
             tool_calls_str = "None"

@@ -36,9 +36,6 @@ def render_analytics_agent():
     st.session_state['model'] = 'gpt-4.1-nano-2025-04-14'
     st.caption(f':blue[The analytics agent uses the {st.session_state["model"]} model.]')
 
-    render_analytics_agent_prompt_guide()
-    render_ai_prompt()
-
     if 'messages' not in st.session_state.keys() or not st.session_state['messages']:
         st.session_state['messages'] = [{'role': 'assistant', 'content': construct_welcome_message()}]
 
@@ -47,6 +44,14 @@ def render_analytics_agent():
     
     if 'count' not in st.session_state:
         st.session_state['count'] = 0
+
+    st.sidebar.metric(
+        label='Usage in this session',
+        value=f'${st.session_state["cost"]}',
+    )
+
+    render_analytics_agent_prompt_guide()
+    render_ai_prompt()
 
     with st.expander('See uploaded Datasets'):
         for filename in st.session_state['vetted_files']:
