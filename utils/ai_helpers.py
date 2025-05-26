@@ -29,12 +29,15 @@ I have access to the metadata of the files you uploaded. I will use that to gene
 
 def generate_ai_response(vetted_files, model, agent_model=False):
     logging.info(f'generate_ai_response - {st.session_state["session_id"]}')
+    
     if 'meta' in model.lower() or 'llama' in model.lower():
-        response = llama_client.generate_llama_response(vetted_files, model, False)
-    elif 'gpt' in model.lower():
-        response = openai_client.generate_openai_response(vetted_files, model, agent_model)
+        if 'llama_client' not in st.session_state:
+            st.session_state['llama_client'] = MetaLlama()
+        response = st.session_state['llama_client'].generate_llama_response(vetted_files, model, False)
     else:
-        response = openai_client.generate_openai_response(vetted_files, model, agent_model)
+        if 'openai_client' not in st.session_state:
+            st.session_state['openai_client'] = OpenAIUtility()
+        response = st.session_state['openai_client'].generate_openai_response(vetted_files, model, agent_model)
+        
     return response
-
 
