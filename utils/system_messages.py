@@ -79,7 +79,10 @@ def add_file_metadata(system_message, vetted_files):
         system_message += f'Data Dictionary:\n\n'
         system_message += vetted_files[filename]['data_dictionary_json']+'\n\n'
         system_message += f'Pandas Describe:\n\n'
-        system_message += vetted_files[filename]['dataframe'].describe().to_json(orient='index')+'\n\n'
+        system_message += vetted_files[filename]['dataframe'].describe(include='all').T.to_json(orient='index')+'\n\n'
+        system_message += f'Missing Values by Column:\n\n'
+        missing_values = vetted_files[filename]["dataframe"].isna().sum().to_json()
+        system_message += missing_values + '\n\n'
         system_message += f'First 5 rows of the dataset:\n\n'
         system_message += vetted_files[filename]['dataframe'].head().to_json(orient='index')+'\n\n'
         system_message += f'Last 5 rows of the dataset:\n\n'
@@ -88,7 +91,6 @@ def add_file_metadata(system_message, vetted_files):
     
     system_message += "You must use this metadata to generate your response.\n"
     return system_message
-
 def construct_system_message(vetted_files, agent_model):
     """Construct the system message based on the model and available files."""
     logging.info(f'construct_system_message - {st.session_state["session_id"]}')
