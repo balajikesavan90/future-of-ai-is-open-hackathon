@@ -235,7 +235,7 @@ class OpenAIUtility:
         return [content, messages, cost_USD]
     
 
-    def run_code_snippet(self, code_snippet, vetted_files):
+    def run_python_expression(self, python_expression, vetted_files):
         """
         Run a code snippet in a sandboxed environment
         Args:
@@ -247,11 +247,11 @@ class OpenAIUtility:
         # Create a restricted global environment for code execution
         safe_globals = create_safe_execution_environment(vetted_files)
         
-        logging.info(f'run_code_snippet - {st.session_state["session_id"]}')
+        logging.info(f'run_python_expression - {st.session_state["session_id"]}')
 
         # Execute the code with a timeout - pass None for report_function 
         # to let execute_with_timeout decide how to handle the result
-        result, stdout_output = execute_with_timeout(code_snippet, safe_globals, None)
+        result, stdout_output = execute_with_timeout(python_expression, safe_globals, None)
 
         logging.info(f'Stdout output - {stdout_output} - {st.session_state["session_id"]}')
 
@@ -327,34 +327,34 @@ class OpenAIUtility:
             st.stop()
 
         if agent_model:
-            run_code_snippet_toolspec = {
+            run_python_expression_toolspec = {
                 "type": "function",
                 "function": {
-                    "name": "run_code_snippet",
-                    "description": "Run a code snippet and return the result. The code snippet must be a single expression that returns a pandas DataFrame or a pandas Series. You can only use the pandas, numpy, datetime and math libraries.",
+                    "name": "run_python_expression",
+                    "description": "Run a python expression and return the result. The python expression must be a single expression that returns a pandas DataFrame or a pandas Series. You can only use the pandas, numpy, datetime and math libraries.",
                     "strict": True,
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "code_snippet": {
+                            "python_expression": {
                                 "type": "string",
-                                "description": "The code snippet to run. The code snippet must be a single expression that returns a pandas DataFrame or a pandas Series. You can only use the pandas, numpy, datetime and math libraries."
+                                "description": "The python expression to run. The python expression must be a single expression that returns a pandas DataFrame or a pandas Series. You can only use the pandas, numpy, datetime and math libraries."
                             },
                             "reason": {
                                 "type": "string",
-                                "description": "The reason for running the code snippet. This will be used to provide context for the code execution and help the user understand the purpose of the code snippet."
+                                "description": "The reason for running the python expression. This will be used to provide context for the code execution and help the user understand the purpose of the code snippet."
                             }
                         },
                         "additionalProperties": False,
-                        "required": ["code_snippet", "reason"],
+                        "required": ["python_expression", "reason"],
                     },
                 }
             }            # Define tool config with both specs and handlers
             tool_config = [
                 {
-                    'spec': run_code_snippet_toolspec,
-                    'handler': lambda args_dict: self.run_code_snippet(
-                        code_snippet=args_dict.get('code_snippet'),
+                    'spec': run_python_expression_toolspec,
+                    'handler': lambda args_dict: self.run_python_expression(
+                        python_expression=args_dict.get('python_expression'),
                         vetted_files=vetted_files
                     )
                 },
