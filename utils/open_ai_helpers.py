@@ -83,7 +83,7 @@ class OpenAIUtility:
         if tools:
             args['tools'] = tools
             args['tool_choice'] = tool_choice
-            args['parallel_tool_calls'] = True
+            args['parallel_tool_calls'] = False
             if 'o3' in args['model'] or 'o4' in args['model']:
                 # remove parallel_tool_calls for o3 and o4 models
                 args.pop('parallel_tool_calls', None)
