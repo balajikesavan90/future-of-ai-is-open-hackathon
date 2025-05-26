@@ -103,9 +103,7 @@ def render_data_analyst():
                         
                         if error_message:
                             # Raise RuntimeError to go through the exception block
-                            raise RuntimeError(error_message)
-                        elif stdout_output:
-                            st.text(f"Code output:\n{stdout_output}")
+                            raise RuntimeError(f"error_message: {error_message}\n\nCode output: {stdout_output}")
                             
                     except (SyntaxError, ValueError, TypeError, KeyError, AttributeError, IndexError, NameError, ModuleNotFoundError, RuntimeError) as e:
                         handle_all_other_errors(e, response)
