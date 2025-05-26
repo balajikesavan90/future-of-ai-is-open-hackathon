@@ -20,7 +20,14 @@ def render_data_analyst():
         st.session_state['messages'] = [{'role': 'assistant', 'content': construct_welcome_message(), 'count': 0}]
         st.session_state['count'] = 0   
 
+    if 'cost' not in st.session_state:
+        st.session_state['cost'] = 0
+
     st.session_state['model'] = st.sidebar.selectbox('Select the model:', ['meta/llama-4-scout-instruct', 'gpt-4.1-mini-2025-04-14'], index=1)
+    st.sidebar.metric(
+        label='Usage in this session',
+        value=f'${st.session_state["cost"]}',
+    )
     render_data_analyst_prompt_guide()
 
     with st.expander('See uploaded Datasets'):
