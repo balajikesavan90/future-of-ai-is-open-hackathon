@@ -33,7 +33,17 @@ def render_analytics_agent():
     logging.info(f'render_analytics_agent - {st.session_state["session_id"]}')
     st.divider()
     st.caption(':green[Arctic Analytics AI now has access to files you uploaded. Arctic Analytics will run code to analyze your data and generate insights.]')
-    st.session_state['model'] = 'gpt-4.1-nano-2025-04-14'
+
+    if st.secrets['ENV'] == 'dev':
+        st.session_state['model'] = st.sidebar.selectbox(
+            label = 'Model',
+            options = ['gpt-4.1-nano-2025-04-14', 'gpt-4.1-mini-2025-04-14', 'o4-mini-2025-04-16', 'gpt-4.1-2025-04-14', 'o3-2025-04-16'],
+            index = 0,
+            key='model_select_sidebar',
+        )
+    else:
+        st.session_state['model'] = 'gpt-4.1-nano-2025-04-14'
+
     st.caption(f':blue[The analytics agent uses the {st.session_state["model"]} model.]')
 
     if 'messages' not in st.session_state.keys() or not st.session_state['messages']:

@@ -57,9 +57,14 @@ class OpenAIUtility:
             return 0.1*prompt_tokens/1000000 + 0.4*completion_tokens/1000000
         elif model == 'gpt-4.1-mini-2025-04-14':
             return 0.4*prompt_tokens/1000000 + 1.6*completion_tokens/1000000
+        elif model == 'o4-mini-2025-04-16':
+            return 1.1*prompt_tokens/1000000 + 4.4*completion_tokens/1000000
+        elif model == 'gpt-4.1-2025-04-14':
+            return 2*prompt_tokens/1000000 + 8*completion_tokens/1000000
+        elif model == 'o3-2025-04-16':
+            return 10*prompt_tokens/1000000 + 40*completion_tokens/1000000
         else:
             st.error(f"Model {model} not recognized for cost calculation.")
-
     # @retry(wait=wait_random_exponential(min=5, max=10), stop=stop_after_attempt(5))
     def _completion_with_backoff(self, **kwargs):
         logging.info(f'completion_with_backoff - {st.session_state["session_id"]}')
