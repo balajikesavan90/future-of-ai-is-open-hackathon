@@ -31,13 +31,9 @@ def generate_ai_response(vetted_files, model, agent_model=False):
     logging.info(f'generate_ai_response - {st.session_state["session_id"]}')
     
     if 'meta' in model.lower() or 'llama' in model.lower():
-        if 'llama_client' not in st.session_state:
-            st.session_state['llama_client'] = MetaLlama()
-        response = st.session_state['llama_client'].generate_llama_response(vetted_files, model, False)
+        response = llama_client.generate_llama_response(vetted_files, model, False)
     else:
-        if 'openai_client' not in st.session_state:
-            st.session_state['openai_client'] = OpenAIUtility()
-        response = st.session_state['openai_client'].generate_openai_response(vetted_files, model, agent_model)
+        response = openai_client.generate_openai_response(vetted_files, model, agent_model)
         
     return response
 

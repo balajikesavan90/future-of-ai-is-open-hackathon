@@ -69,9 +69,13 @@ def render_analytics_agent():
                 st.chat_message(msg['role']).write(msg['content'].replace('$', '\$'))
             if 'tool_calls' in msg:
                 for tool_call in msg['tool_calls']:
-                    with st.expander('🛠️ See Tool Call', expanded=False):
-                        st.code(json.loads(tool_call['function']['arguments'])['python_expression'], language='python')
-                        st.caption(f"Reason: {json.loads(tool_call['function']['arguments'])['reason']}")
+                    with st.expander(f"🛠️ See Tool Call - Tool Name: {tool_call['function']['name']}", expanded=False):
+                        if 'python_expression' in json.loads(tool_call['function']['arguments']):
+                            st.code(json.loads(tool_call['function']['arguments'])['python_expression'], language='python')
+                            st.caption(f"Reason: {json.loads(tool_call['function']['arguments'])['reason']}")
+                        if 'function_definition' in json.loads(tool_call['function']['arguments']):
+                            st.code(json.loads(tool_call['function']['arguments'])['function_definition'], language='python')
+                            st.caption(f"Reason: {json.loads(tool_call['function']['arguments'])['reason']}")
         if msg['role'] == 'tool':
             with st.expander('🛠️ See Tool Response', expanded=False):
                 tool_response = msg['content']

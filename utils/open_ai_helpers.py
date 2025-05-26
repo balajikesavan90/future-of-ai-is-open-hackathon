@@ -86,7 +86,6 @@ class OpenAIUtility:
         """Processes tool calls and updates messages with tool responses"""
         for tool_call in tool_calls:
             logging.info(f'Calling tool: {tool_call.function.name}')
-            logging.info(f'Tool call arguments: {tool_call.function.arguments}')
             
             try:
                 tool_name = tool_call.function.name
@@ -234,8 +233,31 @@ class OpenAIUtility:
         logging.info(f'Final cost: ${cost_USD}')
         return [content, messages, cost_USD]
     
+    def run_python_function(self, python_code, reason, vetted_files, report_function):
+        """
+        Run a python function in a sandboxed environment
+        Args:
+            python_code: The code snippet to run
+            vetted_files: The vetted files to use
+        Returns:
+            The result of the code execution
+        """
 
-    def run_python_expression(self, python_expression, vetted_files):
+        # check if the code is a valid function definition
+        if not python_code.strip().startswith('def generate_report():'):
+            logging.error(f'Invalid function definition: {python_code}')
+            return "The python function must be named generate_report and intake 0 arguments. The function must return a single pandas DataFrame or a pandas Series. You can only use the pandas, numpy, datetime and math libraries."
+        
+
+        return self.run_python_code(
+            python_code=python_code,
+            reason=reason,
+            vetted_files=vetted_files,
+            report_function=report_function
+        )
+        
+
+    def run_python_code(self, python_code, reason, vetted_files, report_function):
         """
         Run a code snippet in a sandboxed environment
         Args:
@@ -247,11 +269,11 @@ class OpenAIUtility:
         # Create a restricted global environment for code execution
         safe_globals = create_safe_execution_environment(vetted_files)
         
-        logging.info(f'run_python_expression - {st.session_state["session_id"]}')
+        logging.info(f'run_python_code - {st.session_state["session_id"]}')
 
         # Execute the code with a timeout - pass None for report_function 
         # to let execute_with_timeout decide how to handle the result
-        result, stdout_output = execute_with_timeout(python_expression, safe_globals, None)
+        result, stdout_output = execute_with_timeout(python_code, safe_globals, report_function)
 
         logging.info(f'Stdout output - {stdout_output} - {st.session_state["session_id"]}')
 
@@ -265,9 +287,14 @@ class OpenAIUtility:
             logging.info('Result is a pandas Series')
             result = result.to_json(orient='index')
 
+        elif isinstance(result, dict):
+            logging.info('Result is a dict')
+            # Convert dict to DataFrame
+            result = pd.DataFrame.from_dict(result, orient='index').to_json(orient='index')
+
         else:
             logging.info(f'Result is not a pandas df ot a pandas series: {type(result)}')
-            result = "Code execution did not return a DataFrame or Series. The code snippet must be a single expression that returns a pandas DataFrame or a pandas Series. You can only use the pandas, numpy, datetime and math libraries."
+            result = f"Code execution returned an object of type {type(result)}. The code execution must return a pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
 
         logging.info(f'Final execution result - {result[:100]}... - {st.session_state["session_id"]}' 
                     if len(str(result)) > 100 else f'Final execution result - {result} - {st.session_state["session_id"]}')
@@ -331,14 +358,14 @@ class OpenAIUtility:
                 "type": "function",
                 "function": {
                     "name": "run_python_expression",
-                    "description": "Run a python expression and return the result. The python expression must be a single expression that returns a pandas DataFrame or a pandas Series. You can only use the pandas, numpy, datetime and math libraries.",
+                    "description": "Run a python expression and return the result. The python expression must be a single expression that returns a pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries.",
                     "strict": True,
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "python_expression": {
                                 "type": "string",
-                                "description": "The python expression to run. The python expression must be a single expression that returns a pandas DataFrame or a pandas Series. You can only use the pandas, numpy, datetime and math libraries."
+                                "description": "The python expression to run. The python expression must be a single expression that returns a pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
                             },
                             "reason": {
                                 "type": "string",
@@ -349,15 +376,52 @@ class OpenAIUtility:
                         "required": ["python_expression", "reason"],
                     },
                 }
-            }            # Define tool config with both specs and handlers
+            }
+
+            run_python_function_toolspec = {
+                "type": "function",
+                "function": {
+                    "name": "run_python_function",
+                    "description": "Run a python function called generate_report. The function must intake 0 arguments and return a single pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries.",
+                    "strict": True,
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "function_definition": {
+                                "type": "string",
+                                "description": "The python function definition to run. The function must be named generate_report and intake 0 arguments. The function must return a single pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
+                            },
+                            "reason": {
+                                "type": "string",
+                                "description": "The reason for running the python function. This will be used to provide context for the code execution and help the user understand the purpose of the code snippet."
+                            }
+                        },
+                        "additionalProperties": False,
+                        "required": ["function_definition", "reason"],
+                    },
+                }
+            }
+
+            # Define tool config with both specs and handlers
             tool_config = [
                 {
                     'spec': run_python_expression_toolspec,
-                    'handler': lambda args_dict: self.run_python_expression(
-                        python_expression=args_dict.get('python_expression'),
-                        vetted_files=vetted_files
+                    'handler': lambda args_dict: self.run_python_code(
+                        python_code=args_dict.get('python_expression'),
+                        reason=args_dict.get('reason'),
+                        vetted_files=vetted_files,
+                        report_function=None,
                     )
                 },
+                {
+                    'spec': run_python_function_toolspec,
+                    'handler': lambda args_dict: self.run_python_function(
+                        python_code=args_dict.get('function_definition'),
+                        reason=args_dict.get('reason'),
+                        vetted_files=vetted_files,
+                        report_function='generate_report'
+                    )
+                }
             ]
             _, response, cost = self.chatcompletion_APICall(prompt, model=model, temperature=0.1, tool_config=tool_config)
         else:
