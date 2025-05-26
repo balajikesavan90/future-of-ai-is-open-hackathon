@@ -14,6 +14,7 @@ import plotly.express as px
 import datetime
 import warnings
 import math
+import statsmodels as sm
 
 class SecurityError(Exception):
     """Exception raised for security violations in code execution."""
@@ -33,8 +34,19 @@ def validate_code_security(python_syntax):
         SecurityError: If code contains potentially dangerous operations
         SyntaxError: If code has syntax errors
     """
-    forbidden_modules = ['os', 'subprocess', 'sys', 'shutil', 'importlib', 'builtins', 
-                       '__builtin__', 'pickle', 'socket', 'requests']
+    # Whitelist of allowed modules
+    allowed_modules = {
+        'pandas', 'pd', 
+        'numpy', 'np', 
+        'matplotlib', 'plt', 
+        'plotly', 'go', 'px', 
+        'datetime', 
+        'warnings', 
+        'math',
+        'statsmodels', 'sm'
+    }
+    
+    # Still maintain the blacklist for dangerous functions
     forbidden_functions = ['eval', 'exec', 'compile', 'open', 'input', '__import__', 'globals']
     
     # Parse the code to check for security issues
@@ -45,11 +57,19 @@ def validate_code_security(python_syntax):
         for node in ast.walk(parsed_ast):
             if isinstance(node, ast.Import):
                 for name in node.names:
-                    if name.name in forbidden_modules:
-                        raise SecurityError(f"Import of potentially dangerous module '{name.name}' is not allowed")
+                    # Check if the module being imported is in the allowed list
+                    module_parts = name.name.split('.')
+                    base_module = module_parts[0]
+                    if base_module not in allowed_modules:
+                        raise SecurityError(f"Import of module '{name.name}' is not allowed. Only whitelisted modules can be used.")
+                        
             elif isinstance(node, ast.ImportFrom):
-                if node.module in forbidden_modules:
-                    raise SecurityError(f"Import from potentially dangerous module '{node.module}' is not allowed")
+                # Check if the module being imported from is in the allowed list
+                if node.module:
+                    module_parts = node.module.split('.')
+                    base_module = module_parts[0]
+                    if base_module not in allowed_modules:
+                        raise SecurityError(f"Import from module '{node.module}' is not allowed. Only whitelisted modules can be used.")
             
             # Check for dangerous function calls
             if isinstance(node, ast.Call):
@@ -84,6 +104,8 @@ def create_safe_execution_environment(vetted_files):
         'math': math,
         'print': print,
         'st': st, 
+        'sm': sm,
+
     }
     
     # Add the dataframes from vetted files to the globals

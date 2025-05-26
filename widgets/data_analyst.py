@@ -102,12 +102,12 @@ def render_data_analyst():
                         output, stdout_output, error_message = safely_execute_code(python_syntax, st.session_state['vetted_files'], 'generate_report')
                         
                         if error_message:
-                            st.error(error_message)
-                            output = None
+                            # Raise RuntimeError to go through the exception block
+                            raise RuntimeError(error_message)
                         elif stdout_output:
                             st.text(f"Code output:\n{stdout_output}")
                             
-                    except (SyntaxError, ValueError, TypeError, KeyError, AttributeError, IndexError, NameError, ModuleNotFoundError) as e:
+                    except (SyntaxError, ValueError, TypeError, KeyError, AttributeError, IndexError, NameError, ModuleNotFoundError, RuntimeError) as e:
                         handle_all_other_errors(e, response)
 
                 check_outputs_and_give_feedback(output, commentary, response)
