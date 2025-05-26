@@ -23,11 +23,10 @@ def render_data_analyst():
     if 'cost' not in st.session_state:
         st.session_state['cost'] = 0
 
-    st.session_state['model'] = st.sidebar.selectbox('Select the model:', ['meta/llama-4-scout-instruct', 'gpt-4.1-mini-2025-04-14'], index=1)
-    st.sidebar.metric(
-        label='Usage in this session',
-        value=f'${st.session_state["cost"]}',
-    )
+    st.session_state['model'] = st.sidebar.selectbox('Select the model:', ['meta/llama-4-scout-instruct', 'gpt-4.1-nano-2025-04-14'], index=1)
+
+    st.session_state['usage_container'] = st.empty()
+
     render_data_analyst_prompt_guide()
 
     with st.expander('See uploaded Datasets'):
@@ -119,3 +118,9 @@ def render_data_analyst():
 
         message = {'role': 'assistant', 'content': response, 'count': st.session_state['count'], 'raw_python': raw_python, 'python_syntax': python_syntax, 'commentary': commentary, 'output': output}
         st.session_state['messages'].append(message)
+
+    with st.session_state['usage_container']:
+        st.sidebar.metric(
+            label='Usage in this session',
+            value=f'${st.session_state["cost"]}',
+        )

@@ -55,10 +55,13 @@ def render_analytics_agent():
     if 'count' not in st.session_state:
         st.session_state['count'] = 0
 
-    st.sidebar.metric(
-        label='Usage in this session',
-        value=f'${st.session_state["cost"]}',
-    )
+    st.session_state['usage_container'] = st.empty()
+
+    with st.session_state['usage_container']:
+        st.sidebar.metric(
+            label='Usage in this session',
+            value=f'${st.session_state["cost"]}',
+        )
 
     render_analytics_agent_prompt_guide()
     render_ai_prompt()

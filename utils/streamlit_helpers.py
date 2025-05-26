@@ -35,6 +35,7 @@ def reset_data_analyst():
     logging.info(f'reset_data_analyst - {st.session_state["session_id"]}')
     st.session_state['messages'] = []
     st.session_state['count'] = 0
+    st.session_state['cost'] = 0
     st.session_state['session_id'] = str(uuid.uuid4())
     print('###############################')
     print('reset_data_analyst')
@@ -52,6 +53,7 @@ def reset_analytics_agent():
     logging.info(f'reset_analytics_agent - {st.session_state["session_id"]}')
     st.session_state['messages'] = []
     st.session_state['count'] = 0
+    st.session_state['cost'] = 0
     st.session_state['session_id'] = str(uuid.uuid4())
     print('###############################')
     print('reset_analytics_agent')
