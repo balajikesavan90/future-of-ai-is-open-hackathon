@@ -84,7 +84,7 @@ def render_analytics_agent():
     for msg in st.session_state['messages']:
         if msg['role'] in ['user', 'assistant']:
             if 'content' in msg and msg['content'] != None:
-                st.chat_message(msg['role']).write(msg['content'].replace('$', '\$'))
+                st.chat_message(msg['role']).write(msg['content'])
             if 'tool_calls' in msg:
                 for tool_call in msg['tool_calls']:
                     with st.expander(f"🛠️ See Tool Call - Tool Name: {tool_call['function']['name']}", expanded=False):
