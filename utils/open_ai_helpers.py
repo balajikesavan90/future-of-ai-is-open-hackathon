@@ -8,7 +8,7 @@ from tenacity import (
 import tiktoken
 import logging
 import json
-import logging
+import re
 from pydantic import BaseModel, Field
 import pandas as pd
 import plotly.graph_objects as go
@@ -257,13 +257,32 @@ class OpenAIUtility:
         # check if the code is a valid function definition
         if not python_code.strip().startswith('def generate_report():'):
             logging.error(f'Invalid function definition: {python_code}')
-            return "The python function must be named generate_report and intake 0 arguments. The function must return a single pandas DataFrame or a pandas Series. You can only use the pandas, numpy, datetime and math libraries."
+            return "The python function must be named generate_report and intake 0 arguments. The function must return a single pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
 
-        # check if it ends with the function call
-        if not python_code.strip().endswith('generate_report()'):
-            # remove 'generate_report()' from the end
-            python_code = python_code.strip().rstrip('generate_report()').rstrip('\n')
-
+        # Check for any code outside the function definition
+        # Get all lines of code and indent levels
+        lines = python_code.strip().split('\n')
+        
+        # If there are unindented non-comment lines after the function definition, reject
+        for i, line in enumerate(lines):
+            # Skip the function definition line and allow comment lines
+            stripped_line = line.strip()
+            if (i > 0 and not line.startswith(' ') and not line.startswith('\t') and stripped_line and not stripped_line.startswith('#')):
+                logging.error(f'Code exists outside of function: {line}')
+                return "All code must be within the generate_report function. No code should exist outside the function definition."
+        
+        # Make sure the function ends with a return statement
+        indented_lines = [line for line in lines[1:] if line.strip()]  # Skip function def line
+        if not indented_lines:
+            logging.error("Empty function body")
+            return "The function body is empty. It must contain code and end with a return statement."
+        
+        last_code_line = indented_lines[-1].strip()
+        if not last_code_line.startswith('return '):
+            logging.error(f'Function does not end with return statement: {last_code_line}')
+            return "The function must end with a return statement that returns a pandas DataFrame, Series, or dictionary."
+        
+        # If we got here, function definition is acceptable
         return self.run_python_code(
             python_code=python_code,
             reason=reason,
