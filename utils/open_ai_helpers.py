@@ -15,7 +15,7 @@ import plotly.graph_objects as go
 
 from utils.system_messages import construct_system_message
 from utils.streamlit_helpers import reset_data_analyst
-from utils.security_helpers import create_safe_execution_environment, execute_with_timeout
+from utils.security_helpers import safely_execute_code
 
 
 class ResponseFormat(BaseModel):
@@ -281,16 +281,18 @@ class OpenAIUtility:
         Returns:
             The result of the code execution
         """
-        # Create a restricted global environment for code execution
-        safe_globals = create_safe_execution_environment(vetted_files)
-        
         logging.info(f'run_python_code - {st.session_state["session_id"]}')
 
         # Execute the code with a timeout - pass None for report_function 
         # to let execute_with_timeout decide how to handle the result
-        result, stdout_output = execute_with_timeout(python_code, safe_globals, report_function)
+        result, stdout_output, error_message = safely_execute_code(python_code, vetted_files, report_function)
 
         logging.info(f'Stdout output - {stdout_output} - {st.session_state["session_id"]}')
+
+        if error_message:
+            logging.error(f'Error executing code: {error_message}')
+            result = f"Error executing code: {error_message}\n\nStdout Output: {stdout_output}"
+            return result
 
         # parse result to check if it is a DataFrame or Plotly figure
         if isinstance(result, pd.DataFrame):
