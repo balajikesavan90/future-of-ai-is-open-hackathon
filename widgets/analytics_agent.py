@@ -29,6 +29,17 @@ def try_convert_to_dataframe(data):
     except Exception:
         return None
             
+def safely_escape_dollars(text):
+    """
+    Escapes dollar signs in text only if they don't appear to be already escaped.
+    """
+    if not text:
+        return text
+    if '\\$' in text:  # Check for already escaped dollars
+        return text
+    else:
+        return text.replace('$', '\\$')
+            
 def render_analytics_agent():
     logging.info(f'render_analytics_agent - {st.session_state["session_id"]}')
     st.divider()
@@ -84,7 +95,7 @@ def render_analytics_agent():
     for msg in st.session_state['messages']:
         if msg['role'] in ['user', 'assistant']:
             if 'content' in msg and msg['content'] != None:
-                st.chat_message(msg['role']).write(msg['content'].replace('$', '\\$'))  # Escape dollar signs for LaTeX rendering
+                st.chat_message(msg['role']).write(safely_escape_dollars(msg['content']))  # Safely escape dollar signs for LaTeX rendering
             if 'tool_calls' in msg:
                 for tool_call in msg['tool_calls']:
                     with st.expander(f"🛠️ See Tool Call - Tool Name: {tool_call['function']['name']}", expanded=False):

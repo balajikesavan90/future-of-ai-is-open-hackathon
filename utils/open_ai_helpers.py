@@ -258,7 +258,11 @@ class OpenAIUtility:
         if not python_code.strip().startswith('def generate_report():'):
             logging.error(f'Invalid function definition: {python_code}')
             return "The python function must be named generate_report and intake 0 arguments. The function must return a single pandas DataFrame or a pandas Series. You can only use the pandas, numpy, datetime and math libraries."
-        
+
+        # check if it ends with the function call
+        if not python_code.strip().endswith('generate_report()'):
+            # remove 'generate_report()' from the end
+            python_code = python_code.strip().rstrip('generate_report()').rstrip('\n')
 
         return self.run_python_code(
             python_code=python_code,
@@ -303,8 +307,17 @@ class OpenAIUtility:
             # Convert dict to DataFrame
             result = pd.DataFrame.from_dict(result, orient='index').to_json(orient='index')
 
+        elif isinstance(result, int) or isinstance(result, float):
+            logging.info(f'Result is a number: {result}')
+            result = pd.DataFrame({'result': [result]}).to_json(orient='index')
+
+        elif isinstance(result, list):
+            logging.info(f'Result is a list: {result}')
+            # Convert list to DataFrame
+            result = pd.DataFrame(result).to_json(orient='index')
+
         else:
-            logging.info(f'Result is not a pandas df ot a pandas series: {type(result)}')
+            logging.info(f'Result is not a pandas df or a pandas series or a python dictionary: {type(result)}')
             result = f"Code execution returned an object of type {type(result)}. The code execution must return a pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
 
         logging.info(f'Final execution result - {result[:100]}... - {st.session_state["session_id"]}' 

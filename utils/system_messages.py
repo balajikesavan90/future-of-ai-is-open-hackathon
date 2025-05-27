@@ -35,6 +35,7 @@ You can pass a python function to run_python_function tool which will execute th
 You might need to run multiple tool calls to get the final result.
 
 Your response to the user must include the actionable insights from the thought process behind the analysis.
+Generate your response in markdown format.
 \n\n
 """
     else:
