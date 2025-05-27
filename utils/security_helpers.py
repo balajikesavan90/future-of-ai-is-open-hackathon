@@ -2,6 +2,7 @@ import streamlit as st
 import threading
 import ast
 import logging
+import traceback
 from io import StringIO
 from contextlib import redirect_stdout, redirect_stderr
 
@@ -219,7 +220,20 @@ def safely_execute_code(python_syntax, vetted_files, report_function):
         error_message = f"Security violation: {str(e)}"
         logging.error(f"Security violation in code execution: {str(e)}")
     except Exception as e:
-        error_message = str(e)
-        logging.error(f"Error in code execution: {str(e)}")
+        # Log the full traceback for debugging purposes
+        full_traceback = traceback.format_exc()
+        logging.error(f"Error in code execution: {full_traceback}")
+        
+        # Provide a clean error message to the user with exception type and message,
+        # but without potentially sensitive path information
+        error_type = type(e).__name__
+        error_message = f"{error_type}: {str(e)}"
+        
+        # Extract line information from the traceback for better debugging help
+        tb_lines = full_traceback.splitlines()
+        for line in tb_lines:
+            if "line" in line and ", in " in line:
+                # This captures the line number information without file paths
+                error_message += "\n" + line.split(", in ")[-1]
     
     return output, stdout_output, error_message

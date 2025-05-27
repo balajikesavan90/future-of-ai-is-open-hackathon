@@ -9,6 +9,8 @@ import tiktoken
 import logging
 import json
 import re
+import numpy as np
+import traceback  # Add traceback module import
 from pydantic import BaseModel, Field
 import pandas as pd
 import plotly.graph_objects as go
@@ -113,8 +115,22 @@ class OpenAIUtility:
                     'tool_call_id': tool_call.id
                 })
             except Exception as e:
-                error_message = f"Error executing tool {tool_call.function.name}: {str(e)}"
-                logging.error(error_message)
+                # Log the full traceback for debugging purposes
+                full_traceback = traceback.format_exc()
+                logging.error(f"Error executing tool {tool_call.function.name}: {full_traceback}")
+                
+                # Provide a clean error message with exception type and message
+                # but without potentially sensitive path information
+                error_type = type(e).__name__
+                error_message = f"Error executing tool {tool_call.function.name}: {error_type}: {str(e)}"
+                
+                # Extract line information from the traceback for better debugging help
+                tb_lines = full_traceback.splitlines()
+                for line in tb_lines:
+                    if "line" in line and ", in " in line:
+                        # This captures the line number information without file paths
+                        error_message += "\n" + line.split(", in ")[-1]
+                        
                 messages.append({
                     'role': 'tool', 
                     'content': error_message, 
@@ -328,8 +344,12 @@ class OpenAIUtility:
             # Convert dict to DataFrame
             result = pd.DataFrame.from_dict(result, orient='index').to_json(orient='index')
 
-        elif isinstance(result, int) or isinstance(result, float):
+        elif isinstance(result, (int, float)) or (hasattr(result, 'dtype') and np.issubdtype(result.dtype, np.number)):
+            # Handle both Python and NumPy numeric types
             logging.info(f'Result is a number: {result}')
+            # Convert NumPy types to native Python types if needed
+            if hasattr(result, 'item'):
+                result = result.item()
             result = pd.DataFrame({'result': [result]}).to_json(orient='index')
 
         elif isinstance(result, list):
