@@ -43,7 +43,7 @@ def safely_escape_dollars(text):
 def render_analytics_agent():
     logging.info(f'render_analytics_agent - {st.session_state["session_id"]}')
     st.divider()
-    st.caption(':green[Arctic Analytics AI now has access to files you uploaded. Arctic Analytics will run code to analyze your data and generate insights.]')
+    st.info('Arctic Analytics AI now has access to files you uploaded. Arctic Analytics will run code to analyze your data and generate insights.')
 
     if st.secrets['ENV'] == 'dev':
         st.session_state['model'] = st.sidebar.selectbox(
@@ -55,7 +55,7 @@ def render_analytics_agent():
     else:
         st.session_state['model'] = 'gpt-4.1-nano-2025-04-14'
 
-    st.caption(f':blue[The analytics agent uses the {st.session_state["model"]} model.]')
+    st.info(f'The analytics agent uses the {st.session_state["model"]} model. Agent mode works much better with advanced models like GPT-4.1 or o4-mini or o3. Please get it touch with [me](https://www.linkedin.com/in/balaji-kesavan/) if you want to use the advanced models.')
 
     if 'messages' not in st.session_state.keys() or not st.session_state['messages']:
         st.session_state['messages'] = [{'role': 'assistant', 'content': construct_welcome_message()}]
