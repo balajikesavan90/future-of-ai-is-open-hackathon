@@ -20,7 +20,6 @@ if 'session_id' not in st.session_state.keys():
 render_reset()
 
 st.header(':blue[Arctic Analytics]')
-st.caption(':green[Answer questions about your data using Actic Analytics.]')
 
 setup_home()
 if st.session_state['datasets_vetted']:
