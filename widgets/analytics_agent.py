@@ -53,9 +53,9 @@ def render_analytics_agent():
             key='model_select_sidebar',
         )
     else:
-        st.session_state['model'] = 'gpt-4.1-nano-2025-04-14'
+        st.session_state['model'] = 'gpt-4.1-2025-04-14'
 
-    st.info(f'The analytics agent uses the {st.session_state["model"]} model. Agent mode works much better with advanced models like GPT-4.1 or o4-mini or o3. Please get it touch with [me](https://www.linkedin.com/in/balaji-kesavan/) if you want to use the advanced models.')
+    st.info(f'The analytics agent uses the {st.session_state["model"]} model. Agent mode works much better with advanced models like o4-mini or o3. Please get it touch with [me](https://www.linkedin.com/in/balaji-kesavan/) if you want to use the advanced models.')
 
     if 'messages' not in st.session_state.keys() or not st.session_state['messages']:
         st.session_state['messages'] = [{'role': 'assistant', 'content': construct_welcome_message()}]
