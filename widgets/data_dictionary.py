@@ -8,6 +8,7 @@ def render_data_dictionary_widget():
     logging.info(f'render_data_dictionary_widget - {st.session_state["session_id"]}')
     st.divider()
     st.subheader(':blue[Data Dictionary]')
+    st.info('Please review the data dictionaries for the files you uploaded. You can edit the data types and primary keys as needed. The AI will use these data dictionaries to generate code snippets for analysis.')
     uploaded_file_count = len(st.session_state['vetted_files'])
     if uploaded_file_count == 1:
         st.toast(':green[Lets create a data dictionary for your file]')
