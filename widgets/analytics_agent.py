@@ -145,5 +145,5 @@ def render_analytics_agent():
             st.session_state['messages'].append({'role': 'user', 'content': st.session_state['user_input']})
             st.session_state['messages'] = generate_ai_response(st.session_state['vetted_files'], st.session_state['model'], True)
             st.session_state['count'] += 1
-        st.chat_message('assistant').write_stream(stream_text(st.session_state['messages'][-1]['content']))
+        st.chat_message('assistant').write_stream(stream_text(safely_escape_dollars(st.session_state['messages'][-1]['content'])))
         st.rerun()

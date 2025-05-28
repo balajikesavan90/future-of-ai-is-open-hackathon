@@ -364,6 +364,14 @@ class OpenAIUtility:
         logging.info(f'Final execution result - {result[:100]}... - {st.session_state["session_id"]}' 
                     if len(str(result)) > 100 else f'Final execution result - {result} - {st.session_state["session_id"]}')
 
+        # calculate token count for the result
+        token_count = len(self.enc_gpt4.encode(str(result)))
+        logging.info(f'Token count for tool response - {token_count} - {st.session_state["session_id"]}')
+
+        if token_count >= 5000:
+            logging.error(f"Code execution returned a result of {token_count} tokens. Please refactor the code to keep the result under 5000 tokens.")
+            result = f"Code execution returned a result of {token_count} tokens. Please refactor the code to keep the result under 5000 tokens."
+
         return result
 
     def generate_openai_response(self, vetted_files, model, agent_model):
