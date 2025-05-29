@@ -16,7 +16,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from utils.system_messages import construct_system_message
-from utils.streamlit_helpers import reset_data_analyst
+from utils.streamlit_helpers import reset_data_analyst, safely_escape_dollars, render_tool_call, render_tool_response
 from utils.security_helpers import safely_execute_code
 
 
@@ -114,6 +114,9 @@ class OpenAIUtility:
                     'content': str(tool_response), 
                     'tool_call_id': tool_call.id
                 })
+                with st.session_state['messages_container']:
+                    render_tool_response(str(tool_response))
+
             except Exception as e:
                 # Log the full traceback for debugging purposes
                 full_traceback = traceback.format_exc()
@@ -136,6 +139,9 @@ class OpenAIUtility:
                     'content': error_message, 
                     'tool_call_id': tool_call.id
                 })
+                with st.session_state['messages_container']:
+                    with st.expander(f"🛠️ See Tool Response"):
+                        st.write(safely_escape_dollars(str(error_message)))
         
         return messages
 
@@ -192,8 +198,15 @@ class OpenAIUtility:
             serialized_tool_calls = self._serialize_tool_calls(tool_calls)
             if content is not None:
                 messages.append({'role': 'assistant', 'content': content, 'tool_calls': serialized_tool_calls})
+                with st.session_state['messages_container']:
+                    st.chat_message('assistant').write(safely_escape_dollars(content))
+                    for tool_call in serialized_tool_calls:
+                        render_tool_call(tool_call)
             else:
                 messages.append({'role': 'assistant', 'tool_calls': serialized_tool_calls})
+                with st.session_state['messages_container']:
+                    for tool_call in serialized_tool_calls:
+                        render_tool_call(tool_call)
             
             # Process tool calls and get updated messages
             messages = self._handle_tool_calls(tool_calls, tool_handlers, messages)

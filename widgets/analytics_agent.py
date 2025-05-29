@@ -8,7 +8,7 @@ import pandas as pd
 from utils.ai_helpers import construct_welcome_message, generate_ai_response
 
 from widgets.prompt_guide import render_analytics_agent_prompt_guide
-from utils.streamlit_helpers import render_ai_prompt
+from utils.streamlit_helpers import render_ai_prompt, safely_escape_dollars, render_tool_call, render_tool_response
 
 
 def stream_text(text):
@@ -18,27 +18,6 @@ def stream_text(text):
             time.sleep(0.05)
         yield "\n"
         
-def try_convert_to_dataframe(data):
-    """Helper function to attempt converting various data types to DataFrames"""
-    try:
-        if isinstance(data, dict):
-            return pd.DataFrame.from_dict(data, orient='index')
-        elif isinstance(data, list) and data and all(isinstance(item, dict) for item in data):
-            return pd.DataFrame(data)
-        return None
-    except Exception:
-        return None
-            
-def safely_escape_dollars(text):
-    """
-    Escapes dollar signs in text only if they don't appear to be already escaped.
-    """
-    if not text:
-        return text
-    if '\\$' in text:  # Check for already escaped dollars
-        return text
-    else:
-        return text.replace('$', '\\$')
             
 def render_analytics_agent():
     logging.info(f'render_analytics_agent - {st.session_state["session_id"]}')
@@ -92,44 +71,18 @@ def render_analytics_agent():
             elif data_filter == 'Random 5 rows':
                 st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].sample(5), use_container_width=True)
 
-    for msg in st.session_state['messages']:
-        if msg['role'] in ['user', 'assistant']:
-            if 'content' in msg and msg['content'] != None:
-                st.chat_message(msg['role']).write(safely_escape_dollars(msg['content']))  # Safely escape dollar signs for LaTeX rendering
-            if 'tool_calls' in msg:
-                for tool_call in msg['tool_calls']:
-                    with st.expander(f"🛠️ See Tool Call - Tool Name: {tool_call['function']['name']}", expanded=False):
-                        st.caption(f"Reason: {json.loads(tool_call['function']['arguments'])['reason']}")
-                        if 'python_expression' in json.loads(tool_call['function']['arguments']):
-                            st.code(json.loads(tool_call['function']['arguments'])['python_expression'], language='python')
-                        if 'function_definition' in json.loads(tool_call['function']['arguments']):
-                            st.code(json.loads(tool_call['function']['arguments'])['function_definition'], language='python')
-        if msg['role'] == 'tool':
-            with st.expander('🛠️ See Tool Response', expanded=False):
-                tool_response = msg['content']
+    st.session_state['messages_container'] = st.container()
 
-                try:
-                    # Try parsing the response
-                    data = json.loads(tool_response)
-                    
-                    # Handle double-encoded JSON
-                    if isinstance(data, str):
-                        try:
-                            data = json.loads(data)
-                        except json.JSONDecodeError:
-                            pass
-                    
-                    # Try converting to DataFrame
-                    df = try_convert_to_dataframe(data)
-                    
-                    if df is not None:
-                        st.dataframe(df, use_container_width=True)
-                    else:
-                        st.write(data)
-                        
-                except json.JSONDecodeError:
-                    # Not JSON, display as plain text
-                    st.write(tool_response)
+    with st.session_state['messages_container']:
+        for msg in st.session_state['messages']:
+            if msg['role'] in ['user', 'assistant']:
+                if 'content' in msg and msg['content'] != None:
+                    st.chat_message(msg['role']).write(safely_escape_dollars(msg['content']))  # Safely escape dollar signs for LaTeX rendering
+                if 'tool_calls' in msg:
+                    for tool_call in msg['tool_calls']:
+                        render_tool_call(tool_call)
+            if msg['role'] == 'tool':
+                render_tool_response(msg['content'])
 
     
 
@@ -140,9 +93,10 @@ def render_analytics_agent():
     )
 
     if st.session_state['user_input'] is not None and st.session_state['user_input'].strip():
-        st.chat_message('user').write(st.session_state['user_input'])
         with st.spinner('Loading...'):
             st.session_state['messages'].append({'role': 'user', 'content': st.session_state['user_input']})
+            with st.session_state['messages_container']:
+                st.chat_message('user').write(safely_escape_dollars(st.session_state['user_input']))  # Safely escape dollar signs for LaTeX rendering
             st.session_state['messages'] = generate_ai_response(st.session_state['vetted_files'], st.session_state['model'], True)
             st.session_state['count'] += 1
         st.chat_message('assistant').write_stream(stream_text(safely_escape_dollars(st.session_state['messages'][-1]['content'])))

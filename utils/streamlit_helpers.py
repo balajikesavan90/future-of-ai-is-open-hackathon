@@ -1,6 +1,8 @@
 import streamlit as st
 import uuid
 import logging
+import json
+import pandas as pd  # Add import for pandas
 
 def setup_session_state():
     logging.info(f'###############################')
@@ -77,3 +79,71 @@ def render_ai_prompt():
             st.subheader(':blue[Messages]')
             messages_wo_system_message = [msg for msg in st.session_state['messages'] if msg['role'] != 'system']
             st.write(messages_wo_system_message)
+
+def safely_escape_dollars(text):
+    """
+    Escapes dollar signs in text only if they don't appear to be already escaped.
+    """
+    if not text:
+        return text
+    if '\\$' in text:  # Check for already escaped dollars
+        return text
+    else:
+        return text.replace('$', '\\$')
+
+def try_convert_to_dataframe(data):
+    """Helper function to attempt converting various data types to DataFrames"""
+    try:
+        if isinstance(data, dict):
+            return pd.DataFrame.from_dict(data, orient='index')
+        elif isinstance(data, list) and data and all(isinstance(item, dict) for item in data):
+            return pd.DataFrame(data)
+        return None
+    except Exception:
+        return None
+
+def render_tool_call(tool_call):
+    """
+    Renders a tool call in the Streamlit UI
+    
+    Args:
+        tool_call: The tool call to render
+    """
+    with st.expander(f"🛠️ See Tool Call - Tool Name: {tool_call['function']['name']}", expanded=False):
+        st.caption(f"Reason: {json.loads(tool_call['function']['arguments'])['reason']}")
+        if 'python_expression' in json.loads(tool_call['function']['arguments']):
+            st.code(json.loads(tool_call['function']['arguments'])['python_expression'], language='python')
+        if 'function_definition' in json.loads(tool_call['function']['arguments']):
+            st.code(json.loads(tool_call['function']['arguments'])['function_definition'], language='python')
+
+def render_tool_response(tool_response):
+    """
+    Renders a tool response in the Streamlit UI
+    
+    Args:
+        tool_response: The tool response to render
+    """
+    with st.expander('🛠️ See Tool Response', expanded=False):
+        try:
+            # Try parsing the response
+            data = json.loads(tool_response)
+            
+            # Handle double-encoded JSON
+            if isinstance(data, str):
+                try:
+                    data = json.loads(data)
+                except json.JSONDecodeError:
+                    pass
+            
+            # Try converting to DataFrame
+            df = try_convert_to_dataframe(data)
+            
+            if df is not None:
+                st.dataframe(df, use_container_width=True)
+            else:
+                st.write(data)
+                
+        except json.JSONDecodeError:
+            # Not JSON, display as plain text
+            st.write(tool_response)
+
