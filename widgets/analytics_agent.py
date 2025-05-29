@@ -8,7 +8,7 @@ import pandas as pd
 from utils.ai_helpers import construct_welcome_message, generate_ai_response
 
 from widgets.prompt_guide import render_analytics_agent_prompt_guide
-from utils.streamlit_helpers import render_ai_prompt, safely_escape_dollars, render_tool_call, render_tool_response
+from utils.streamlit_helpers import render_ai_prompt, safely_escape_dollars, render_tool_call, render_tool_response, disable_sample_button
 
 
 def stream_text(text):
@@ -44,6 +44,9 @@ def render_analytics_agent():
     
     if 'count' not in st.session_state:
         st.session_state['count'] = 0
+
+    if 'show_sample' not in st.session_state:
+        st.session_state['show_sample'] = True
 
     st.session_state['usage_container'] = st.empty()
 
@@ -91,6 +94,28 @@ def render_analytics_agent():
     st.session_state['user_input'] = st.chat_input(
         max_chars = 1000, 
     )
+
+    if st.session_state['show_sample']:
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            if st.button(
+                label=':blue[Please find me something interesting in this data]',
+                use_container_width=True,
+                on_click=disable_sample_button,
+                disabled=st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False,
+            ):
+                st.session_state['user_input'] = 'Find me something interesting in this data'
+                st.session_state['show_sample'] = False
+        with col2:
+            if st.button(
+                label=':blue[Please identify interesting patterns and/or correlations in the data]',
+                use_container_width=True,
+                on_click=disable_sample_button,
+                disabled=st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False,
+            ):
+                st.session_state['user_input'] = 'Please identify interesting patterns and/or correlations in the data'
+                st.session_state['show_sample'] = False
+        
 
     if st.session_state['user_input'] is not None and st.session_state['user_input'].strip():
         with st.spinner('Loading...'):

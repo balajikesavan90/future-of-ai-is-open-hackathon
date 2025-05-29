@@ -56,6 +56,8 @@ def reset_analytics_agent():
     st.session_state['messages'] = []
     st.session_state['count'] = 0
     st.session_state['cost'] = 0
+    st.session_state['show_sample'] = True
+    st.session_state['disable_sample_button'] = False
     st.session_state['session_id'] = str(uuid.uuid4())
     print('###############################')
     print('reset_analytics_agent')
@@ -68,6 +70,9 @@ def render_reset_analytics_agent():
 def render_session_state():
     logging.info(f'render_session_state - {st.session_state["session_id"]}')
     st.sidebar.write(st.session_state)
+
+def disable_sample_button():
+    st.session_state['disable_sample_button'] = True
 
 def render_ai_prompt():
     logging.info(f'render_ai_prompt - {st.session_state["session_id"]}')
