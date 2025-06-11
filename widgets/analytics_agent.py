@@ -27,7 +27,7 @@ def render_analytics_agent():
     if st.secrets['ENV'] == 'dev':
         st.session_state['model'] = st.sidebar.selectbox(
             label = 'Model',
-            options = ['gpt-4.1-nano-2025-04-14', 'gpt-4.1-mini-2025-04-14', 'o4-mini-2025-04-16', 'gpt-4.1-2025-04-14', 'o3-2025-04-16'],
+            options = ['gpt-4.1-nano-2025-04-14', 'gpt-4.1-mini-2025-04-14', 'o4-mini-2025-04-16', 'gpt-4.1-2025-04-14', 'o3-2025-04-16', 'o3-pro-2025-06-10'],
             index = 0,
             key='model_select_sidebar',
         )

@@ -64,7 +64,9 @@ class OpenAIUtility:
         elif model == 'gpt-4.1-2025-04-14':
             return 2*prompt_tokens/1000000 + 8*completion_tokens/1000000
         elif model == 'o3-2025-04-16':
-            return 10*prompt_tokens/1000000 + 40*completion_tokens/1000000
+            return 2*prompt_tokens/1000000 + 8*completion_tokens/1000000
+        elif model == 'o3-pro-2025-06-10':
+            return 20*prompt_tokens + 80*completion_tokens/1000000
         else:
             st.error(f"Model {model} not recognized for cost calculation.")
     # @retry(wait=wait_random_exponential(min=5, max=10), stop=stop_after_attempt(5))
