@@ -27,14 +27,14 @@ def render_analytics_agent():
     if st.secrets['ENV'] == 'dev':
         st.session_state['model'] = st.sidebar.selectbox(
             label = 'Model',
-            options = ['gpt-4.1-nano-2025-04-14', 'gpt-4.1-mini-2025-04-14', 'o4-mini-2025-04-16', 'gpt-4.1-2025-04-14', 'o3-2025-04-16', 'o3-pro-2025-06-10'],
+            options = ['gpt-5-nano-2025-08-07', 'gpt-5-mini-2025-08-07', 'gpt-5-2025-08-07'],
             index = 0,
             key='model_select_sidebar',
         )
     else:
-        st.session_state['model'] = 'gpt-4.1-2025-04-14'
+        st.session_state['model'] = 'gpt-5-nano-2025-08-07'
 
-    st.info(f'The analytics agent uses the {st.session_state["model"]} model. Agent mode works much better with advanced models like o4-mini or o3. Please get it touch with [me](https://www.linkedin.com/in/balaji-kesavan/) if you want to use the advanced models.')
+    st.info(f'The analytics agent uses the {st.session_state["model"]} model. Agent mode works much better with advanced models like gpt-5-mini or gpt-5. Please get it touch with [me](https://www.linkedin.com/in/balaji-kesavan/) if you want to use the advanced models.')
 
     if 'messages' not in st.session_state.keys() or not st.session_state['messages']:
         st.session_state['messages'] = [{'role': 'assistant', 'content': construct_welcome_message()}]

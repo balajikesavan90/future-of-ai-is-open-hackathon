@@ -67,6 +67,12 @@ class OpenAIUtility:
             return 2*prompt_tokens/1000000 + 8*completion_tokens/1000000
         elif model == 'o3-pro-2025-06-10':
             return 20*prompt_tokens + 80*completion_tokens/1000000
+        elif model == 'gpt-5-nano-2025-08-07':
+            return 0.05*prompt_tokens/1000000 + 0.4*completion_tokens/1000000
+        elif model == 'gpt-5-mini-2025-08-07':
+            return 0.25*prompt_tokens/1000000 + 2*completion_tokens/1000000
+        elif model == 'gpt-5-2025-08-07':
+            return 1.25*prompt_tokens/1000000 + 10*completion_tokens/1000000
         else:
             st.error(f"Model {model} not recognized for cost calculation.")
     # @retry(wait=wait_random_exponential(min=5, max=10), stop=stop_after_attempt(5))
@@ -92,7 +98,7 @@ class OpenAIUtility:
                 # remove parallel_tool_calls for o3 and o4 models
                 args.pop('parallel_tool_calls', None)
 
-        if 'o3' in model or 'o4' in model:
+        if 'o3' in model or 'o4' in model or 'gpt-5' in model:
             # remove temperature for o3 and o4 models
             args.pop('temperature', None)            
         return args
@@ -232,7 +238,7 @@ class OpenAIUtility:
                 
         return content, messages, tool_cost
         
-    def chatcompletion_APICall(self, messages, session_id='', temperature = 0.8, model='gpt-4.1-mini-2025-04-14', response_format = None, reasoning_effort = None, tool_config = None, tool_choice = 'required'):
+    def chatcompletion_APICall(self, messages, session_id='', temperature = 0.8, model='gpt-5-nano-2025-08-07', response_format = None, reasoning_effort = None, tool_config = None, tool_choice = 'required'):
         """
         Runs the chat completion API call
         Args:
