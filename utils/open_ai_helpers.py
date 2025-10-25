@@ -21,7 +21,7 @@ import matplotlib.figure as mfigure
 import openai
 
 from utils.system_messages import construct_system_message
-from utils.streamlit_helpers import reset_data_analyst, safely_escape_dollars, render_tool_call, render_tool_response
+from utils.streamlit_helpers import safely_escape_dollars, render_tool_call, render_tool_response
 from utils.security_helpers import safely_execute_code
 
 
@@ -495,7 +495,6 @@ class OpenAIUtility:
 
         if error_count >= 3:
             st.error('Oops! Something went wrong. Try rephrasing your prompt in a different way.')
-            st.button(':red[Reset Data Analyst]', on_click=reset_data_analyst, key='reset')
             if st.secrets['ENV'] == 'dev':
                 st.write(st.session_state['messages'])
             st.stop()
