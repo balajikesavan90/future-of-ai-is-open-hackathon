@@ -21,7 +21,7 @@ import matplotlib.figure as mfigure
 import openai
 
 from utils.system_messages import construct_system_message
-from utils.streamlit_helpers import safely_escape_dollars, render_tool_call, render_tool_response
+from utils.streamlit_helpers import safely_escape_dollars, render_tool_call, render_tool_response, reset_data_analyst
 from utils.security_helpers import safely_execute_code
 
 
