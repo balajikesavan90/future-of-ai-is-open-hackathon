@@ -2,10 +2,10 @@ import streamlit as st
 import logging
 
 from utils.meta_llama_helpers import MetaLlama
-from utils.open_ai_chat_completions_api_helpers import OpenAIUtility
+from utils.open_ai_chat_completions_api_helpers import OpenAIChatCompletionsUtility
 
 llama_client = MetaLlama()
-openai_client = OpenAIUtility()
+openai_chat_completions_client = OpenAIChatCompletionsUtility()
 
 def construct_welcome_message():
     logging.info(f'construct_welcome_message - {st.session_state["session_id"]}')
@@ -33,7 +33,10 @@ def generate_ai_response(vetted_files, model, agent_model=False):
     if 'meta' in model.lower() or 'llama' in model.lower():
         response = llama_client.generate_llama_response(vetted_files, model, False)
     else:
-        response = openai_client.generate_openai_response(vetted_files, model, agent_model)
+        if agent_model:
+            pass
+        else:
+            response = openai_chat_completions_client.generate_openai_chat_completions_response(vetted_files, model, agent_model)
         
     return response
 

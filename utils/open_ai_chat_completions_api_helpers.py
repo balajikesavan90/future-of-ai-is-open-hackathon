@@ -30,7 +30,7 @@ class ResponseFormat(BaseModel):
     commentary: str = Field(..., description="The commentary for the user.")
 
 
-class OpenAIUtility:
+class OpenAIChatCompletionsUtility:
     def __init__(self):
         self.client = OpenAI()
         self.enc_gpt4 = tiktoken.encoding_for_model("gpt-4")
@@ -455,8 +455,8 @@ class OpenAIUtility:
 
         return result
 
-    def generate_openai_response(self, vetted_files, model, agent_model):
-        logging.info(f'generate_openai_response - {st.session_state["session_id"]}')
+    def generate_openai_chat_completions_response(self, vetted_files, model, agent_model):
+        logging.info(f'generate_openai_chat_completions_response - {st.session_state["session_id"]}')
 
         system_message = construct_system_message(vetted_files, agent_model)
 
