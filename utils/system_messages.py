@@ -62,6 +62,8 @@ def generate_plot():
 Use the run_python_expression and/or the run_python_function to generate any supporting information needed for the plot.
 
 Your response to the user must include the actionable insights from the thought process behind the analysis.
+**DO NOT** include the URL of the plot in your response. 
+The UI will handle displaying the plot separately.
 Generate your response in markdown format.
 \n\n
 """
