@@ -150,7 +150,7 @@ def render_tool_response(tool_response):
                 df = try_convert_to_dataframe(data)
                 
                 if df is not None:
-                    st.dataframe(df, use_container_width=True)
+                    st.dataframe(df, width='stretch')
                 else:
                     st.write(data)
                     
