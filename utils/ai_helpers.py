@@ -2,7 +2,7 @@ import streamlit as st
 import logging
 
 from utils.meta_llama_helpers import MetaLlama
-from utils.open_ai_helpers import OpenAIUtility
+from utils.open_ai_chat_completions_api_helpers import OpenAIUtility
 
 llama_client = MetaLlama()
 openai_client = OpenAIUtility()
