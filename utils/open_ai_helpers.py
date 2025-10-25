@@ -102,7 +102,7 @@ class OpenAIUtility:
                 or "Input tokens exceed the configured limit" in err_text
             ):
                 logging.error(f'Context length exceeded: {err_text}')
-                st.error('Conversation length too long. LLMs have a context window limit which has been exceeded. Please reset and start a new conversation. Alternatively, get in touch with [me](https://www.linkedin.com/in/balaji-kesavan/) and I can help you set up a custom solution.')
+                st.error('The conversation length got too long. LLMs have a context window limit which has been exceeded. Please reset and start a new conversation. Alternatively, get in touch with [me](https://www.linkedin.com/in/balaji-kesavan/) and I can help you set up a custom solution.')
                 st.stop()
             # Re-raise other BadRequestError cases
             raise
@@ -501,7 +501,7 @@ class OpenAIUtility:
             st.stop()
 
         if token_count >= 200000:
-            st.error('Conversation length too long. LLMs have a context window limit which has been exceeded. Please reset and start a new conversation. Alternatively, get in touch with [me](https://www.linkedin.com/in/balaji-kesavan/) and I can help you set up a custom solution.')
+            st.error('The conversation length got too long. LLMs have a context window limit which has been exceeded. Please reset and start a new conversation. Alternatively, get in touch with [me](https://www.linkedin.com/in/balaji-kesavan/) and I can help you set up a custom solution.')
             if agent_model:
                 st.button(':red[Reset Analytics Agent]', on_click=reset_analytics_agent, key='reset')
             else:
