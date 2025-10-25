@@ -44,7 +44,9 @@ def validate_code_security(python_syntax):
         'datetime', 
         'warnings', 
         'math',
-        'statsmodels', 'sm'
+        'statsmodels', 'sm',
+        'mathplotlib.figure', 'mfigure',
+        'seaborn', 'sns'
     }
     
     # Still maintain the blacklist for dangerous functions
