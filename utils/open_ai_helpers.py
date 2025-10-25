@@ -18,9 +18,10 @@ import io
 import base64
 import matplotlib.pyplot as plt
 import matplotlib.figure as mfigure
+import openai  # Added to catch BadRequestError
 
 from utils.system_messages import construct_system_message
-from utils.streamlit_helpers import reset_data_analyst, safely_escape_dollars, render_tool_call, render_tool_response
+from utils.streamlit_helpers import reset_data_analyst, safely_escape_dollars, render_tool_call, render_tool_response, reset_analytics_agent
 from utils.security_helpers import safely_execute_code
 
 
@@ -79,10 +80,32 @@ class OpenAIUtility:
             return 1.25*prompt_tokens/1000000 + 10*completion_tokens/1000000
         else:
             st.error(f"Model {model} not recognized for cost calculation.")
+
     # @retry(wait=wait_random_exponential(min=5, max=10), stop=stop_after_attempt(5))
     def _completion_with_backoff(self, **kwargs):
         logging.info(f'completion_with_backoff - {st.session_state["session_id"]}')
-        return self.client.beta.chat.completions.parse(**kwargs)
+        try:
+            return self.client.beta.chat.completions.parse(**kwargs)
+        except openai.BadRequestError as e:
+            # Detect the specific "context_length_exceeded" error
+            err_code = getattr(e, "code", None)
+            # Some versions include details in e.response or only in str(e)
+            try:
+                if not err_code and hasattr(e, "response") and isinstance(e.response, dict):
+                    err_code = e.response.get("error", {}).get("code")
+            except Exception:
+                pass
+            err_text = str(e)
+            if (
+                err_code == "context_length_exceeded"
+                or "context_length_exceeded" in err_text
+                or "Input tokens exceed the configured limit" in err_text
+            ):
+                logging.error(f'Context length exceeded: {err_text}')
+                st.error('Conversation length too long. LLMs have a context window limit which has been exceeded. Please reset and start a new conversation. Alternatively, get in touch with [me](https://www.linkedin.com/in/balaji-kesavan/) and I can help you set up a custom solution.')
+                st.stop()
+            # Re-raise other BadRequestError cases
+            raise
 
     def _prepare_api_args(self, messages, model, temperature, response_format, reasoning_effort, tools, tool_choice):
         """Prepares the arguments for the chat completion API call"""
@@ -479,7 +502,10 @@ class OpenAIUtility:
 
         if token_count >= 200000:
             st.error('Conversation length too long. LLMs have a context window limit which has been exceeded. Please reset and start a new conversation. Alternatively, get in touch with [me](https://www.linkedin.com/in/balaji-kesavan/) and I can help you set up a custom solution.')
-            st.button(':red[Reset]', on_click=reset_data_analyst, key='reset')
+            if agent_model:
+                st.button(':red[Reset Analytics Agent]', on_click=reset_analytics_agent, key='reset')
+            else:
+                st.button(':red[Reset Data Analyst]', on_click=reset_data_analyst, key='reset')
             if st.secrets['ENV'] == 'dev':
                 st.write(st.session_state['messages'])
             st.stop()
