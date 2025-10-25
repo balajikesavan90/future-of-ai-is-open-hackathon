@@ -3,6 +3,7 @@ import uuid
 import logging
 import json
 import pandas as pd  # Add import for pandas
+import matplotlib.figure as mfigure  # Add import for matplotlib.figure
 
 def setup_session_state():
     logging.info(f'###############################')
@@ -128,27 +129,32 @@ def render_tool_response(tool_response):
     Args:
         tool_response: The tool response to render
     """
-    with st.expander('🛠️ See Tool Response', expanded=False):
-        try:
-            # Try parsing the response
-            data = json.loads(tool_response)
-            
-            # Handle double-encoded JSON
-            if isinstance(data, str):
-                try:
-                    data = json.loads(data)
-                except json.JSONDecodeError:
-                    pass
-            
-            # Try converting to DataFrame
-            df = try_convert_to_dataframe(data)
-            
-            if df is not None:
-                st.dataframe(df, use_container_width=True)
-            else:
-                st.write(data)
+    if tool_response.startswith('data:image/png;base64,'):
+        with st.expander('🛠️ See Tool Response - Plot', expanded=True):
+            st.image(tool_response)
+    
+    else:
+        with st.expander('🛠️ See Tool Response', expanded=False):
+            try:
+                # Try parsing the response
+                data = json.loads(tool_response)
                 
-        except json.JSONDecodeError:
-            # Not JSON, display as plain text
-            st.write(tool_response)
+                # Handle double-encoded JSON
+                if isinstance(data, str):
+                    try:
+                        data = json.loads(data)
+                    except json.JSONDecodeError:
+                        pass
+                
+                # Try converting to DataFrame
+                df = try_convert_to_dataframe(data)
+                
+                if df is not None:
+                    st.dataframe(df, use_container_width=True)
+                else:
+                    st.write(data)
+                    
+            except json.JSONDecodeError:
+                # Not JSON, display as plain text
+                st.write(tool_response)
 

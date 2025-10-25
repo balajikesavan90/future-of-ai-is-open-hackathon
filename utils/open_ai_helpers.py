@@ -14,6 +14,10 @@ import traceback  # Add traceback module import
 from pydantic import BaseModel, Field
 import pandas as pd
 import plotly.graph_objects as go
+import io
+import base64
+import matplotlib.pyplot as plt
+import matplotlib.figure as mfigure
 
 from utils.system_messages import construct_system_message
 from utils.streamlit_helpers import reset_data_analyst, safely_escape_dollars, render_tool_call, render_tool_response
@@ -116,7 +120,7 @@ class OpenAIUtility:
                     tool_response = tool_handlers[tool_name](args_dict)
                 else:
                     tool_response = f"Tool '{tool_name}' not implemented or not available."
-                    
+                
                 messages.append({
                     'role': 'tool', 
                     'content': str(tool_response), 
@@ -292,9 +296,14 @@ class OpenAIUtility:
         """
 
         # check if the code is a valid function definition
-        if not python_code.strip().startswith('def generate_report():'):
-            logging.error(f'Invalid function definition: {python_code}')
-            return "The python function must be named generate_report and intake 0 arguments. The function must return a single pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
+        if report_function == 'generate_report':
+            if not python_code.strip().startswith('def generate_report():'):
+                logging.error(f'Invalid function definition: {python_code}')
+                return "The python function must be named generate_report and intake 0 arguments. The function must return a single pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
+        elif report_function == 'generate_plot':
+            if not python_code.strip().startswith('def generate_plot():'):
+                logging.error(f'Invalid function definition: {python_code}')
+                return "The python function must be named generate_plot and intake 0 arguments. The function must return a single matplotlib.figure.Figure. You can only use the pandas, numpy, seaborn, matplotlib, datetime and math libraries."
 
         # # Check for any code outside the function definition
         # # Get all lines of code and indent levels
@@ -350,37 +359,54 @@ class OpenAIUtility:
             result = f"Error executing code: {error_message}\n\nStdout Output: {stdout_output}"
             return result
 
-        # parse result to check if it is a DataFrame or Plotly figure
-        if isinstance(result, pd.DataFrame):
-            logging.info('Result is a DataFrame')
-            # Only do one conversion to JSON, not two
-            result = result.to_json(orient='index')
+        if report_function == 'generate_report' or report_function is None:
+            # parse result to check if it is a DataFrame or Plotly figure
+            if isinstance(result, pd.DataFrame):
+                logging.info('Result is a DataFrame')
+                # Only do one conversion to JSON, not two
+                result = result.to_json(orient='index')
 
-        elif isinstance(result, pd.Series):
-            logging.info('Result is a pandas Series')
-            result = result.to_json(orient='index')
+            elif isinstance(result, pd.Series):
+                logging.info('Result is a pandas Series')
+                result = result.to_json(orient='index')
 
-        elif isinstance(result, dict):
-            logging.info('Result is a dict')
-            # Convert dict to DataFrame
-            result = pd.DataFrame.from_dict(result, orient='index').to_json(orient='index')
+            elif isinstance(result, dict):
+                logging.info('Result is a dict')
+                # Convert dict to DataFrame
+                result = pd.DataFrame.from_dict(result, orient='index').to_json(orient='index')
 
-        elif isinstance(result, (int, float)) or (hasattr(result, 'dtype') and np.issubdtype(result.dtype, np.number)):
-            # Handle both Python and NumPy numeric types
-            logging.info(f'Result is a number: {result}')
-            # Convert NumPy types to native Python types if needed
-            if hasattr(result, 'item'):
-                result = result.item()
-            result = pd.DataFrame({'result': [result]}).to_json(orient='index')
+            elif isinstance(result, (int, float)) or (hasattr(result, 'dtype') and np.issubdtype(result.dtype, np.number)):
+                # Handle both Python and NumPy numeric types
+                logging.info(f'Result is a number: {result}')
+                # Convert NumPy types to native Python types if needed
+                if hasattr(result, 'item'):
+                    result = result.item()
+                result = pd.DataFrame({'result': [result]}).to_json(orient='index')
 
-        elif isinstance(result, list):
-            logging.info(f'Result is a list: {result}')
-            # Convert list to DataFrame
-            result = pd.DataFrame(result).to_json(orient='index')
+            elif isinstance(result, list):
+                logging.info(f'Result is a list: {result}')
+                # Convert list to DataFrame
+                result = pd.DataFrame(result).to_json(orient='index')
 
-        else:
-            logging.info(f'Result is not a pandas df or a pandas series or a python dictionary: {type(result)}')
-            result = f"Code execution returned an object of type {type(result)}. The code execution must return a pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
+            else:
+                logging.info(f'Result is not a pandas df or a pandas series or a python dictionary: {type(result)}')
+                result = f"Code execution returned an object of type {type(result)}. The code execution must return a pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
+
+        elif report_function == 'generate_plot':
+            if isinstance(result, mfigure.Figure):
+                logging.info('Result is a Matplotlib Figure')
+                # convert to URL
+                buf = io.BytesIO()
+                result.savefig(buf, format='png')
+                plt.close(result)
+                buf.seek(0)
+                img_bytes = buf.getvalue()
+                img_b64 = base64.b64encode(img_bytes).decode('utf-8')
+                img_url = f'data:image/png;base64,{img_b64}'
+                result = img_url
+            else:
+                logging.info(f'Result is not a matplotlib.figure.Figure: {type(result)}')
+                result = f"Code execution returned an object of type {type(result)}. The code execution must return a matplotlib.figure.Figure. You can only use the pandas, numpy, seaborn, matplotlib, datetime and math libraries."
 
         logging.info(f'Final execution result - {result[:100]}... - {st.session_state["session_id"]}' 
                     if len(str(result)) > 100 else f'Final execution result - {result} - {st.session_state["session_id"]}')
@@ -389,7 +415,7 @@ class OpenAIUtility:
         token_count = len(self.enc_gpt4.encode(str(result)))
         logging.info(f'Token count for tool response - {token_count} - {st.session_state["session_id"]}')
 
-        if token_count >= 5000:
+        if token_count >= 5000 and report_function != 'generate_plot':
             logging.error(f"Code execution returned a result of {token_count} tokens. Please refactor the code to keep the result under 5000 tokens.")
             result = f"Code execution returned a result of {token_count} tokens. Please refactor the code to keep the result under 5000 tokens."
 
@@ -496,6 +522,30 @@ class OpenAIUtility:
                 }
             }
 
+            generate_seaborn_plot_toolspec = {
+                "type": "function",
+                "function": {
+                    "name": "generate_plot",
+                    "description": "Run a python function to generate a Seaborn plot. The function must intake 0 arguments and return a single matplotlib.figure.Figure. You can only use the pandas, numpy, seaborn, matplotlib, datetime and math libraries.",
+                    "strict": True,
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "function_definition": {
+                                "type": "string",
+                                "description": "The python function definition to run. The function must be named generate_plot and intake 0 arguments. The function must return a single matplotlib.figure.Figure. You can only use the pandas, numpy, seaborn, matplotlib, datetime and math libraries."
+                            },
+                            "reason": {
+                                "type": "string",
+                                "description": "The design decisions made for the plot. This will be used to provide context for the code execution and help the user understand the purpose of the code snippet."
+                            }
+                        },
+                        "additionalProperties": False,
+                        "required": ["function_definition", "reason"],
+                    },
+                }
+            }
+
             # Define tool config with both specs and handlers
             tool_config = [
                 {
@@ -514,6 +564,15 @@ class OpenAIUtility:
                         reason=args_dict.get('reason'),
                         vetted_files=vetted_files,
                         report_function='generate_report'
+                    )
+                },
+                {
+                    'spec': generate_seaborn_plot_toolspec,
+                    'handler': lambda args_dict: self.run_python_function(
+                        python_code=args_dict.get('function_definition'),
+                        reason=args_dict.get('reason'),
+                        vetted_files=vetted_files,
+                        report_function='generate_plot'
                     )
                 }
             ]

@@ -9,7 +9,7 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.12"
-streamlit = "^1.44.1"
+streamlit = {extras = ["charts"], version = "^1.50.0"}
 snowflake-connector-python = "^3.17.0"
 seaborn = "^0.13.2"
 plotly = "^6.0.1"
@@ -20,6 +20,7 @@ pyarrow = "^18.0.0"
 pillow = "^11.3.0"
 pydantic = "^2.11.3"
 statsmodels = "^0.14.4"
+matplotlib = "^3.10.7"
 
 
 [build-system]
