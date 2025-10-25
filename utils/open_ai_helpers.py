@@ -18,9 +18,10 @@ import io
 import base64
 import matplotlib.pyplot as plt
 import matplotlib.figure as mfigure
+import openai
 
 from utils.system_messages import construct_system_message
-from utils.streamlit_helpers import reset_data_analyst, safely_escape_dollars, render_tool_call, render_tool_response
+from utils.streamlit_helpers import safely_escape_dollars, render_tool_call, render_tool_response
 from utils.security_helpers import safely_execute_code
 
 
@@ -79,10 +80,32 @@ class OpenAIUtility:
             return 1.25*prompt_tokens/1000000 + 10*completion_tokens/1000000
         else:
             st.error(f"Model {model} not recognized for cost calculation.")
+
     # @retry(wait=wait_random_exponential(min=5, max=10), stop=stop_after_attempt(5))
     def _completion_with_backoff(self, **kwargs):
         logging.info(f'completion_with_backoff - {st.session_state["session_id"]}')
-        return self.client.beta.chat.completions.parse(**kwargs)
+        try:
+            return self.client.beta.chat.completions.parse(**kwargs)
+        except openai.BadRequestError as e:
+            # Detect the specific "context_length_exceeded" error
+            err_code = getattr(e, "code", None)
+            # Some versions include details in e.response or only in str(e)
+            try:
+                if not err_code and hasattr(e, "response") and isinstance(e.response, dict):
+                    err_code = e.response.get("error", {}).get("code")
+            except Exception:
+                pass
+            err_text = str(e)
+            if (
+                err_code == "context_length_exceeded"
+                or "context_length_exceeded" in err_text
+                or "Input tokens exceed the configured limit" in err_text
+            ):
+                logging.error(f'Context length exceeded: {err_text}')
+                st.error('The conversation length got too long. LLMs have a context window limit which has been exceeded. Please reset and start a new conversation. Alternatively, get in touch with [me](https://www.linkedin.com/in/balaji-kesavan/) and I can help you set up a custom solution.')
+                st.stop()
+            # Re-raise other BadRequestError cases
+            raise
 
     def _prepare_api_args(self, messages, model, temperature, response_format, reasoning_effort, tools, tool_choice):
         """Prepares the arguments for the chat completion API call"""
@@ -388,9 +411,20 @@ class OpenAIUtility:
                 # Convert list to DataFrame
                 result = pd.DataFrame(result).to_json(orient='index')
 
+            elif isinstance(result, mfigure.Figure):
+                logging.info('Result is a Matplotlib Figure, but it was created using the wrong tool')
+                result = f"Code execution returned a Matplotlib Figure, but it was created using the wrong tool. Please use the generate_plot tool to create plots."
+
+            elif result is None:
+                logging.info('Result is None')
+                if report_function == 'generate_report':
+                    result = "Code execution returned None. The code execution must return a pandas DataFrame or a pandas Series or a Python dictionary. You can only use the pandas, numpy, datetime and math libraries."
+                elif report_function is None:
+                    result = "Code execution returned None. This could happen if the Python expression is multiple lines long. The Python expression must be a small single line code snippet. Use the run_python_function tool for complex multi-line code."
+
             else:
                 logging.info(f'Result is not a pandas df or a pandas series or a python dictionary: {type(result)}')
-                result = f"Code execution returned an object of type {type(result)}. The code execution must return a pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
+                result = f"Code execution returned an object of type {type(result)}. The code execution must return a pandas DataFrame or a pandas Series or a Python dictionary. You can only use the pandas, numpy, datetime and math libraries."
 
         elif report_function == 'generate_plot':
             if isinstance(result, mfigure.Figure):
@@ -461,14 +495,12 @@ class OpenAIUtility:
 
         if error_count >= 3:
             st.error('Oops! Something went wrong. Try rephrasing your prompt in a different way.')
-            st.button(':red[Reset Data Analyst]', on_click=reset_data_analyst, key='reset')
             if st.secrets['ENV'] == 'dev':
                 st.write(st.session_state['messages'])
             st.stop()
 
-        if token_count >= 10000:
-            st.error('Conversation length too long. Please keep it under 10000 tokens.')
-            st.button(':red[Reset Data Analyst]', on_click=reset_data_analyst, key='reset')
+        if token_count >= 200000:
+            st.error('The conversation length got too long. LLMs have a context window limit which has been exceeded. Please reset and start a new conversation. Alternatively, get in touch with [me](https://www.linkedin.com/in/balaji-kesavan/) and I can help you set up a custom solution.')
             if st.secrets['ENV'] == 'dev':
                 st.write(st.session_state['messages'])
             st.stop()

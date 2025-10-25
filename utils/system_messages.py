@@ -59,9 +59,13 @@ Use the run_python_plot_function tool to run complex multi-line code that genera
 def generate_plot():
     # Your complex multi-line plotting code here
     return fig_result
+When generating plots, ensure that the plots are well-formatted with appropriate titles, labels, and legends.
+When generating plots, ensure the labels and legends fit well within the plot area and are clearly readable. Avoid overlapping text.
 Use the run_python_expression and/or the run_python_function to generate any supporting information needed for the plot.
 
 Your response to the user must include the actionable insights from the thought process behind the analysis.
+**DO NOT** include the URL of the plot in your response. 
+The UI will handle displaying the plot separately.
 Generate your response in markdown format.
 \n\n
 """

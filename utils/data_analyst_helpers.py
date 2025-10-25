@@ -122,10 +122,10 @@ def check_outputs_and_give_feedback(output, commentary, response):
             st.session_state['count'] += 1
             if isinstance(output, pd.DataFrame):
                 logging.info(f'check_outputs_and_give_feedback - dataframe - success - {st.session_state["session_id"]}')
-                st.dataframe(output, use_container_width=True, hide_index=False)
+                st.dataframe(output, width='stretch', hide_index=False)
             elif isinstance(output, go.Figure):
                 logging.info(f'check_outputs_and_give_feedback - plot - success - {st.session_state["session_id"]}')
-                st.plotly_chart(output, use_container_width=True)
+                st.plotly_chart(output, width='stretch')
             if commentary is not None:
                 st.caption(commentary)
             render_ai_prompt()
