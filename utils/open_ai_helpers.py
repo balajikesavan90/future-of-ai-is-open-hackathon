@@ -121,12 +121,12 @@ class OpenAIUtility:
                 else:
                     tool_response = f"Tool '{tool_name}' not implemented or not available."
                 
+                messages.append({
+                    'role': 'tool', 
+                    'content': str(tool_response), 
+                    'tool_call_id': tool_call.id
+                })
                 with st.session_state['messages_container']:
-                    messages.append({
-                        'role': 'tool', 
-                        'content': str(tool_response), 
-                        'tool_call_id': tool_call.id
-                    })
                     render_tool_response(str(tool_response))
 
             except Exception as e:
