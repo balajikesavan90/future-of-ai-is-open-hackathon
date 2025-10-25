@@ -388,6 +388,10 @@ class OpenAIUtility:
                 # Convert list to DataFrame
                 result = pd.DataFrame(result).to_json(orient='index')
 
+            elif isinstance(result, mfigure.Figure):
+                logging.info('Result is a Matplotlib Figure, but it was created using the wrong tool')
+                result = f"Code execution returned a Matplotlib Figure, but it was created using the wrong tool. Please use the generate_plot tool to create plots."
+
             elif result is None:
                 logging.info('Result is None')
                 if report_function  == 'generate_report':
