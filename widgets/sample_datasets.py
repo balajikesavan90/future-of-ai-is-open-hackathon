@@ -12,7 +12,7 @@ def render_sample_datasets():
         with col1:
             if st.button(
                 label='💵:green[Tips Dataset]',
-                use_container_width=True,
+                width='stretch',
             ):
                 st.session_state['source'] = 'tips'
                 gather_metadata()
@@ -20,7 +20,7 @@ def render_sample_datasets():
 
             if st.button(
                 label='🪐:green[Planets Dataset]',
-                use_container_width=True,
+                width='stretch',
             ):
                 st.session_state['source'] = 'planets'
                 gather_metadata()
@@ -28,7 +28,7 @@ def render_sample_datasets():
             
             if st.button(
                 label='🐧:green[Penguins Dataset]',
-                use_container_width=True,
+                width='stretch',
             ):
                 st.session_state['source'] = 'penguins'
                 gather_metadata()
@@ -36,21 +36,21 @@ def render_sample_datasets():
         with col2:
             if st.button(
                 label='⛐:green[Car Crashes Dataset]',
-                use_container_width=True,
+                width='stretch',
             ):
                 st.session_state['source'] = 'car_crashes'
                 gather_metadata()
                 st.rerun()
             if st.button(
                 label='💎:green[Diamonds Dataset]',
-                use_container_width=True,
+                width='stretch',
             ):
                 st.session_state['source'] = 'diamonds'
                 gather_metadata()
                 st.rerun()
             if st.button(
                 label='🚘:green[MPG Dataset]',
-                use_container_width=True,
+                width='stretch',
             ):
                 st.session_state['source'] = 'mpg'
                 gather_metadata()

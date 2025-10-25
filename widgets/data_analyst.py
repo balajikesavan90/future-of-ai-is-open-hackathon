@@ -38,11 +38,11 @@ def render_data_analyst():
                 key=f'{filename}_data_filter',
             )
             if data_filter == 'First 5 rows':
-                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].head(), use_container_width=True)
+                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].head(), width='stretch')
             elif data_filter == 'Last 5 rows':
-                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].tail(), use_container_width=True)
+                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].tail(), width='stretch')
             elif data_filter == 'Random 5 rows':
-                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].sample(5), use_container_width=True)
+                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].sample(5), width='stretch')
 
     for message in st.session_state['messages']:
         if 'error' not in message.keys():
@@ -57,9 +57,9 @@ def render_data_analyst():
                                 st.write(message['commentary'])
                             if message['output'] is not None:
                                 if isinstance(message['output'], pd.DataFrame):
-                                    st.dataframe(message['output'], use_container_width=True, hide_index=False)
+                                    st.dataframe(message['output'], width='stretch', hide_index=False)
                                 elif isinstance(message['output'], go.Figure):
-                                    st.plotly_chart(message['output'], use_container_width=True)
+                                    st.plotly_chart(message['output'], width='stretch')
                             if 'commentary' in message.keys():
                                 if message['commentary'] is not None:
                                     st.caption(message['commentary'])

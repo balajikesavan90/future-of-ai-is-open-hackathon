@@ -28,7 +28,7 @@ def render_uploaded_data():
             data=df,
             hide_index=True,
             height=250,
-            use_container_width=True
+            width='stretch',
         )
         st.divider()
     
@@ -37,11 +37,11 @@ def render_uploaded_data():
         st.button(
             label=':red[Go Back]',
             on_click=goto_data_dictionary_widget,
-            use_container_width=True
+            width='stretch'
         )
     with proceed_col:
         st.button(
             label=':green[Proceed to Data Analysis]',
             on_click=goto_data_analysis_widget,
-            use_container_width=True
+            width='stretch'
         )
