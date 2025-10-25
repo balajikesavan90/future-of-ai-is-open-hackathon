@@ -23,7 +23,7 @@ def render_data_analyst():
     if 'cost' not in st.session_state:
         st.session_state['cost'] = 0
 
-    st.session_state['model'] = st.sidebar.selectbox('Select the model:', ['meta/llama-4-scout-instruct', 'gpt-4.1-nano-2025-04-14'], index=1)
+    st.session_state['model'] = st.sidebar.selectbox('Select the model:', ['meta/llama-4-scout-instruct', 'gpt-5-nano-2025-08-07'], index=1)
 
     st.session_state['usage_container'] = st.empty()
 

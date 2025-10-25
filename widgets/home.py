@@ -29,7 +29,7 @@ def render_home():
         with analyze_data:
             st.session_state['agent_model'] = st.toggle(
                 label=':blue[Use Agent Model]',
-                value=False,
+                value=True,
                 help='Use the agent model to analyze your data. This will allow the AI to see your data.',
             )
             render_sample_datasets()
