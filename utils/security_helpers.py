@@ -45,7 +45,7 @@ def validate_code_security(python_syntax):
         'warnings', 
         'math',
         'statsmodels', 'sm',
-        'mathplotlib.figure', 'mfigure',
+        'matplotlib.figure', 'mfigure',
         'seaborn', 'sns'
     }
     
