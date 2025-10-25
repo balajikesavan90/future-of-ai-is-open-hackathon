@@ -18,7 +18,7 @@ import io
 import base64
 import matplotlib.pyplot as plt
 import matplotlib.figure as mfigure
-import openai  # Added to catch BadRequestError
+import openai
 
 from utils.system_messages import construct_system_message
 from utils.streamlit_helpers import reset_data_analyst, safely_escape_dollars, render_tool_call, render_tool_response, reset_analytics_agent
