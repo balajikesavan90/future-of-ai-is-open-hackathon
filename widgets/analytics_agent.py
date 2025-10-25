@@ -34,7 +34,7 @@ def render_analytics_agent():
     else:
         st.session_state['model'] = 'gpt-5-nano-2025-08-07'
 
-    st.info(f'The analytics agent uses the {st.session_state["model"]} model. Agent mode works much better with advanced models like gpt-5-mini or gpt-5. Please get it touch with [me](https://www.linkedin.com/in/balaji-kesavan/) if you want to use the advanced models.')
+    st.info(f'The analytics agent uses the {st.session_state["model"]} model. Agent mode works much better with advanced models like gpt-5-mini or gpt-5. Please get in touch with [me](https://www.linkedin.com/in/balaji-kesavan/) if you want to use the advanced models.')
 
     if 'messages' not in st.session_state.keys() or not st.session_state['messages']:
         st.session_state['messages'] = [{'role': 'assistant', 'content': construct_welcome_message()}]
