@@ -99,21 +99,21 @@ def render_analytics_agent():
         col1, col2 = st.columns([1, 1])
         with col1:
             if st.button(
-                label=':blue[Please find me something interesting in this data]',
+                label=':blue[Please find me something interesting in this data and plot it]',
                 use_container_width=True,
                 on_click=disable_sample_button,
                 disabled=st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False,
             ):
-                st.session_state['user_input'] = 'Find me something interesting in this data'
+                st.session_state['user_input'] = 'Find me something interesting in this data and plot it'
                 st.session_state['show_sample'] = False
         with col2:
             if st.button(
-                label=':blue[Please identify interesting patterns and/or correlations in the data]',
+                label=':blue[Please identify interesting patterns and/or correlations in the data and plot them]',
                 use_container_width=True,
                 on_click=disable_sample_button,
                 disabled=st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False,
             ):
-                st.session_state['user_input'] = 'Please identify interesting patterns and/or correlations in the data'
+                st.session_state['user_input'] = 'Please identify interesting patterns and/or correlations in the data and plot them'
                 st.session_state['show_sample'] = False
         
 
