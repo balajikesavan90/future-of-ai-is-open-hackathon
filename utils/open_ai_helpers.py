@@ -417,7 +417,7 @@ class OpenAIUtility:
 
             elif result is None:
                 logging.info('Result is None')
-                if report_function  == 'generate_report':
+                if report_function == 'generate_report':
                     result = "Code execution returned None. The code execution must return a pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
                 elif report_function is None:
                     result = "Code execution returned None. This could happen if the python expression is multiple lines long. The python expression must be a small single line code snippet. Use the run_python_function tool for complex multi-line code."
