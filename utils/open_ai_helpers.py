@@ -502,10 +502,6 @@ class OpenAIUtility:
 
         if token_count >= 200000:
             st.error('The conversation length got too long. LLMs have a context window limit which has been exceeded. Please reset and start a new conversation. Alternatively, get in touch with [me](https://www.linkedin.com/in/balaji-kesavan/) and I can help you set up a custom solution.')
-            if agent_model:
-                st.button(':red[Reset Analytics Agent]', on_click=reset_analytics_agent, key='reset')
-            else:
-                st.button(':red[Reset Data Analyst]', on_click=reset_data_analyst, key='reset')
             if st.secrets['ENV'] == 'dev':
                 st.write(st.session_state['messages'])
             st.stop()
