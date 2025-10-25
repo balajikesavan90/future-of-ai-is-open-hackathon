@@ -108,12 +108,12 @@ def render_analytics_agent():
                 st.session_state['show_sample'] = False
         with col2:
             if st.button(
-                label=':blue[Please identify interesting patterns and/or correlations in the data and plot them]',
+                label=':blue[Please identify interesting patterns/correlations in the data and plot them]',
                 width='stretch',
                 on_click=disable_sample_button,
                 disabled=st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False,
             ):
-                st.session_state['user_input'] = 'Please identify interesting patterns and/or correlations in the data and plot them'
+                st.session_state['user_input'] = 'Please identify interesting patterns/correlations in the data and plot them'
                 st.session_state['show_sample'] = False
         
 
