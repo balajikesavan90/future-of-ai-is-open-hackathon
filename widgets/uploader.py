@@ -77,7 +77,7 @@ def render_uploader():
 
         if st.form_submit_button(
             label=':green[Lets Go!]',
-            use_container_width=True,
+            width='stretch',
         ):
             if uploaded_files:
                 # Validate all files before processing

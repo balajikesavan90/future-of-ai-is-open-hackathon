@@ -41,11 +41,11 @@ def render_data_dictionary_widget():
                 key = f'{filename}_data_filter',
             )
             if data_filter == 'First 5 rows':
-                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].head(), use_container_width=True)
+                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].head(), width='stretch')
             elif data_filter == 'Last 5 rows':
-                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].tail(), use_container_width=True)
+                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].tail(), width='stretch')
             elif data_filter == 'Random 5 rows':
-                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].sample(5), use_container_width=True)
+                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].sample(5), width='stretch')
 
         if st.session_state['source'] in (['snowflake', 'uploader']):
             value = ''
@@ -62,7 +62,7 @@ def render_data_dictionary_widget():
 
         st.session_state['vetted_files'][filename]['data_dictionary'] = st.data_editor(
             data=df,
-            use_container_width=True,
+            width='stretch',
             hide_index=True,
             key=filename,
             height=250,
@@ -85,6 +85,6 @@ def render_data_dictionary_widget():
     st.button(
         label=':green[Save Data Dictionary and Proceed]',
         on_click=process_data_dictionaries,
-        use_container_width=True,
+        width='stretch',
         args=(st.session_state['vetted_files'], None)
     )

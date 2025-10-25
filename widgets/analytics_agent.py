@@ -68,11 +68,11 @@ def render_analytics_agent():
                 key=f'{filename}_data_filter',
             )
             if data_filter == 'First 5 rows':
-                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].head(), use_container_width=True)
+                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].head(), width='stretch')
             elif data_filter == 'Last 5 rows':
-                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].tail(), use_container_width=True)
+                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].tail(), width='stretch')
             elif data_filter == 'Random 5 rows':
-                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].sample(5), use_container_width=True)
+                st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].sample(5), width='stretch')
 
     st.session_state['messages_container'] = st.container()
 
@@ -100,7 +100,7 @@ def render_analytics_agent():
         with col1:
             if st.button(
                 label=':blue[Please find me something interesting in this data and plot it]',
-                use_container_width=True,
+                width='stretch',
                 on_click=disable_sample_button,
                 disabled=st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False,
             ):
@@ -109,7 +109,7 @@ def render_analytics_agent():
         with col2:
             if st.button(
                 label=':blue[Please identify interesting patterns and/or correlations in the data and plot them]',
-                use_container_width=True,
+                width='stretch',
                 on_click=disable_sample_button,
                 disabled=st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False,
             ):
