@@ -55,6 +55,12 @@ def generate_report():
     # Your complex multi-line data manipulation code here
     return df_result
 
+Use the run_python_plot_function tool to run complex multi-line code that generates plots like
+def generate_plot():
+    # Your complex multi-line plotting code here
+    return fig_result
+Use the run_python_expression and/or the run_python_function to generate any supporting information needed for the plot.
+
 Your response to the user must include the actionable insights from the thought process behind the analysis.
 Generate your response in markdown format.
 \n\n
