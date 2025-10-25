@@ -122,20 +122,12 @@ class OpenAIUtility:
                     tool_response = f"Tool '{tool_name}' not implemented or not available."
                 
                 with st.session_state['messages_container']:
-                    if tool_name == 'generate_plot':
-                        messages.append({
-                            'role': 'tool', 
-                            'content': tool_response, 
-                            'tool_call_id': tool_call.id
-                        })
-                        render_tool_response(tool_response)
-                    else:
-                        messages.append({
-                            'role': 'tool', 
-                            'content': str(tool_response), 
-                            'tool_call_id': tool_call.id
-                        })
-                        render_tool_response(str(tool_response))
+                    messages.append({
+                        'role': 'tool', 
+                        'content': str(tool_response), 
+                        'tool_call_id': tool_call.id
+                    })
+                    render_tool_response(str(tool_response))
 
             except Exception as e:
                 # Log the full traceback for debugging purposes
@@ -533,7 +525,7 @@ class OpenAIUtility:
             generate_seaborn_plot_toolspec = {
                 "type": "function",
                 "function": {
-                    "name": "generate_seaborn_plot",
+                    "name": "generate_plot",
                     "description": "Run a python function to generate a Seaborn plot. The function must intake 0 arguments and return a single matplotlib.figure.Figure. You can only use the pandas, numpy, seaborn, matplotlib, datetime and math libraries.",
                     "strict": True,
                     "parameters": {
