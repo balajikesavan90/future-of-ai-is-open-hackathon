@@ -411,6 +411,7 @@ class OpenAIUtility:
                 img_b64 = base64.b64encode(img_bytes).decode('utf-8')
                 img_url = f'data:image/png;base64,{img_b64}'
                 result = img_url
+                plt.close(result)
             else:
                 logging.info(f'Result is not a matplotlib.figure.Figure: {type(result)}')
                 result = f"Code execution returned an object of type {type(result)}. The code execution must return a matplotlib.figure.Figure. You can only use the pandas, numpy, seaborn, matplotlib, datetime and math libraries."
