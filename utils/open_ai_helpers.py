@@ -388,6 +388,13 @@ class OpenAIUtility:
                 # Convert list to DataFrame
                 result = pd.DataFrame(result).to_json(orient='index')
 
+            elif result is None:
+                logging.info('Result is None')
+                if report_function  == 'generate_report':
+                    result = "Code execution returned None. The code execution must return a pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
+                elif report_function is None:
+                    result = "Code execution returned None. This could happen if the python expression is multiple lines long. The python expression must be a small single line code snippet. Use the run_python_function tool for complex multi-line code."
+
             else:
                 logging.info(f'Result is not a pandas df or a pandas series or a python dictionary: {type(result)}')
                 result = f"Code execution returned an object of type {type(result)}. The code execution must return a pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
