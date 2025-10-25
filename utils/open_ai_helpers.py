@@ -66,7 +66,7 @@ class OpenAIUtility:
         elif model == 'o3-2025-04-16':
             return 2*prompt_tokens/1000000 + 8*completion_tokens/1000000
         elif model == 'o3-pro-2025-06-10':
-            return 20*prompt_tokens + 80*completion_tokens/1000000
+            return 20*prompt_tokens/1000000 + 80*completion_tokens/1000000
         elif model == 'gpt-5-nano-2025-08-07':
             return 0.05*prompt_tokens/1000000 + 0.4*completion_tokens/1000000
         elif model == 'gpt-5-mini-2025-08-07':
