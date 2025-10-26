@@ -604,8 +604,9 @@ class OpenAIResponsesUtility:
                 )
             }
         ]
-        response, _, cost, _ = self.responses_APIcall(st.session_state['messages'], model=model, temperature=0.1, tool_config=tool_config)
+        response, _, cost, context_window_usage = self.responses_APIcall(st.session_state['messages'], model=model, temperature=0.1, tool_config=tool_config)
 
         st.session_state['prompt_str'] = ""
         st.session_state['cost'] += cost
+        st.session_state['context_window_usage'] = context_window_usage
         return response

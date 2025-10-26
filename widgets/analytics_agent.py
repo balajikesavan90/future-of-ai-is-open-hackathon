@@ -73,6 +73,9 @@ def render_analytics_agent():
     if 'show_sample' not in st.session_state:
         st.session_state['show_sample'] = True
 
+    if 'context_window_usage' not in st.session_state:
+        st.session_state['context_window_usage'] = 0
+
     st.session_state['usage_container'] = st.empty()
 
     with st.session_state['usage_container']:
@@ -123,6 +126,16 @@ def render_analytics_agent():
                         render_tool_response(output_item['image_url'])
 
     st.session_state['spinner_container'] = st.container()
+
+    if st.session_state['context_window_usage'] > 0:
+        st.progress(
+            value=st.session_state['context_window_usage'],
+            text=f'Model Context Usage : {st.session_state["context_window_usage"]*100:.2f}%'
+        )
+
+    if st.session_state['context_window_usage'] > 0.5:
+        st.warning('LLMs are known to degrade in performance when context window usage gets higher than 50%. Consider starting a new session.')
+
 
     st.session_state['user_input'] = st.chat_input(
         max_chars = 1000, 

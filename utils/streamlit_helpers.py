@@ -59,6 +59,7 @@ def reset_analytics_agent():
     st.session_state['cost'] = 0
     st.session_state['show_sample'] = True
     st.session_state['disable_sample_button'] = False
+    st.session_state['context_window_usage'] = 0
     st.session_state['session_id'] = str(uuid.uuid4())
     print('###############################')
     print('reset_analytics_agent')
