@@ -25,7 +25,7 @@ def render_home():
     logging.info(f'render_home - {st.session_state["session_id"]}')
     if st.session_state['vetted_files'] == {}:
 
-        analyze_data, about = st.tabs(['🔍 Analyze Data', '🤖 About'])
+        analyze_data, about = st.tabs(['🔍 Analyze Data', '🗒️ About'])
         with analyze_data:
             st.session_state['agent_model'] = st.toggle(
                 label=':blue[Use Agent Model]',
