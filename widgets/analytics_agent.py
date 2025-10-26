@@ -122,7 +122,7 @@ def render_analytics_agent():
                 if msg['summary'] != []:
                     summary_list = msg['summary']
                     for summary in summary_list:
-                        with st.expander(f"🤔 Agent Reasoning", expanded=True):
+                        with st.expander(f"🧠 Agent Reasoning", expanded=True):
                             st.write(safely_escape_dollars(summary['text']))  # Safely escape dollar signs for LaTeX rendering
             elif msg['type'] == 'function_call':
                 render_tool_call(msg)

@@ -170,7 +170,7 @@ class OpenAIResponsesUtility:
                 if summary_list != []:
                     for summary in summary_list:
                         with st.session_state['messages_container']:
-                            with st.expander(f"🤔 Agent Reasoning", expanded=True):
+                            with st.expander(f"🧠 Agent Reasoning", expanded=True):
                                 st.write(safely_escape_dollars(summary['text']))  # Safely escape dollar signs for LaTeX rendering
             # elif output.type in ['mcp_list_tools', 'mcp_call']:
             #     messages.append(output.to_dict())
