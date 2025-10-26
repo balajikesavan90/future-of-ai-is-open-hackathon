@@ -84,7 +84,7 @@ def render_ai_prompt():
             st.write(st.session_state['system_message'])
         if 'messages' in st.session_state.keys():
             st.subheader(':blue[Messages]')
-            messages_wo_system_message = [msg for msg in st.session_state['messages'] if 'role' in msg and msg['role'] != 'system']
+            messages_wo_system_message = [msg for msg in st.session_state['messages'][1:]]
             st.write(messages_wo_system_message)
 
 def safely_escape_dollars(text):
