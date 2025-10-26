@@ -101,17 +101,6 @@ def render_analytics_agent():
 
     st.session_state['messages_container'] = st.container()
 
-    # with st.session_state['messages_container']:
-    #     for msg in st.session_state['messages']:
-    #         if 'role' in msg and msg['role'] in ['user', 'assistant']:
-    #             if 'content' in msg and msg['content'] != None:
-    #                 st.chat_message(msg['role']).write(safely_escape_dollars(msg['content'][0]['text']))  # Safely escape dollar signs for LaTeX rendering
-    #             if 'tool_calls' in msg:
-    #                 for tool_call in msg['tool_calls']:
-    #                     render_tool_call(tool_call)
-    #         if 'role' in msg and msg['role'] == 'tool':
-    #             render_tool_response(msg['content'])
-
     with st.session_state['messages_container']:
         for msg in st.session_state['messages']:
             if msg['type'] == 'message':
