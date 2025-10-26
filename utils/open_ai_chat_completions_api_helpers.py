@@ -30,11 +30,10 @@ class ResponseFormat(BaseModel):
     commentary: str = Field(..., description="The commentary for the user.")
 
 
-class OpenAIUtility:
+class OpenAIChatCompletionsUtility:
     def __init__(self):
         self.client = OpenAI()
         self.enc_gpt4 = tiktoken.encoding_for_model("gpt-4")
-
 
     def token_count_message(self, message):
         str = ''
@@ -327,29 +326,6 @@ class OpenAIUtility:
             if not python_code.strip().startswith('def generate_plot():'):
                 logging.error(f'Invalid function definition: {python_code}')
                 return "The python function must be named generate_plot and intake 0 arguments. The function must return a single matplotlib.figure.Figure. You can only use the pandas, numpy, seaborn, matplotlib, datetime and math libraries."
-
-        # # Check for any code outside the function definition
-        # # Get all lines of code and indent levels
-        # lines = python_code.strip().split('\n')
-        
-        # # If there are unindented non-comment lines after the function definition, reject
-        # for i, line in enumerate(lines):
-        #     # Skip the function definition line and allow comment lines
-        #     stripped_line = line.strip()
-        #     if (i > 0 and not line.startswith(' ') and not line.startswith('\t') and stripped_line and not stripped_line.startswith('#')):
-        #         logging.error(f'Code exists outside of function: {line}')
-        #         return "All code must be within the generate_report function. No code should exist outside the function definition."
-        
-        # # Make sure the function ends with a return statement
-        # indented_lines = [line for line in lines[1:] if line.strip()]  # Skip function def line
-        # if not indented_lines:
-        #     logging.error("Empty function body")
-        #     return "The function body is empty. It must contain code and end with a return statement."
-        
-        # last_code_line = indented_lines[-1].strip()
-        # if not last_code_line.startswith('return '):
-        #     logging.error(f'Function does not end with return statement: {last_code_line}')
-        #     return "The function must end with a return statement that returns a pandas DataFrame, Series, or dictionary."
         
         # If we got here, function definition is acceptable
         return self.run_python_code(
@@ -455,10 +431,10 @@ class OpenAIUtility:
 
         return result
 
-    def generate_openai_response(self, vetted_files, model, agent_model):
-        logging.info(f'generate_openai_response - {st.session_state["session_id"]}')
+    def generate_openai_chat_completions_response(self, vetted_files, model):
+        logging.info(f'generate_openai_chat_completions_response - {st.session_state["session_id"]}')
 
-        system_message = construct_system_message(vetted_files, agent_model)
+        system_message = construct_system_message(vetted_files, agent_model=False)
 
         st.session_state['system_message'] = system_message
 
@@ -505,112 +481,7 @@ class OpenAIUtility:
                 st.write(st.session_state['messages'])
             st.stop()
 
-        if agent_model:
-            run_python_expression_toolspec = {
-                "type": "function",
-                "function": {
-                    "name": "run_python_expression",
-                    "description": "Run a python expression and return the result. The python expression must be a single expression that returns a pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries.",
-                    "strict": True,
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "python_expression": {
-                                "type": "string",
-                                "description": "The python expression to run. The python expression must be a single expression that returns a pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
-                            },
-                            "reason": {
-                                "type": "string",
-                                "description": "The reason for running the python expression. This will be used to provide context for the code execution and help the user understand the purpose of the code snippet."
-                            }
-                        },
-                        "additionalProperties": False,
-                        "required": ["python_expression", "reason"],
-                    },
-                }
-            }
-
-            run_python_function_toolspec = {
-                "type": "function",
-                "function": {
-                    "name": "run_python_function",
-                    "description": "Run a python function called generate_report. The function must intake 0 arguments and return a single pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries.",
-                    "strict": True,
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "function_definition": {
-                                "type": "string",
-                                "description": "The python function definition to run. The function must be named generate_report and intake 0 arguments. The function must return a single pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
-                            },
-                            "reason": {
-                                "type": "string",
-                                "description": "The reason for running the python function. This will be used to provide context for the code execution and help the user understand the purpose of the code snippet."
-                            }
-                        },
-                        "additionalProperties": False,
-                        "required": ["function_definition", "reason"],
-                    },
-                }
-            }
-
-            generate_seaborn_plot_toolspec = {
-                "type": "function",
-                "function": {
-                    "name": "generate_plot",
-                    "description": "Run a python function to generate a Seaborn plot. The function must intake 0 arguments and return a single matplotlib.figure.Figure. You can only use the pandas, numpy, seaborn, matplotlib, datetime and math libraries.",
-                    "strict": True,
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "function_definition": {
-                                "type": "string",
-                                "description": "The python function definition to run. The function must be named generate_plot and intake 0 arguments. The function must return a single matplotlib.figure.Figure. You can only use the pandas, numpy, seaborn, matplotlib, datetime and math libraries."
-                            },
-                            "reason": {
-                                "type": "string",
-                                "description": "The design decisions made for the plot. This will be used to provide context for the code execution and help the user understand the purpose of the code snippet."
-                            }
-                        },
-                        "additionalProperties": False,
-                        "required": ["function_definition", "reason"],
-                    },
-                }
-            }
-
-            # Define tool config with both specs and handlers
-            tool_config = [
-                {
-                    'spec': run_python_expression_toolspec,
-                    'handler': lambda args_dict: self.run_python_code(
-                        python_code=args_dict.get('python_expression'),
-                        reason=args_dict.get('reason'),
-                        vetted_files=vetted_files,
-                        report_function=None,
-                    )
-                },
-                {
-                    'spec': run_python_function_toolspec,
-                    'handler': lambda args_dict: self.run_python_function(
-                        python_code=args_dict.get('function_definition'),
-                        reason=args_dict.get('reason'),
-                        vetted_files=vetted_files,
-                        report_function='generate_report'
-                    )
-                },
-                {
-                    'spec': generate_seaborn_plot_toolspec,
-                    'handler': lambda args_dict: self.run_python_function(
-                        python_code=args_dict.get('function_definition'),
-                        reason=args_dict.get('reason'),
-                        vetted_files=vetted_files,
-                        report_function='generate_plot'
-                    )
-                }
-            ]
-            _, response, cost = self.chatcompletion_APICall(prompt, model=model, temperature=0.1, tool_config=tool_config)
-        else:
-            response, _, cost = self.chatcompletion_APICall(prompt, model=model, temperature=0.1, response_format=ResponseFormat)
+        response, _, cost = self.chatcompletion_APICall(prompt, model=model, temperature=0.1, response_format=ResponseFormat)
 
         st.session_state['prompt_str'] = ""
         st.session_state['cost'] += cost

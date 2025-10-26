@@ -32,7 +32,7 @@ def get_base_system_message(agent_model):
 You can run tool calls to query the data and provide answers to the user.
 You can pass a python expression to run_python_expression tool which will execute the code and return the result.
 You can pass a python function to run_python_function tool which will execute the function and return the result.
-You can pass a python function to run_python_plot_function tool which will execute the function and return the matplotlib figure.
+You can pass a python function to generate_plot tool which will execute the function and return the matplotlib figure.
 Your goal is to analyze the user's data and generate insights from it.
 You might need to run multiple tool calls to get the final result.
 
@@ -55,7 +55,7 @@ def generate_report():
     # Your complex multi-line data manipulation code here
     return df_result
 
-Use the run_python_plot_function tool to run complex multi-line code that generates plots like
+Use the generate_plot tool to run complex multi-line code that generates plots like
 def generate_plot():
     # Your complex multi-line plotting code here
     return fig_result

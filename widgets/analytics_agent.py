@@ -6,6 +6,7 @@ import json
 import pandas as pd
 
 from utils.ai_helpers import construct_welcome_message, generate_ai_response
+from utils.system_messages import construct_system_message
 
 from widgets.prompt_guide import render_analytics_agent_prompt_guide
 from utils.streamlit_helpers import render_ai_prompt, safely_escape_dollars, render_tool_call, render_tool_response, disable_sample_button
@@ -36,8 +37,32 @@ def render_analytics_agent():
 
     st.info(f'The analytics agent uses the {st.session_state["model"]} model. Agent mode works much better with advanced models like gpt-5-mini or gpt-5. Please get in touch with [me](https://www.linkedin.com/in/balaji-kesavan/) if you want to use the advanced models.')
 
+    st.session_state['system_message'] = construct_system_message(st.session_state['vetted_files'], agent_model = True)
+
+
     if 'messages' not in st.session_state.keys() or not st.session_state['messages']:
-        st.session_state['messages'] = [{'role': 'assistant', 'content': construct_welcome_message()}]
+        st.session_state['messages'] = [
+            {
+                'role': 'system', 
+                'content': [
+                    {
+                        'text': st.session_state['system_message'], 
+                        'type': 'input_text'
+                    }
+                ], 
+                'type': 'message'
+            },
+            {
+                'role': 'assistant', 
+                'content': [
+                    {
+                        'text': construct_welcome_message(),
+                        'type': 'output_text'
+                    }
+                ],
+                'type': 'message'
+            }
+        ]
 
     if 'cost' not in st.session_state:
         st.session_state['cost'] = 0
@@ -47,6 +72,9 @@ def render_analytics_agent():
 
     if 'show_sample' not in st.session_state:
         st.session_state['show_sample'] = True
+
+    if 'context_window_usage' not in st.session_state:
+        st.session_state['context_window_usage'] = 0
 
     st.session_state['usage_container'] = st.empty()
 
@@ -78,18 +106,36 @@ def render_analytics_agent():
 
     with st.session_state['messages_container']:
         for msg in st.session_state['messages']:
-            if msg['role'] in ['user', 'assistant']:
-                if 'content' in msg and msg['content'] != None:
-                    st.chat_message(msg['role']).write(safely_escape_dollars(msg['content']))  # Safely escape dollar signs for LaTeX rendering
-                if 'tool_calls' in msg:
-                    for tool_call in msg['tool_calls']:
-                        render_tool_call(tool_call)
-            if msg['role'] == 'tool':
-                render_tool_response(msg['content'])
-
-    
+            if msg['type'] == 'message':
+                if msg['role'] in ['user', 'assistant']:
+                    text = msg['content'][0]['text']
+                    st.chat_message(msg['role']).write(safely_escape_dollars(text))  # Safely escape dollar signs for LaTeX rendering
+            elif msg['type'] == 'reasoning':
+                if msg['summary'] != []:
+                    summary_list = msg['summary']
+                    for summary in summary_list:
+                        with st.expander(f"🧠 Agent Reasoning", expanded=True):
+                            st.write(safely_escape_dollars(summary['text']))  # Safely escape dollar signs for LaTeX rendering
+            elif msg['type'] == 'function_call':
+                render_tool_call(msg)
+            elif msg['type'] == 'function_call_output':
+                if isinstance(msg['output'], str):
+                    render_tool_response(msg['output'])
+                elif isinstance(msg['output'], list):
+                    for output_item in msg['output']:
+                        render_tool_response(output_item['image_url'])
 
     st.session_state['spinner_container'] = st.container()
+
+    if st.session_state['context_window_usage'] > 0:
+        st.progress(
+            value=st.session_state['context_window_usage'],
+            text=f'Model Context Usage: {st.session_state["context_window_usage"]*100:.2f}%'
+        )
+
+    if st.session_state['context_window_usage'] > 0.5:
+        st.warning('LLMs are known to degrade in performance when context window usage gets higher than 50%. Consider starting a new session.')
+
 
     st.session_state['user_input'] = st.chat_input(
         max_chars = 1000, 
@@ -119,10 +165,21 @@ def render_analytics_agent():
 
     if st.session_state['user_input'] is not None and st.session_state['user_input'].strip():
         with st.spinner('Loading...'):
-            st.session_state['messages'].append({'role': 'user', 'content': st.session_state['user_input']})
+            st.session_state['messages'].append(
+                {
+                    'role': 'user', 
+                    'content': [
+                        {
+                            'text': st.session_state['user_input'],
+                            'type': 'input_text'
+                        },
+                    ],
+                    'type': 'message'
+                }
+            )
             with st.session_state['messages_container']:
                 st.chat_message('user').write(safely_escape_dollars(st.session_state['user_input']))  # Safely escape dollar signs for LaTeX rendering
             st.session_state['messages'] = generate_ai_response(st.session_state['vetted_files'], st.session_state['model'], True)
             st.session_state['count'] += 1
-        st.chat_message('assistant').write_stream(stream_text(safely_escape_dollars(st.session_state['messages'][-1]['content'])))
+        st.chat_message('assistant').write_stream(stream_text(safely_escape_dollars(st.session_state['messages'][-1]['content'][0]['text'])))  # Safely escape dollar signs for LaTeX rendering
         st.rerun()
