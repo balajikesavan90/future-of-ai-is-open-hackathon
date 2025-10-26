@@ -122,12 +122,16 @@ def render_analytics_agent():
                 if msg['summary'] != []:
                     summary_list = msg['summary']
                     for summary in summary_list:
-                        with st.expander(f"🤔 See Agent Reasoning", expanded=False):
+                        with st.expander(f"🤔 Agent Reasoning", expanded=True):
                             st.write(safely_escape_dollars(summary['text']))  # Safely escape dollar signs for LaTeX rendering
             elif msg['type'] == 'function_call':
                 render_tool_call(msg)
             elif msg['type'] == 'function_call_output':
-                render_tool_response(msg['output'])
+                if isinstance(msg['output'], str):
+                    render_tool_response(msg['output'])
+                elif isinstance(msg['output'], list):
+                    for output_item in msg['output']:
+                        render_tool_response(output_item['image_url'])
 
     st.session_state['spinner_container'] = st.container()
 

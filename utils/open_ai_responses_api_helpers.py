@@ -166,6 +166,12 @@ class OpenAIResponsesUtility:
             #     messages.append(output.to_dict())
             elif output.type == 'reasoning':
                 messages.append(output.to_dict())
+                summary_list = output.to_dict()['summary']
+                if summary_list != []:
+                    for summary in summary_list:
+                        with st.session_state['messages_container']:
+                            with st.expander(f"🤔 Agent Reasoning", expanded=True):
+                                st.write(safely_escape_dollars(summary['text']))  # Safely escape dollar signs for LaTeX rendering
             # elif output.type in ['mcp_list_tools', 'mcp_call']:
             #     messages.append(output.to_dict())
             elif output.type == 'function_call':
@@ -180,6 +186,15 @@ class OpenAIResponsesUtility:
                     'name': function_name,
                     'arguments': arguments
                 })
+                with st.session_state['messages_container']:
+                    render_tool_call({
+                        'type': 'function_call',
+                        'id': id,
+                        'call_id': call_id,
+                        'name': function_name,
+                        'arguments': arguments
+                    })
+
                 output_dict = output.to_dict()
                 if 'parsed_arguments' in output_dict:
                     del output_dict['parsed_arguments']  # Remove parsed_arguments if present
@@ -231,15 +246,26 @@ class OpenAIResponsesUtility:
                             tool_response = tool_handlers[tool_name](args_dict)
                         else:
                             tool_response = f"Tool '{tool_name}' not implemented or not available."
-                            
-                        messages.append({
-                            'type': 'function_call_output',
-                            'call_id': tool_call['call_id'],
-                            'output': str(tool_response),
-                        })
+
+                        if tool_response.startswith('data:image/png;base64,'): 
+                            messages.append({
+                                'type': 'function_call_output',
+                                'call_id': tool_call['call_id'],
+                                'output': [
+                                    {
+                                        'type': 'input_image',
+                                        'image_url': tool_response
+                                    }
+                                ],
+                            })
+                        else:                           
+                            messages.append({
+                                'type': 'function_call_output',
+                                'call_id': tool_call['call_id'],
+                                'output': str(tool_response),
+                            })
                         with st.session_state['messages_container']:
-                            render_tool_call(tool_call)
-                            render_tool_response(str(tool_response))
+                            render_tool_response(tool_response)
                     except Exception as e:
                         error_message = f"Error executing tool {tool_call['name']}: {str(e)}"
                         logging.error(error_message)
@@ -249,7 +275,6 @@ class OpenAIResponsesUtility:
                             'output': error_message
                         })
                         with st.session_state['messages_container']:
-                            render_tool_call(tool_call)
                             render_tool_response(error_message)
         
 
@@ -362,13 +387,19 @@ class OpenAIResponsesUtility:
 
         # check if the code is a valid function definition
         if report_function == 'generate_report':
-            if not python_code.strip().startswith('def generate_report():'):
+            if python_code.strip().startswith('def generate_plot():'):
+                logging.error(f'Use of generate_plot function detected in generate_report tool: {python_code}')
+                return "Use of generate_plot function detected in the generate_report tool. Please use the generate_plot tool to create plots."
+            elif not python_code.strip().startswith('def generate_report():'):
                 logging.error(f'Invalid function definition: {python_code}')
-                return "The python function must be named generate_report and intake 0 arguments. The function must return a single pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
+                return "The function definition should start with 'def generate_report():'. The python function must be named generate_report and intake 0 arguments. The function must return a single pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
         elif report_function == 'generate_plot':
-            if not python_code.strip().startswith('def generate_plot():'):
+            if python_code.strip().startswith('def generate_report():'):
+                logging.error(f'Use of generate_report function detected in generate_plot tool: {python_code}')
+                return "Use of generate_report function detected in the generate_plot tool. Please use the generate_report tool to create data reports."
+            elif not python_code.strip().startswith('def generate_plot():'):
                 logging.error(f'Invalid function definition: {python_code}')
-                return "The python function must be named generate_plot and intake 0 arguments. The function must return a single matplotlib.figure.Figure. You can only use the pandas, numpy, seaborn, matplotlib, datetime and math libraries."
+                return "The function definition should start with 'def generate_plot():'. The python function must be named generate_plot and intake 0 arguments. The function must return a single matplotlib.figure.Figure. You can only use the pandas, numpy, seaborn, matplotlib, datetime and math libraries."
 
         # # Check for any code outside the function definition
         # # Get all lines of code and indent levels
