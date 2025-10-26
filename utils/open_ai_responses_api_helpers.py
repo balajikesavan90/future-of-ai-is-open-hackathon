@@ -17,7 +17,6 @@ import matplotlib.figure as mfigure
 import pandas as pd
 import numpy as np
 import io
-import base64
 import tiktoken
 
 # from utils.system_messages import construct_system_message
