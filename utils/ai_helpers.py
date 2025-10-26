@@ -38,7 +38,7 @@ def generate_ai_response(vetted_files, model, agent_model=False):
         if agent_model:
             response = openai_responses_client.generate_openai_response(vetted_files, model)
         else:
-            response = openai_chat_completions_client.generate_openai_chat_completions_response(vetted_files, model, agent_model)
+            response = openai_chat_completions_client.generate_openai_chat_completions_response(vetted_files, model)
         
     return response
 
