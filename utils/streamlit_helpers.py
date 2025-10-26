@@ -83,7 +83,7 @@ def render_ai_prompt():
             st.write(st.session_state['system_message'])
         if 'messages' in st.session_state.keys():
             st.subheader(':blue[Messages]')
-            messages_wo_system_message = [msg for msg in st.session_state['messages'] if msg['role'] != 'system']
+            messages_wo_system_message = [msg for msg in st.session_state['messages'] if 'role' in msg and msg['role'] != 'system']
             st.write(messages_wo_system_message)
 
 def safely_escape_dollars(text):
@@ -115,12 +115,12 @@ def render_tool_call(tool_call):
     Args:
         tool_call: The tool call to render
     """
-    with st.expander(f"🛠️ See Tool Call - Tool Name: {tool_call['function']['name']}", expanded=False):
-        st.caption(f"Reason: {json.loads(tool_call['function']['arguments'])['reason']}")
-        if 'python_expression' in json.loads(tool_call['function']['arguments']):
-            st.code(json.loads(tool_call['function']['arguments'])['python_expression'], language='python')
-        if 'function_definition' in json.loads(tool_call['function']['arguments']):
-            st.code(json.loads(tool_call['function']['arguments'])['function_definition'], language='python')
+    with st.expander(f"🛠️ See Tool Call - Tool Name: {tool_call['name']}", expanded=False):
+        st.caption(f"Reason: {json.loads(tool_call['arguments'])['reason']}")
+        if 'python_expression' in json.loads(tool_call['arguments']):
+            st.code(json.loads(tool_call['arguments'])['python_expression'], language='python')
+        if 'function_definition' in json.loads(tool_call['arguments']):
+            st.code(json.loads(tool_call['arguments'])['function_definition'], language='python')
 
 def render_tool_response(tool_response):
     """

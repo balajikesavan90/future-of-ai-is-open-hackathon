@@ -20,7 +20,7 @@ import io
 import base64
 import tiktoken
 
-from utils.system_messages import construct_system_message
+# from utils.system_messages import construct_system_message
 from utils.streamlit_helpers import safely_escape_dollars, render_tool_call, render_tool_response
 from utils.security_helpers import safely_execute_code
 
@@ -30,16 +30,6 @@ class OpenAIResponsesUtility:
     def __init__(self):
         self.client = OpenAI()
         self.enc_gpt4 = tiktoken.encoding_for_model("gpt-4")
-
-    def token_count_message(self, message):
-        str = ''
-        for msg in message:
-            if 'content'in msg:
-                str = f"{str}role: {msg['role']}, message: {msg['content']}\n"
-            elif 'tool_calls' in msg:
-                for tool_call in msg['tool_calls']:
-                    str = f"{str}role: {msg['role']}, tool_call: {tool_call['function']['name']}, arguments: {tool_call['function']['arguments']}\n"
-        return len(self.enc_gpt4.encode(str))
 
     @retry(wait=wait_random_exponential(min=5, max=10), stop=stop_after_attempt(5))
     def _embedding_with_backoff(self, **kwargs):
@@ -125,7 +115,7 @@ class OpenAIResponsesUtility:
     def _prepare_api_args(self, messages, model, temperature, response_format, reasoning_effort, tools, tool_choice, include):
         args = {
             'input': messages,
-            'instructions': messages[0]['content'],
+            'instructions': messages[0]['content'][0]['text'],
             'model': model,
             'temperature': temperature,
             'include': include
@@ -247,6 +237,9 @@ class OpenAIResponsesUtility:
                             'call_id': tool_call['call_id'],
                             'output': str(tool_response),
                         })
+                        with st.session_state['messages_container']:
+                            render_tool_call(tool_call)
+                            render_tool_response(str(tool_response))
                     except Exception as e:
                         error_message = f"Error executing tool {tool_call['name']}: {str(e)}"
                         logging.error(error_message)
@@ -255,6 +248,9 @@ class OpenAIResponsesUtility:
                             'call_id': tool_call['call_id'],
                             'output': error_message
                         })
+                        with st.session_state['messages_container']:
+                            render_tool_call(tool_call)
+                            render_tool_response(error_message)
         
 
             # Update messages in args and set tool_choice to auto for follow-up call
@@ -504,52 +500,63 @@ class OpenAIResponsesUtility:
     def generate_openai_response(self, vetted_files, model):
         logging.info(f'generate_openai_response - {st.session_state["session_id"]}')
 
-        system_message = construct_system_message(vetted_files, agent_model = True)
+        # system_message = construct_system_message(vetted_files, agent_model = True)
 
-        st.session_state['system_message'] = system_message
+        # st.session_state['system_message'] = system_message
 
-        prompt = [{'role': 'system', 'content': system_message}]
+        # prompt = [
+        #     {
+        #         'role': 'system', 
+        #         'content': [
+        #             {
+        #                 'text': system_message,
+        #                 'type': 'input_text'
+        #             },
+        #         ],
+        #         'type': 'message'
+        #     }
+        # ]
 
-        for dict_message in st.session_state['messages']:
-            if dict_message['role'] != 'system':
-                if dict_message['role'] in ['assistant', 'user'] and 'content' in dict_message:
-                    prompt.append({
-                        'role': dict_message['role'], 
-                        'content': dict_message['content']
-                    })
-                if dict_message['role'] == 'assistant' and 'tool_calls' in dict_message:
-                    prompt.append({
-                        'role': dict_message['role'],
-                        'tool_calls': dict_message['tool_calls']
-                    })
-                if dict_message['role'] == 'tool':
-                    prompt.append({
-                        'role': dict_message['role'],
-                        'content': dict_message['content'],
-                        'tool_call_id': dict_message['tool_call_id']
-                    })
+        # for dict_message in st.session_state['messages']:
+        #     if dict_message['role'] != 'system':
+        #         if dict_message['role'] in ['assistant', 'user'] and 'content' in dict_message:
+        #             prompt.append({
+        #                 'role': dict_message['role'], 
+        #                 'content': dict_message['content']
+        #             })
+        #         if dict_message['role'] == 'assistant' and 'tool_calls' in dict_message:
+        #             prompt.append({
+        #                 'role': dict_message['role'],
+        #                 'tool_calls': dict_message['tool_calls']
+        #             })
+        #         if dict_message['role'] == 'tool':
+        #             prompt.append({
+        #                 'role': dict_message['role'],
+        #                 'content': dict_message['content'],
+        #                 'tool_call_id': dict_message['tool_call_id']
+        #             })
 
 
-        token_count = self.token_count_message(prompt)
-        logging.info(f'token_count - {token_count} - {st.session_state["session_id"]}')
+        # token_count = self.token_count_message(prompt)
+        # logging.info(f'token_count - {token_count} - {st.session_state["session_id"]}')
 
-        error_count = 0
-        for message in st.session_state['messages']:
-            if 'error' in message.keys():
-                if message['role'] == 'assistant':
-                    error_count += 1
+        # error_count = 0
+        # for message in st.session_state['messages']:
+        #     if 'error' in message.keys():
+        #         if message['role'] == 'assistant':
+        #             error_count += 1
 
-        if error_count >= 3:
-            st.error('Oops! Something went wrong. Try rephrasing your prompt in a different way.')
-            if st.secrets['ENV'] == 'dev':
-                st.write(st.session_state['messages'])
-            st.stop()
+        # if error_count >= 3:
+        #     st.error('Oops! Something went wrong. Try rephrasing your prompt in a different way.')
+        #     if st.secrets['ENV'] == 'dev':
+        #         st.write(st.session_state['messages'])
+        #     st.stop()
 
-        if token_count >= 200000:
-            st.error('The conversation length got too long. LLMs have a context window limit which has been exceeded. Please reset and start a new conversation. Alternatively, get in touch with [me](https://www.linkedin.com/in/balaji-kesavan/) and I can help you set up a custom solution.')
-            if st.secrets['ENV'] == 'dev':
-                st.write(st.session_state['messages'])
-            st.stop()
+        # if token_count >= 200000:
+        #     st.error('The conversation length got too long. LLMs have a context window limit which has been exceeded. Please reset and start a new conversation. Alternatively, get in touch with [me](https://www.linkedin.com/in/balaji-kesavan/) and I can help you set up a custom solution.')
+        #     if st.secrets['ENV'] == 'dev':
+        #         st.write(st.session_state['messages'])
+        #     st.stop()
 
         run_python_expression_toolspec = {
             "type": "function",
@@ -583,7 +590,7 @@ class OpenAIResponsesUtility:
                 "properties": {
                     "function_definition": {
                         "type": "string",
-                        "description": "The python function definition to run. The function must be named generate_report and intake 0 arguments. The function must return a single pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
+                        "description": "The python function definition to run. The function must be named generate_report and intake 0 arguments. The function must return a single pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries. ONLY provide the function definition, do not include the function call. The function will be invoked by the tool."
                     },
                     "reason": {
                         "type": "string",
@@ -605,7 +612,7 @@ class OpenAIResponsesUtility:
                 "properties": {
                     "function_definition": {
                         "type": "string",
-                        "description": "The python function definition to run. The function must be named generate_plot and intake 0 arguments. The function must return a single matplotlib.figure.Figure. You can only use the pandas, numpy, seaborn, matplotlib, datetime and math libraries."
+                        "description": "The python function definition to run. The function must be named generate_plot and intake 0 arguments. The function must return a single matplotlib.figure.Figure. You can only use the pandas, numpy, seaborn, matplotlib, datetime and math libraries. ONLY provide the function definition, do not include the function call. The function will be invoked by the tool."
                     },
                     "reason": {
                         "type": "string",
@@ -647,7 +654,7 @@ class OpenAIResponsesUtility:
                 )
             }
         ]
-        response, _, cost, _ = self.responses_APIcall(prompt, model=model, temperature=0.1, tool_config=tool_config)
+        response, _, cost, _ = self.responses_APIcall(st.session_state['messages'], model=model, temperature=0.1, tool_config=tool_config)
 
         st.session_state['prompt_str'] = ""
         st.session_state['cost'] += cost
