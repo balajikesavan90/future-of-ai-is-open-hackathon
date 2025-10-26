@@ -460,11 +460,6 @@ class OpenAIResponsesUtility:
                 # Convert list to DataFrame
                 result = pd.DataFrame(result).to_json(orient='index')
 
-            elif isinstance(result, tuple):
-                logging.info(f'Result is a tuple: {result}')
-                # Convert tuple to DataFrame
-                result = pd.DataFrame(list(result)).to_json(orient='index')
-
             elif isinstance(result, mfigure.Figure):
                 logging.info('Result is a Matplotlib Figure, but it was created using the wrong tool')
                 result = f"Code execution returned a Matplotlib Figure, but it was created using the wrong tool. Please use the generate_plot tool to create plots."
