@@ -308,7 +308,7 @@ class OpenAIResponsesUtility:
             allow_image_generation = False,
             image_params = None,
             # include = ['web_search_call.action.sources', 'reasoning.encrypted_content']
-            include = []
+            include = ['reasoning.encrypted_content']
         ):
         logging.info(f'responses_APIcall - {st.session_state["session_id"]}')
 
@@ -400,29 +400,6 @@ class OpenAIResponsesUtility:
             elif not python_code.strip().startswith('def generate_plot():'):
                 logging.error(f'Invalid function definition: {python_code}')
                 return "The function definition should start with 'def generate_plot():'. The python function must be named generate_plot and intake 0 arguments. The function must return a single matplotlib.figure.Figure. You can only use the pandas, numpy, seaborn, matplotlib, datetime and math libraries."
-
-        # # Check for any code outside the function definition
-        # # Get all lines of code and indent levels
-        # lines = python_code.strip().split('\n')
-        
-        # # If there are unindented non-comment lines after the function definition, reject
-        # for i, line in enumerate(lines):
-        #     # Skip the function definition line and allow comment lines
-        #     stripped_line = line.strip()
-        #     if (i > 0 and not line.startswith(' ') and not line.startswith('\t') and stripped_line and not stripped_line.startswith('#')):
-        #         logging.error(f'Code exists outside of function: {line}')
-        #         return "All code must be within the generate_report function. No code should exist outside the function definition."
-        
-        # # Make sure the function ends with a return statement
-        # indented_lines = [line for line in lines[1:] if line.strip()]  # Skip function def line
-        # if not indented_lines:
-        #     logging.error("Empty function body")
-        #     return "The function body is empty. It must contain code and end with a return statement."
-        
-        # last_code_line = indented_lines[-1].strip()
-        # if not last_code_line.startswith('return '):
-        #     logging.error(f'Function does not end with return statement: {last_code_line}')
-        #     return "The function must end with a return statement that returns a pandas DataFrame, Series, or dictionary."
         
         # If we got here, function definition is acceptable
         return self.run_python_code(
@@ -531,64 +508,6 @@ class OpenAIResponsesUtility:
     def generate_openai_response(self, vetted_files, model):
         logging.info(f'generate_openai_response - {st.session_state["session_id"]}')
 
-        # system_message = construct_system_message(vetted_files, agent_model = True)
-
-        # st.session_state['system_message'] = system_message
-
-        # prompt = [
-        #     {
-        #         'role': 'system', 
-        #         'content': [
-        #             {
-        #                 'text': system_message,
-        #                 'type': 'input_text'
-        #             },
-        #         ],
-        #         'type': 'message'
-        #     }
-        # ]
-
-        # for dict_message in st.session_state['messages']:
-        #     if dict_message['role'] != 'system':
-        #         if dict_message['role'] in ['assistant', 'user'] and 'content' in dict_message:
-        #             prompt.append({
-        #                 'role': dict_message['role'], 
-        #                 'content': dict_message['content']
-        #             })
-        #         if dict_message['role'] == 'assistant' and 'tool_calls' in dict_message:
-        #             prompt.append({
-        #                 'role': dict_message['role'],
-        #                 'tool_calls': dict_message['tool_calls']
-        #             })
-        #         if dict_message['role'] == 'tool':
-        #             prompt.append({
-        #                 'role': dict_message['role'],
-        #                 'content': dict_message['content'],
-        #                 'tool_call_id': dict_message['tool_call_id']
-        #             })
-
-
-        # token_count = self.token_count_message(prompt)
-        # logging.info(f'token_count - {token_count} - {st.session_state["session_id"]}')
-
-        # error_count = 0
-        # for message in st.session_state['messages']:
-        #     if 'error' in message.keys():
-        #         if message['role'] == 'assistant':
-        #             error_count += 1
-
-        # if error_count >= 3:
-        #     st.error('Oops! Something went wrong. Try rephrasing your prompt in a different way.')
-        #     if st.secrets['ENV'] == 'dev':
-        #         st.write(st.session_state['messages'])
-        #     st.stop()
-
-        # if token_count >= 200000:
-        #     st.error('The conversation length got too long. LLMs have a context window limit which has been exceeded. Please reset and start a new conversation. Alternatively, get in touch with [me](https://www.linkedin.com/in/balaji-kesavan/) and I can help you set up a custom solution.')
-        #     if st.secrets['ENV'] == 'dev':
-        #         st.write(st.session_state['messages'])
-        #     st.stop()
-
         run_python_expression_toolspec = {
             "type": "function",
             "name": "run_python_expression",
@@ -689,13 +608,4 @@ class OpenAIResponsesUtility:
 
         st.session_state['prompt_str'] = ""
         st.session_state['cost'] += cost
-        # for dict_message in prompt:
-        #     content_str = "None"
-        #     tool_calls_str = "None"
-        #     if 'content' in dict_message:
-        #         content_str = dict_message['content'] if dict_message['content'] is not None else "None"
-        #     elif 'tool_calls' in dict_message:
-        #         tool_calls_str = f"Tool calls: {str(dict_message['tool_calls'])}"
-            
-        #     st.session_state['prompt_str'] += f"role: {dict_message['role']}\ncontent: {content_str}\ntool call: {tool_calls_str}\n--\n"
         return response
