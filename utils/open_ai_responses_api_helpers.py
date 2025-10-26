@@ -12,16 +12,38 @@ from typing import Dict, Any, List, Optional, Type
 from pydantic import BaseModel
 import os
 import uuid
+import matplotlib.pyplot as plt
+import matplotlib.figure as mfigure
+import pandas as pd
+import numpy as np
+import io
+import base64
+import tiktoken
+
+from utils.system_messages import construct_system_message
+from utils.streamlit_helpers import safely_escape_dollars, render_tool_call, render_tool_response
+from utils.security_helpers import safely_execute_code
 
 
 
 class OpenAIResponsesUtility:
     def __init__(self):
         self.client = OpenAI()
+        self.enc_gpt4 = tiktoken.encoding_for_model("gpt-4")
+
+    def token_count_message(self, message):
+        str = ''
+        for msg in message:
+            if 'content'in msg:
+                str = f"{str}role: {msg['role']}, message: {msg['content']}\n"
+            elif 'tool_calls' in msg:
+                for tool_call in msg['tool_calls']:
+                    str = f"{str}role: {msg['role']}, tool_call: {tool_call['function']['name']}, arguments: {tool_call['function']['arguments']}\n"
+        return len(self.enc_gpt4.encode(str))
 
     @retry(wait=wait_random_exponential(min=5, max=10), stop=stop_after_attempt(5))
     def _embedding_with_backoff(self, **kwargs):
-        logging.info(f'embedding_with_backoff - {st.session_state["id"]}')
+        logging.info(f'embedding_with_backoff - {st.session_state["session_id"]}')
         return self.client.embeddings.create(**kwargs)
 
     def _calculate_cost(self, prompt_tokens, completion_tokens=0, model=''):
@@ -66,7 +88,7 @@ class OpenAIResponsesUtility:
             return tokens/1047576
 
     def create_embedding_APICall(self, text, page, session_id=''):
-        logging.info(f'create_embedding_APICall - {st.session_state["id"]}')
+        logging.info(f'create_embedding_APICall - {st.session_state["session_id"]}')
         response = self._embedding_with_backoff(
             input=text,
             model='text-embedding-3-small'
@@ -81,7 +103,7 @@ class OpenAIResponsesUtility:
 
     # @retry(wait=wait_random_exponential(min=5, max=10), stop=stop_after_attempt(5))
     def _responses_with_backoff(self, **kwargs):
-        logging.info(f'responses_with_backoff - {st.session_state["id"]}')
+        logging.info(f'responses_with_backoff - {st.session_state["session_id"]}')
         return self.client.responses.parse(**kwargs)
 
     def _extract_tools_and_handlers(self, tool_config):
@@ -255,7 +277,7 @@ class OpenAIResponsesUtility:
     def responses_APIcall(
             self, 
             messages, 
-            session_id, 
+            session_id = '', 
             temperature = 0.8, 
             model='gpt-5-nano-2025-08-07', 
             response_format = None, 
@@ -267,7 +289,7 @@ class OpenAIResponsesUtility:
             # include = ['web_search_call.action.sources', 'reasoning.encrypted_content']
             include = []
         ):
-        logging.info(f'responses_APIcall - {st.session_state["id"]}')
+        logging.info(f'responses_APIcall - {st.session_state["session_id"]}')
 
         # if allow_image_generation:
         #     tool_config = tool_config or []
@@ -298,6 +320,9 @@ class OpenAIResponsesUtility:
         # # Prepare API arguments
         args = self._prepare_api_args(messages, model, temperature, response_format, reasoning_effort, tools, tool_choice, include)
 
+        # st.write(args['input'])
+        # st.stop()
+
         # Initial API call
         response = self._responses_with_backoff(**args)
 
@@ -314,7 +339,7 @@ class OpenAIResponsesUtility:
         images_2 = None
         if tool_calls is not None and tool_calls != []:
             messages, images_2, cost_USD_tool, context_window_usage_2 = self._process_tool_call_loop(
-                tool_calls, messages, tool_handlers, args, session_id, model, include
+                tool_calls, messages, tool_handlers, args, session_id, model
             )
             
         # Calculate total cost at the end
@@ -327,3 +352,312 @@ class OpenAIResponsesUtility:
 
         logging.info(f'Final cost: ${cost_USD}')
         return [messages, output_images, cost_USD, context_window_usage]
+    
+
+    def run_python_function(self, python_code, reason, vetted_files, report_function):
+        """
+        Run a python function in a sandboxed environment
+        Args:
+            python_code: The code snippet to run
+            vetted_files: The vetted files to use
+        Returns:
+            The result of the code execution
+        """
+
+        # check if the code is a valid function definition
+        if report_function == 'generate_report':
+            if not python_code.strip().startswith('def generate_report():'):
+                logging.error(f'Invalid function definition: {python_code}')
+                return "The python function must be named generate_report and intake 0 arguments. The function must return a single pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
+        elif report_function == 'generate_plot':
+            if not python_code.strip().startswith('def generate_plot():'):
+                logging.error(f'Invalid function definition: {python_code}')
+                return "The python function must be named generate_plot and intake 0 arguments. The function must return a single matplotlib.figure.Figure. You can only use the pandas, numpy, seaborn, matplotlib, datetime and math libraries."
+
+        # # Check for any code outside the function definition
+        # # Get all lines of code and indent levels
+        # lines = python_code.strip().split('\n')
+        
+        # # If there are unindented non-comment lines after the function definition, reject
+        # for i, line in enumerate(lines):
+        #     # Skip the function definition line and allow comment lines
+        #     stripped_line = line.strip()
+        #     if (i > 0 and not line.startswith(' ') and not line.startswith('\t') and stripped_line and not stripped_line.startswith('#')):
+        #         logging.error(f'Code exists outside of function: {line}')
+        #         return "All code must be within the generate_report function. No code should exist outside the function definition."
+        
+        # # Make sure the function ends with a return statement
+        # indented_lines = [line for line in lines[1:] if line.strip()]  # Skip function def line
+        # if not indented_lines:
+        #     logging.error("Empty function body")
+        #     return "The function body is empty. It must contain code and end with a return statement."
+        
+        # last_code_line = indented_lines[-1].strip()
+        # if not last_code_line.startswith('return '):
+        #     logging.error(f'Function does not end with return statement: {last_code_line}')
+        #     return "The function must end with a return statement that returns a pandas DataFrame, Series, or dictionary."
+        
+        # If we got here, function definition is acceptable
+        return self.run_python_code(
+            python_code=python_code,
+            reason=reason,
+            vetted_files=vetted_files,
+            report_function=report_function
+        )
+        
+
+    def run_python_code(self, python_code, reason, vetted_files, report_function):
+        """
+        Run a code snippet in a sandboxed environment
+        Args:
+            code_snippet: The code snippet to run
+            df: The dataframe to use
+        Returns:
+            The result of the code execution
+        """
+        logging.info(f'run_python_code - {st.session_state["session_id"]}')
+
+        # Execute the code with a timeout - pass None for report_function 
+        # to let execute_with_timeout decide how to handle the result
+        result, stdout_output, error_message = safely_execute_code(python_code, vetted_files, report_function)
+
+        logging.info(f'Stdout output - {stdout_output} - {st.session_state["session_id"]}')
+
+        if error_message:
+            logging.error(f'Error executing code: {error_message}')
+            result = f"Error executing code: {error_message}\n\nStdout Output: {stdout_output}"
+            return result
+
+        if report_function == 'generate_report' or report_function is None:
+            # parse result to check if it is a DataFrame or Plotly figure
+            if isinstance(result, pd.DataFrame):
+                logging.info('Result is a DataFrame')
+                # Only do one conversion to JSON, not two
+                result = result.to_json(orient='index')
+
+            elif isinstance(result, pd.Series):
+                logging.info('Result is a pandas Series')
+                result = result.to_json(orient='index')
+
+            elif isinstance(result, dict):
+                logging.info('Result is a dict')
+                # Convert dict to DataFrame
+                result = pd.DataFrame.from_dict(result, orient='index').to_json(orient='index')
+
+            elif isinstance(result, (int, float)) or (hasattr(result, 'dtype') and np.issubdtype(result.dtype, np.number)):
+                # Handle both Python and NumPy numeric types
+                logging.info(f'Result is a number: {result}')
+                # Convert NumPy types to native Python types if needed
+                if hasattr(result, 'item'):
+                    result = result.item()
+                result = pd.DataFrame({'result': [result]}).to_json(orient='index')
+
+            elif isinstance(result, list):
+                logging.info(f'Result is a list: {result}')
+                # Convert list to DataFrame
+                result = pd.DataFrame(result).to_json(orient='index')
+
+            elif isinstance(result, mfigure.Figure):
+                logging.info('Result is a Matplotlib Figure, but it was created using the wrong tool')
+                result = f"Code execution returned a Matplotlib Figure, but it was created using the wrong tool. Please use the generate_plot tool to create plots."
+
+            elif result is None:
+                logging.info('Result is None')
+                if report_function == 'generate_report':
+                    result = "Code execution returned None. The code execution must return a pandas DataFrame or a pandas Series or a Python dictionary. You can only use the pandas, numpy, datetime and math libraries."
+                elif report_function is None:
+                    result = "Code execution returned None. This could happen if the Python expression is multiple lines long. The Python expression must be a small single line code snippet. Use the run_python_function tool for complex multi-line code."
+
+            else:
+                logging.info(f'Result is not a pandas df or a pandas series or a python dictionary: {type(result)}')
+                result = f"Code execution returned an object of type {type(result)}. The code execution must return a pandas DataFrame or a pandas Series or a Python dictionary. You can only use the pandas, numpy, datetime and math libraries."
+
+        elif report_function == 'generate_plot':
+            if isinstance(result, mfigure.Figure):
+                logging.info('Result is a Matplotlib Figure')
+                # convert to URL
+                buf = io.BytesIO()
+                result.savefig(buf, format='png')
+                plt.close(result)
+                buf.seek(0)
+                img_bytes = buf.getvalue()
+                img_b64 = base64.b64encode(img_bytes).decode('utf-8')
+                img_url = f'data:image/png;base64,{img_b64}'
+                result = img_url
+            else:
+                logging.info(f'Result is not a matplotlib.figure.Figure: {type(result)}')
+                result = f"Code execution returned an object of type {type(result)}. The code execution must return a matplotlib.figure.Figure. You can only use the pandas, numpy, seaborn, matplotlib, datetime and math libraries."
+
+        logging.info(f'Final execution result - {result[:100]}... - {st.session_state["session_id"]}' 
+                    if len(str(result)) > 100 else f'Final execution result - {result} - {st.session_state["session_id"]}')
+
+        # calculate token count for the result
+        token_count = len(self.enc_gpt4.encode(str(result)))
+        logging.info(f'Token count for tool response - {token_count} - {st.session_state["session_id"]}')
+
+        if token_count >= 5000 and report_function != 'generate_plot':
+            logging.error(f"Code execution returned a result of {token_count} tokens. Please refactor the code to keep the result under 5000 tokens.")
+            result = f"Code execution returned a result of {token_count} tokens. Please refactor the code to keep the result under 5000 tokens."
+
+        return result
+
+    def generate_openai_response(self, vetted_files, model):
+        logging.info(f'generate_openai_response - {st.session_state["session_id"]}')
+
+        system_message = construct_system_message(vetted_files, agent_model = True)
+
+        st.session_state['system_message'] = system_message
+
+        prompt = [{'role': 'system', 'content': system_message}]
+
+        for dict_message in st.session_state['messages']:
+            if dict_message['role'] != 'system':
+                if dict_message['role'] in ['assistant', 'user'] and 'content' in dict_message:
+                    prompt.append({
+                        'role': dict_message['role'], 
+                        'content': dict_message['content']
+                    })
+                if dict_message['role'] == 'assistant' and 'tool_calls' in dict_message:
+                    prompt.append({
+                        'role': dict_message['role'],
+                        'tool_calls': dict_message['tool_calls']
+                    })
+                if dict_message['role'] == 'tool':
+                    prompt.append({
+                        'role': dict_message['role'],
+                        'content': dict_message['content'],
+                        'tool_call_id': dict_message['tool_call_id']
+                    })
+
+
+        token_count = self.token_count_message(prompt)
+        logging.info(f'token_count - {token_count} - {st.session_state["session_id"]}')
+
+        error_count = 0
+        for message in st.session_state['messages']:
+            if 'error' in message.keys():
+                if message['role'] == 'assistant':
+                    error_count += 1
+
+        if error_count >= 3:
+            st.error('Oops! Something went wrong. Try rephrasing your prompt in a different way.')
+            if st.secrets['ENV'] == 'dev':
+                st.write(st.session_state['messages'])
+            st.stop()
+
+        if token_count >= 200000:
+            st.error('The conversation length got too long. LLMs have a context window limit which has been exceeded. Please reset and start a new conversation. Alternatively, get in touch with [me](https://www.linkedin.com/in/balaji-kesavan/) and I can help you set up a custom solution.')
+            if st.secrets['ENV'] == 'dev':
+                st.write(st.session_state['messages'])
+            st.stop()
+
+        run_python_expression_toolspec = {
+            "type": "function",
+            "name": "run_python_expression",
+            "description": "Run a python expression and return the result. The python expression must be a single expression that returns a pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries.",
+            "strict": True,
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "python_expression": {
+                        "type": "string",
+                        "description": "The python expression to run. The python expression must be a single expression that returns a pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
+                    },
+                    "reason": {
+                        "type": "string",
+                        "description": "The reason for running the python expression. This will be used to provide context for the code execution and help the user understand the purpose of the code snippet."
+                    }
+                },
+                "additionalProperties": False,
+                "required": ["python_expression", "reason"]
+            }
+        }
+
+        run_python_function_toolspec = {
+            "type": "function",
+            "name": "run_python_function",
+            "description": "Run a python function called generate_report. The function must intake 0 arguments and return a single pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries.",
+            "strict": True,
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "function_definition": {
+                        "type": "string",
+                        "description": "The python function definition to run. The function must be named generate_report and intake 0 arguments. The function must return a single pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
+                    },
+                    "reason": {
+                        "type": "string",
+                        "description": "The reason for running the python function. This will be used to provide context for the code execution and help the user understand the purpose of the code snippet."
+                    }
+                },
+                "additionalProperties": False,
+                "required": ["function_definition", "reason"]
+            }
+        }
+
+        generate_seaborn_plot_toolspec = {
+            "type": "function",
+            "name": "generate_plot",
+            "description": "Run a python function to generate a Seaborn plot. The function must intake 0 arguments and return a single matplotlib.figure.Figure. You can only use the pandas, numpy, seaborn, matplotlib, datetime and math libraries.",
+            "strict": True,
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "function_definition": {
+                        "type": "string",
+                        "description": "The python function definition to run. The function must be named generate_plot and intake 0 arguments. The function must return a single matplotlib.figure.Figure. You can only use the pandas, numpy, seaborn, matplotlib, datetime and math libraries."
+                    },
+                    "reason": {
+                        "type": "string",
+                        "description": "The design decisions made for the plot. This will be used to provide context for the code execution and help the user understand the purpose of the code snippet."
+                    }
+                },
+                "additionalProperties": False,
+                "required": ["function_definition", "reason"]
+            }
+        }
+
+        # Define tool config with both specs and handlers
+        tool_config = [
+            {
+                'spec': run_python_expression_toolspec,
+                'handler': lambda args_dict: self.run_python_code(
+                    python_code=args_dict.get('python_expression'),
+                    reason=args_dict.get('reason'),
+                    vetted_files=vetted_files,
+                    report_function=None,
+                )
+            },
+            {
+                'spec': run_python_function_toolspec,
+                'handler': lambda args_dict: self.run_python_function(
+                    python_code=args_dict.get('function_definition'),
+                    reason=args_dict.get('reason'),
+                    vetted_files=vetted_files,
+                    report_function='generate_report'
+                )
+            },
+            {
+                'spec': generate_seaborn_plot_toolspec,
+                'handler': lambda args_dict: self.run_python_function(
+                    python_code=args_dict.get('function_definition'),
+                    reason=args_dict.get('reason'),
+                    vetted_files=vetted_files,
+                    report_function='generate_plot'
+                )
+            }
+        ]
+        response, _, cost, _ = self.responses_APIcall(prompt, model=model, temperature=0.1, tool_config=tool_config)
+
+        st.session_state['prompt_str'] = ""
+        st.session_state['cost'] += cost
+        # for dict_message in prompt:
+        #     content_str = "None"
+        #     tool_calls_str = "None"
+        #     if 'content' in dict_message:
+        #         content_str = dict_message['content'] if dict_message['content'] is not None else "None"
+        #     elif 'tool_calls' in dict_message:
+        #         tool_calls_str = f"Tool calls: {str(dict_message['tool_calls'])}"
+            
+        #     st.session_state['prompt_str'] += f"role: {dict_message['role']}\ncontent: {content_str}\ntool call: {tool_calls_str}\n--\n"
+        return response
