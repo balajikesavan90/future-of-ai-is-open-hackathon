@@ -130,7 +130,7 @@ def render_analytics_agent():
     if st.session_state['context_window_usage'] > 0:
         st.progress(
             value=st.session_state['context_window_usage'],
-            text=f'Model Context Usage : {st.session_state["context_window_usage"]*100:.2f}%'
+            text=f'Model Context Usage: {st.session_state["context_window_usage"]*100:.2f}%'
         )
 
     if st.session_state['context_window_usage'] > 0.5:
