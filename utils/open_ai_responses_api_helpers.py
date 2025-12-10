@@ -364,7 +364,8 @@ class OpenAIResponsesUtility:
             
         # Calculate total cost at the end
         cost_USD = cost_USD_initial + cost_USD_tool
-        context_window_usage = context_window_usage_1 + context_window_usage_2
+        # Context window usage is cumulative - use the latest value from tool loop if present, otherwise initial
+        context_window_usage = context_window_usage_2 if context_window_usage_2 != 0 else context_window_usage_1
         if images_1:
             output_images.extend(images_1)
         if images_2:
