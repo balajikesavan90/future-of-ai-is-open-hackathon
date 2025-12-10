@@ -17,13 +17,13 @@ def is_valid_csv(file):
     # Define suspicious patterns (e.g., script tags, executable commands)
     suspicious_patterns = [
         r'<script.*?>',
-        r'exec\(', 
-        r'eval\(',
-        r'system\(',
-        r'=cmd\|',
-        r'=.*\|\|',
-        r'=.*DDE',
-        r'=\+\-\@'  # Common Excel formula injection markers
+        r'\bexec\s*\(["\']',  # exec function call with string argument
+        r'\beval\s*\(["\']',  # eval function call with string argument
+        r'\bsystem\s*\(["\']',  # system function call with string argument
+        r'^=cmd\|',  # Excel formula with cmd
+        r'^=.*\|\|',  # Excel formula with pipes
+        r'^=.*\bDDE\s*\(',  # Only match formulas that start with = and have DDE function call
+        r'^=[\+\-\@]'  # Common Excel formula injection markers at start
     ]
     pattern_regex = re.compile('|'.join(suspicious_patterns), re.IGNORECASE)
     
@@ -53,8 +53,10 @@ def is_valid_csv(file):
                 
             # Check each cell in string columns
             for value in df[column].astype(str):
-                if pattern_regex.search(value):
-                    return False, f"Suspicious content detected in cell: '{value[:20]}...'"
+                match = pattern_regex.search(value)
+                if match:
+                    matched_pattern = match.group(0)
+                    return False, f"Suspicious content detected in cell: '{value[:50]}...' (matched pattern: '{matched_pattern}')"
         
         return True, ""
     except Exception as e:
