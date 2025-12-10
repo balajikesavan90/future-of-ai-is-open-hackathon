@@ -56,7 +56,7 @@ def is_valid_csv(file):
                 match = pattern_regex.search(value)
                 if match:
                     matched_pattern = match.group(0)
-                    return False, f"Suspicious content detected in cell: '{value[:50]}...' (matched pattern: '{matched_pattern}')"
+                    return False, f"Suspicious content detected in cell: '{value[:50]}{'...' if len(value) > 50 else ''}' (matched pattern: '{matched_pattern}')"
         
         return True, ""
     except Exception as e:
