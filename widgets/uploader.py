@@ -23,7 +23,7 @@ def is_valid_csv(file):
         r'^=cmd\|',  # Excel formula with cmd
         r'^=.*\|\|',  # Excel formula with pipes
         r'^=.*DDE\s*\(',  # Only match formulas that start with = and have DDE function call
-        r'^=[\+\-\@]'  # Common Excel formula injection markers at start
+        r'^=[+@-]'  # Common Excel formula injection markers at start
     ]
     pattern_regex = re.compile('|'.join(suspicious_patterns), re.IGNORECASE)
     
