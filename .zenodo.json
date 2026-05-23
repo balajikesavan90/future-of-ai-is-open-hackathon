@@ -1,0 +1,33 @@
+{
+  "title": "Arctic Analytics",
+  "description": "Arctic Analytics is a powerful tool that can answer questions about your data, build charts and graphs from your data, and help document and debug your codebase.",
+  "upload_type": "software",
+  "license": "MIT",
+  "creators": [
+    {
+      "name": "Kesavan, Balaji",
+      "affiliation": "",
+      "orcid": "0009-0002-7714-518X"
+    }
+  ],
+  "keywords": [
+    "data-analytics",
+    "streamlit",
+    "ai",
+    "data-visualization",
+    "snowflake",
+    "arctic",
+    "llm"
+  ],
+  "language": "eng",
+  "related_identifiers": [
+    {
+      "relation": "isSupplementTo",
+      "identifier": "https://github.com/balajikesavan90/future-of-ai-is-open-hackathon",
+      "resource_type": "software",
+      "scheme": "url"
+    }
+  ],
+  "contributors": [],
+  "version": "0.1.0"
+}
