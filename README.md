@@ -30,7 +30,7 @@ Generated analysis should be inspectable. The UI exposes the system prompt, mess
 
 ### Constraints Over Unrestricted Execution
 
-Generated code should not run with unrestricted access by default. Arctic Analytics applies Python-level validation, import/function restrictions, output-shape checks, and runtime limits before returning results.
+Generated code should not run with unrestricted access by default. Arctic Analytics applies Python-level validation, import/function restrictions, output-type checks, and runtime limits before returning results.
 
 Important limitation: these are Python-level restrictions and runtime constraints. They are not isolated container or OS-level sandboxing.
 
