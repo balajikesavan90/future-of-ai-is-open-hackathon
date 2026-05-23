@@ -112,18 +112,20 @@ def _json_safe(value):
             }
         return value
     if isinstance(value, pd.DataFrame):
+        preview = value.head(100)
         return {
             "type": "pandas.DataFrame",
             "shape": list(value.shape),
             "columns": [str(column) for column in value.columns],
-            "data": value.head(100).to_dict(orient="records"),
+            "data": json.loads(preview.to_json(orient="records", date_format="iso")),
             "truncated": len(value) > 100,
         }
     if isinstance(value, pd.Series):
+        preview = value.head(100)
         return {
             "type": "pandas.Series",
             "name": str(value.name),
-            "data": value.head(100).to_dict(),
+            "data": json.loads(preview.to_json(date_format="iso")),
             "truncated": len(value) > 100,
         }
     if isinstance(value, mfigure.Figure):
@@ -211,8 +213,8 @@ def build_analysis_trace():
         "agent_model": st.session_state.get("agent_model"),
         "cost": st.session_state.get("cost"),
         "context_window_usage": st.session_state.get("context_window_usage"),
-        "system_message": st.session_state.get("system_message"),
-        "prompt_str": st.session_state.get("prompt_str"),
+        "system_message": _json_safe(st.session_state.get("system_message")),
+        "prompt_str": _json_safe(st.session_state.get("prompt_str")),
         "messages": _json_safe(messages),
         "tool_calls": _extract_tool_calls(messages),
         "outputs": _extract_outputs(messages),
