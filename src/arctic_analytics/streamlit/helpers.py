@@ -6,6 +6,9 @@ from datetime import datetime, timezone
 import pandas as pd  # Add import for pandas
 import matplotlib.figure as mfigure  # Add import for matplotlib.figure
 
+MAX_TRACE_STRING_CHARS = 10000
+TRACE_STRING_PREVIEW_CHARS = 1000
+
 def setup_session_state():
     logging.info(f'###############################')
     logging.info(f'setup_session_state')
@@ -90,6 +93,24 @@ def render_ai_prompt():
     render_trace_export()
 
 def _json_safe(value):
+    if isinstance(value, str):
+        if value.startswith("data:image/") and ";base64," in value:
+            header, _, payload = value.partition(",")
+            return {
+                "type": "image_base64",
+                "media_type": header.replace("data:", "").replace(";base64", ""),
+                "length_chars": len(value),
+                "payload_length_chars": len(payload),
+                "truncated": True,
+            }
+        if len(value) > MAX_TRACE_STRING_CHARS:
+            return {
+                "type": "text",
+                "length_chars": len(value),
+                "preview": value[:TRACE_STRING_PREVIEW_CHARS],
+                "truncated": True,
+            }
+        return value
     if isinstance(value, pd.DataFrame):
         return {
             "type": "pandas.DataFrame",
@@ -129,9 +150,11 @@ def _dataset_metadata_for_trace():
     dataset_metadata = {}
     for filename, file_info in st.session_state.get("vetted_files", {}).items():
         dataframe = file_info.get("dataframe")
+        column_names = [str(column) for column in file_info.get("columns_names", [])]
         metadata = {
             "dataset_description": file_info.get("dataset_description"),
-            "columns_names": [str(column) for column in file_info.get("columns_names", [])],
+            "column_names": column_names,
+            "columns_names": column_names,
             "data_types": {str(key): str(value) for key, value in getattr(file_info.get("data_types"), "items", lambda: [])()},
             "primary_key": _json_safe(file_info.get("primary_key", [])),
             "data_dictionary": _parse_json_if_possible(file_info.get("data_dictionary_json")),
@@ -206,14 +229,21 @@ def render_trace_export():
     if "messages" not in st.session_state and "vetted_files" not in st.session_state:
         return
 
-    trace = build_analysis_trace()
-    trace_json = json.dumps(trace, indent=2, default=str)
-    st.sidebar.download_button(
-        label="Export Analysis Trace",
-        data=trace_json,
-        file_name=f"arctic_analytics_trace_{trace.get('session_id', 'session')}.json",
-        mime="application/json",
-    )
+    with st.sidebar.expander("Analysis Trace", expanded=False):
+        st.caption("Prepare a JSON snapshot of the current analysis session when you need to export it.")
+        if st.button("Prepare Trace Export", key="prepare_trace_export"):
+            trace = build_analysis_trace()
+            st.session_state["trace_export_json"] = json.dumps(trace, indent=2, default=str)
+            st.session_state["trace_export_session_id"] = trace.get("session_id", "session")
+
+        if "trace_export_json" in st.session_state:
+            st.download_button(
+                label="Export Analysis Trace",
+                data=st.session_state["trace_export_json"],
+                file_name=f"arctic_analytics_trace_{st.session_state.get('trace_export_session_id', 'session')}.json",
+                mime="application/json",
+                key="download_trace_export",
+            )
 
 def safely_escape_dollars(text):
     """
