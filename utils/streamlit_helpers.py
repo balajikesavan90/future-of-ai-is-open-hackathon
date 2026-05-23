@@ -116,7 +116,11 @@ def render_tool_call(tool_call):
     Args:
         tool_call: The tool call to render
     """
-    function = tool_call.get('function', {}) if isinstance(tool_call, dict) else {}
+    if not isinstance(tool_call, dict):
+        logging.warning(f'Unexpected tool call shape: {tool_call}')
+        tool_call = {}
+
+    function = tool_call.get('function', {})
     tool_name = tool_call.get('name') or function.get('name') or 'unknown'
     raw_arguments = tool_call.get('arguments') or function.get('arguments') or '{}'
 
