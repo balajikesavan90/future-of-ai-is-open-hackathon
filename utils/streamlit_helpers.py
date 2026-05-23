@@ -116,14 +116,28 @@ def render_tool_call(tool_call):
     Args:
         tool_call: The tool call to render
     """
-    arguments = json.loads(tool_call['arguments'])
+    function = tool_call.get('function', {}) if isinstance(tool_call, dict) else {}
+    tool_name = tool_call.get('name') or function.get('name') or 'unknown'
+    raw_arguments = tool_call.get('arguments') or function.get('arguments') or '{}'
+
+    if isinstance(raw_arguments, dict):
+        arguments = raw_arguments
+    else:
+        try:
+            arguments = json.loads(raw_arguments)
+        except (TypeError, json.JSONDecodeError):
+            logging.warning(f'Unable to parse tool call arguments for {tool_name}: {raw_arguments}')
+            arguments = {}
+
     if 'reason' in arguments:
-        st.caption(f"Reason: {arguments['reason']}")
-    with st.expander(f"🛠️ See Tool Call - Tool Name: {tool_call['name']}", expanded=False):
+        st.caption(f"Reason: {safely_escape_dollars(str(arguments['reason']))}")
+    with st.expander(f"🛠️ See Tool Call - Tool Name: {tool_name}", expanded=False):
         if 'python_expression' in arguments:
             st.code(arguments['python_expression'], language='python')
         if 'function_definition' in arguments:
             st.code(arguments['function_definition'], language='python')
+        if not arguments:
+            st.code(str(raw_arguments), language='json')
 
 def render_tool_response(tool_response):
     """
