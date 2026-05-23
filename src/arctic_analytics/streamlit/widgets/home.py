@@ -28,9 +28,9 @@ def render_home():
         analyze_data, about = st.tabs(['🔍 Analyze Data', '🗒️ About'])
         with analyze_data:
             st.session_state['agent_model'] = st.toggle(
-                label=':blue[Use Agent Model]',
+                label=':blue[Use Agent Mode]',
                 value=True,
-                help='Use the agent model to analyze your data. This will allow the AI to see your data.',
+                help='Allow the model to request constrained Python tool calls over your data. Tool calls and outputs are visible for review.',
             )
             render_sample_datasets()
             render_uploader()

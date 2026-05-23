@@ -2,6 +2,7 @@ import streamlit as st
 import uuid
 import logging
 import json
+from datetime import datetime, timezone
 import pandas as pd  # Add import for pandas
 import matplotlib.figure as mfigure  # Add import for matplotlib.figure
 
@@ -86,6 +87,133 @@ def render_ai_prompt():
             st.subheader(':blue[Messages]')
             messages_wo_system_message = st.session_state['messages'][1:]
             st.write(messages_wo_system_message)
+    render_trace_export()
+
+def _json_safe(value):
+    if isinstance(value, pd.DataFrame):
+        return {
+            "type": "pandas.DataFrame",
+            "shape": list(value.shape),
+            "columns": [str(column) for column in value.columns],
+            "data": value.head(100).to_dict(orient="records"),
+            "truncated": len(value) > 100,
+        }
+    if isinstance(value, pd.Series):
+        return {
+            "type": "pandas.Series",
+            "name": str(value.name),
+            "data": value.head(100).to_dict(),
+            "truncated": len(value) > 100,
+        }
+    if isinstance(value, mfigure.Figure):
+        return {"type": "matplotlib.figure.Figure"}
+    if isinstance(value, dict):
+        return {str(key): _json_safe(val) for key, val in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(item) for item in value]
+    try:
+        json.dumps(value)
+        return value
+    except TypeError:
+        return str(value)
+
+def _parse_json_if_possible(value):
+    if not isinstance(value, str):
+        return _json_safe(value)
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        return value
+
+def _dataset_metadata_for_trace():
+    dataset_metadata = {}
+    for filename, file_info in st.session_state.get("vetted_files", {}).items():
+        dataframe = file_info.get("dataframe")
+        metadata = {
+            "dataset_description": file_info.get("dataset_description"),
+            "columns_names": [str(column) for column in file_info.get("columns_names", [])],
+            "data_types": {str(key): str(value) for key, value in getattr(file_info.get("data_types"), "items", lambda: [])()},
+            "primary_key": _json_safe(file_info.get("primary_key", [])),
+            "data_dictionary": _parse_json_if_possible(file_info.get("data_dictionary_json")),
+        }
+        if dataframe is not None:
+            metadata["shape"] = list(dataframe.shape)
+            metadata["columns"] = [str(column) for column in dataframe.columns]
+        if "pandas_describe" in file_info:
+            metadata["pandas_describe"] = _json_safe(file_info["pandas_describe"])
+        dataset_metadata[filename] = metadata
+    return dataset_metadata
+
+def _extract_tool_calls(messages):
+    tool_calls = []
+    for message in messages:
+        if isinstance(message, dict):
+            if message.get("type") == "function_call":
+                tool_calls.append(_json_safe(message))
+            for tool_call in message.get("tool_calls", []) or []:
+                tool_calls.append(_json_safe(tool_call))
+    return tool_calls
+
+def _extract_outputs(messages):
+    outputs = []
+    for message in messages:
+        if not isinstance(message, dict):
+            continue
+        if message.get("type") == "function_call_output":
+            outputs.append(_json_safe(message))
+            continue
+        if "output" in message:
+            outputs.append(
+                {
+                    "role": message.get("role"),
+                    "type": message.get("type"),
+                    "output": _json_safe(message.get("output")),
+                }
+            )
+    return outputs
+
+def _extract_errors(messages):
+    errors = []
+    for message in messages:
+        if isinstance(message, dict) and message.get("error"):
+            errors.append(_json_safe(message))
+    return errors
+
+def build_analysis_trace():
+    messages = st.session_state.get("messages", [])
+    return {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "session_id": st.session_state.get("session_id"),
+        "model": st.session_state.get("model"),
+        "agent_model": st.session_state.get("agent_model"),
+        "cost": st.session_state.get("cost"),
+        "context_window_usage": st.session_state.get("context_window_usage"),
+        "system_message": st.session_state.get("system_message"),
+        "prompt_str": st.session_state.get("prompt_str"),
+        "messages": _json_safe(messages),
+        "tool_calls": _extract_tool_calls(messages),
+        "outputs": _extract_outputs(messages),
+        "dataset_metadata": _dataset_metadata_for_trace(),
+        "errors": _extract_errors(messages),
+        "limitations": [
+            "Execution uses Python-level validation and runtime constraints, not isolated container or OS-level sandboxing.",
+            "Trace export is a snapshot of current Streamlit session state, not a durable audit log.",
+            "The trace is not replayable and does not include dataset version hashes or provenance records.",
+        ],
+    }
+
+def render_trace_export():
+    if "messages" not in st.session_state and "vetted_files" not in st.session_state:
+        return
+
+    trace = build_analysis_trace()
+    trace_json = json.dumps(trace, indent=2, default=str)
+    st.sidebar.download_button(
+        label="Export Analysis Trace",
+        data=trace_json,
+        file_name=f"arctic_analytics_trace_{trace.get('session_id', 'session')}.json",
+        mime="application/json",
+    )
 
 def safely_escape_dollars(text):
     """
