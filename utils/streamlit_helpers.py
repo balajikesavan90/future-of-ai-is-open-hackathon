@@ -117,12 +117,14 @@ def render_tool_call(tool_call):
         tool_call: The tool call to render
     """
     arguments = json.loads(tool_call['arguments'])
-    with st.expander(f"🛠️ See Tool Call - Tool Name: {tool_call['name']}", expanded=False):
+    if 'reason' in arguments:
         st.caption(f"Reason: {arguments['reason']}")
+    with st.expander(f"🛠️ See Tool Call - Tool Name: {tool_call['name']}", expanded=False):
         if 'python_expression' in arguments:
             st.code(arguments['python_expression'], language='python')
         if 'function_definition' in arguments:
             st.code(arguments['function_definition'], language='python')
+
 def render_tool_response(tool_response):
     """
     Renders a tool response in the Streamlit UI
@@ -158,4 +160,3 @@ def render_tool_response(tool_response):
             except json.JSONDecodeError:
                 # Not JSON, display as plain text
                 st.write(tool_response)
-
