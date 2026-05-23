@@ -123,7 +123,9 @@ class OpenAIResponsesUtility:
         if tools:
             args['tools'] = tools
             args['tool_choice'] = tool_choice
-            args['parallel_tool_calls'] = True
+            # Keep tool calls sequential so each call can render and execute as
+            # soon as the model emits it, instead of batching multiple calls.
+            args['parallel_tool_calls'] = False
 
         if model.startswith('o4'):
             args['tool_choice'] = 'auto'  # Set tool choice to auto for o4 models
