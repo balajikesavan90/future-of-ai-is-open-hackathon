@@ -2,6 +2,8 @@
 
 Arctic Analytics is a powerful tool that can answer questions about your data, build charts and graphs from your data, and help document and debug your codebase. Arctic Analytics does not get access to your dataset.
 
+> Packaging note: the app is available as the `arctic-analytics` distribution with the `arctic_analytics` import package.
+
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
@@ -29,6 +31,16 @@ cd future-of-ai-is-open-hackathon
 poetry install
 ```
 
+### Installing as a package
+
+```bash
+# Install from a built wheel
+pip install arctic-analytics
+
+# Or, during local development
+poetry install
+```
+
 ### Setting up secrets
 
 create a secrets.toml and place it in the .streamlit folder. You need to set up 3 keys
@@ -44,6 +56,12 @@ OPENAI_API_KEY = "<Create an openai account and add your API key here>"
 ```bash
 # Run the app
 streamlit run app.py
+
+# Or run the package-native Streamlit entrypoint
+streamlit run src/arctic_analytics/streamlit_app.py
+
+# Or use the installed console script
+arctic-analytics-app
 ```
 
 ### Contributing
