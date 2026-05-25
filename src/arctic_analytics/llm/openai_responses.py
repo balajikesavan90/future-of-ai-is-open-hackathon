@@ -42,9 +42,7 @@ class OpenAIResponsesUtility:
             cost_USD: Cost in USD
         """
         # Standard rates for common models (these can be updated as pricing changes)
-        if model == 'gpt-5-nano-2025-08-07':
-            return 0.05*prompt_tokens/1000000 + 0.4*completion_tokens/1000000
-        elif model == 'gpt-5.5-2026-04-23':
+        if model == 'gpt-5.5-2026-04-23':
             return 5*prompt_tokens/1000000 + 30*completion_tokens/1000000
         elif model == 'gpt-5.4-2026-03-05':
             return 2.5*prompt_tokens/1000000 + 15*completion_tokens/1000000
