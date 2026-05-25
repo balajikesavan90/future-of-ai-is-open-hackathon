@@ -58,6 +58,8 @@ class OpenAIResponsesUtility:
             return tokens/400000
         elif model in ['gpt-5.4-2026-03-05', 'gpt-5.5-2026-04-23']:
             return tokens/1050000
+        else:
+            raise ValueError(f"Model {model} not recognized for context window usage calculation.")
 
     def _responses_with_backoff(self, **kwargs):
         logging.info(f'responses_with_backoff - {st.session_state["session_id"]}')
