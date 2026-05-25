@@ -7,11 +7,17 @@ import os
 
 from arctic_analytics.core.data_import import gather_metadata
 
+def _is_dev_environment():
+    try:
+        return st.secrets.get('ENV', os.environ.get('ENV', '')) == 'dev'
+    except Exception:
+        return os.environ.get('ENV', '') == 'dev'
+
 def is_valid_csv(file):
     """Validate if file is a proper CSV and not malicious"""
 
     # do not check file size in dev environment
-    if st.secrets.get('ENV', '') != 'dev':
+    if not _is_dev_environment():
         # Check file size (10MB limit)
         MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
         if file.size > MAX_FILE_SIZE:
