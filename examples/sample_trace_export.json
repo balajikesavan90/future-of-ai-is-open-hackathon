@@ -1,11 +1,11 @@
 {
   "trace_schema_version": "0.1.0",
   "package_version": "0.1.0",
-  "timestamp": "2026-05-25T01:55:39.362641+00:00",
+  "timestamp": "2026-05-25T07:58:22.954714+00:00",
   "session_id": "tips-example-openai-api-session",
-  "model": "gpt-5-nano-2025-08-07",
-  "cost": 0.0005328500000000001,
-  "context_window_usage": 0.010605,
+  "model": "gpt-5.4-mini-2026-03-17",
+  "cost": 0.0067215,
+  "context_window_usage": 0.0102075,
   "system_message": "You support metadata-aware analysis over structured data.\nYou can request tool calls to query the data and provide reviewable answers to the user.\nYou can pass a python expression to run_python_expression tool which will execute the code and return the result.\nYou can pass a python function to run_python_function tool which will execute the function and return the result.\nYou can pass a python function to generate_plot tool which will execute the function and return the matplotlib figure.\nYour goal is to analyze the user's data and generate reviewable findings from it.\nYou might need to run multiple tool calls to get the final result.\n\nUse the run_python_expression tool to run small single line code snippets like \n - df.groupby(['col1', 'col2', 'col3', ...])['col4'].mean()\n - df['col_name'].value_counts()\n - df['col_name'].isna().sum()\n - df['col_name'].median()\n - df['col_name'].min()\n - df['col_name'].max()\n - df['col_name'].nunique()\n - df['col_name'].unique()\n - df.sort_values('col_name').head(5)\n - df[df['col_name'] > 0].shape[0]\n - df['col_name'].str.contains(\"pattern\", case=False, na=False).sum()\nAvoid using the run_python_expression tool for complex multi-line logic or data manipulations.\n\nUse the run_python_function tool to run complex multi-line code and/or data manipulations like\ndef generate_report():\n    # Your complex multi-line data manipulation code here\n    return df_result\n\nUse the generate_plot tool to run complex multi-line code that generates plots like\ndef generate_plot():\n    # Your complex multi-line plotting code here\n    return fig_result\nWhen generating plots, ensure that the plots are well-formatted with appropriate titles, labels, and legends.\nWhen generating plots, ensure the labels and legends fit well within the plot area and are clearly readable. Avoid overlapping text.\nUse the run_python_expression and/or the run_python_function to generate any supporting information needed for the plot.\n\nYour response to the user must include the findings and enough analysis detail for human review.\n**DO NOT** include the URL of the plot in your response. \nThe UI will handle displaying the plot separately.\nGenerate your response in markdown format.\n\n\n\nHere is the metadata of the files uploaded by the user.\n\n\ntips:\n\nShape: (244, 7)\n\nDescription: This dataset contains data on tips given to waitstaff at a restaurant.\n\nData Dictionary:\n\n{\"0\":{\"Primary Key\":false,\"Column Name\":\"total_bill\",\"Data Type\":\"Float64\",\"Description\":\"The total bill for the meal.\"},\"1\":{\"Primary Key\":false,\"Column Name\":\"tip\",\"Data Type\":\"Float64\",\"Description\":\"The tip given to the waitstaff.\"},\"2\":{\"Primary Key\":false,\"Column Name\":\"sex\",\"Data Type\":\"category\",\"Description\":\"The gender of the person paying the bill\"},\"3\":{\"Primary Key\":false,\"Column Name\":\"smoker\",\"Data Type\":\"category\",\"Description\":\"Indicates whether the person was smoking or not\"},\"4\":{\"Primary Key\":false,\"Column Name\":\"day\",\"Data Type\":\"category\",\"Description\":\"The day of the week the meal took place.\"},\"5\":{\"Primary Key\":false,\"Column Name\":\"time\",\"Data Type\":\"category\",\"Description\":\"The time of day, either Dinner or Lunch.\"},\"6\":{\"Primary Key\":false,\"Column Name\":\"size\",\"Data Type\":\"Int64\",\"Description\":\"The size of the party.\"}}\n\nPandas Describe:\n\n{\"total_bill\":{\"count\":244.0,\"unique\":null,\"top\":null,\"freq\":null,\"mean\":19.785942623,\"std\":8.9024119549,\"min\":3.07,\"25%\":13.3475,\"50%\":17.795,\"75%\":24.1275,\"max\":50.81},\"tip\":{\"count\":244.0,\"unique\":null,\"top\":null,\"freq\":null,\"mean\":2.9982786885,\"std\":1.383638189,\"min\":1.0,\"25%\":2.0,\"50%\":2.9,\"75%\":3.5625,\"max\":10.0},\"sex\":{\"count\":244,\"unique\":2,\"top\":\"Male\",\"freq\":157,\"mean\":null,\"std\":null,\"min\":null,\"25%\":null,\"50%\":null,\"75%\":null,\"max\":null},\"smoker\":{\"count\":244,\"unique\":2,\"top\":\"No\",\"freq\":151,\"mean\":null,\"std\":null,\"min\":null,\"25%\":null,\"50%\":null,\"75%\":null,\"max\":null},\"day\":{\"count\":244,\"unique\":4,\"top\":\"Sat\",\"freq\":87,\"mean\":null,\"std\":null,\"min\":null,\"25%\":null,\"50%\":null,\"75%\":null,\"max\":null},\"time\":{\"count\":244,\"unique\":2,\"top\":\"Dinner\",\"freq\":176,\"mean\":null,\"std\":null,\"min\":null,\"25%\":null,\"50%\":null,\"75%\":null,\"max\":null},\"size\":{\"count\":244.0,\"unique\":null,\"top\":null,\"freq\":null,\"mean\":2.5696721311,\"std\":0.9510998047,\"min\":1.0,\"25%\":2.0,\"50%\":2.0,\"75%\":3.0,\"max\":6.0}}\n\nMissing Values by Column:\n\n{\"total_bill\":0,\"tip\":0,\"sex\":0,\"smoker\":0,\"day\":0,\"time\":0,\"size\":0}\n\nFirst 5 rows of the dataset:\n\n{\"0\":{\"total_bill\":16.99,\"tip\":1.01,\"sex\":\"Female\",\"smoker\":\"No\",\"day\":\"Sun\",\"time\":\"Dinner\",\"size\":2},\"1\":{\"total_bill\":10.34,\"tip\":1.66,\"sex\":\"Male\",\"smoker\":\"No\",\"day\":\"Sun\",\"time\":\"Dinner\",\"size\":3},\"2\":{\"total_bill\":21.01,\"tip\":3.5,\"sex\":\"Male\",\"smoker\":\"No\",\"day\":\"Sun\",\"time\":\"Dinner\",\"size\":3},\"3\":{\"total_bill\":23.68,\"tip\":3.31,\"sex\":\"Male\",\"smoker\":\"No\",\"day\":\"Sun\",\"time\":\"Dinner\",\"size\":2},\"4\":{\"total_bill\":24.59,\"tip\":3.61,\"sex\":\"Female\",\"smoker\":\"No\",\"day\":\"Sun\",\"time\":\"Dinner\",\"size\":4}}\n\nLast 5 rows of the dataset:\n\n{\"239\":{\"total_bill\":29.03,\"tip\":5.92,\"sex\":\"Male\",\"smoker\":\"No\",\"day\":\"Sat\",\"time\":\"Dinner\",\"size\":3},\"240\":{\"total_bill\":27.18,\"tip\":2.0,\"sex\":\"Female\",\"smoker\":\"Yes\",\"day\":\"Sat\",\"time\":\"Dinner\",\"size\":2},\"241\":{\"total_bill\":22.67,\"tip\":2.0,\"sex\":\"Male\",\"smoker\":\"Yes\",\"day\":\"Sat\",\"time\":\"Dinner\",\"size\":2},\"242\":{\"total_bill\":17.82,\"tip\":1.75,\"sex\":\"Male\",\"smoker\":\"No\",\"day\":\"Sat\",\"time\":\"Dinner\",\"size\":2},\"243\":{\"total_bill\":18.78,\"tip\":3.0,\"sex\":\"Female\",\"smoker\":\"No\",\"day\":\"Thur\",\"time\":\"Dinner\",\"size\":2}}\n\nThe dataset has already been loaded as a pandas DataFrame named tips\n\nYou must use this metadata to generate your response.\n",
   "prompt_str": "Which day has the highest average tip percentage? Calculate tip percentage as tip divided by total_bill.",
   "messages": [
@@ -40,46 +40,36 @@
       "type": "message"
     },
     {
-      "id": "rs_02653d39dc5a80dc006a13ac144658819a9977d31b0c7d07e2",
-      "summary": [
-        {
-          "text": "**Calculating average tip percentage**\n\nI need to compute the average tip percentage by day. To do this, I\u2019ll use a single line of code: I\u2019ll assign a new column where I calculate the percentage of tips compared to the total bill. Then, I\u2019ll group the data by day and find the mean of those percentages. After running it, I plan to present the results along with some actionable insights. Let\u2019s get started!",
-          "type": "summary_text"
-        }
-      ],
+      "id": "rs_04921387dc1812ea006a140119bdb081989152003212462918",
+      "summary": [],
       "type": "reasoning",
-      "encrypted_content": "gAAAAABqE6wWRIVhk2M9e0lhp9wGQlfBxxnesroZ0rKVX42WO2w_w9Op0teK0BZSCb9TemiCBX9lvDzVjITV0B2JjTJeVI2VaXy-QVIL11iF_EW-9-N6PMZ1kIXdY1000TPuZhTlh5ViB-j9iTiwy8GUHhRFbtHCGSHTXZ6xg84Im8eOsN_B87G08fyR2CitRHx71vhfOCWVecp84MGj715QPZK93Bbt998-3J3a9jFNV8KAgrjsiDJIynEq4NkCB5rHcuxVacc0mW6XlZns70a4bvkt1Gy79Ynet5_et88zoSV5V4M2qu9jVasPGiqCzghvUXhNkuEB-WEByW3ipe5LaXI4vWnA4Xwz6WBnZO89fq8NOqXlUwJXgqc3mduc0F1Hirxb8bkV9judkiQwEI3YTL8zDkeR_TEV1z4np-ICLz4VcZ9YwNK3_KoG_MWkUG8XwBQkP2ToO12_acDiQ6i-NbUwCbnN-O0sCHZRau_ZRsxpu3SBz0ih74sV2_a6t2z9agL_eylGuOJR8g5UmQxgk8DRdi7D09fHF5Nd3pXdue_CGzJ06PcdZosyMqC7h_qZzbhkxpUj557VaNG96E8mAm7aGD2Y-eKVeO_7MlP2PQAoophjNwxOLVE6gf7-An5EKoeRzCLL1y4npH8UZctj1y5YzrvF2LMHwzDwMFEb9PGMKDESmohPdwxN10f9Rs0zsSxy0MfhAL_sjng7CrxwGfZkLYbuxQ9tp27RC6dsCR8GwjOBQjaNWFWJ48rP2Jf7l7D4W7U72rCcpeBwyzcIUqO5dFEbl3nS3tCaL3-_Hvp5ZY7YLjrT8b1zERGMYHZ2MDejcQhl47pacSGxVn0SSKghoSRmMlVc8utDH5_-JicbESbc6t1SW9RMncwO7tjpKfubZn-lEMFk_kjKWvLzTMRWmIREjAJGQyrf_NVVrPQ8b6F8xrLFzdHXrYVZ8k29nwmlpV_gnR4Ca26vsVNn6ZCGDNLTIPQj65OJ5PYQB6Dhus3f5prTSzPEKkMxtLVrcmchwicMLVerqIY9q_Bl0hYXWp7NMUMejIgVtmIhaelzooAoDvSh_kUJOJxAp_CPkj3CcTx5Mcq7fNb1Dty5kbVQ0c7EfppE3xYQYPENmWi_4fGsE08IryOl32298LYl315fHskJWpNehl2rHsZWD7Oe9aZd116xxfQf7TIBni7WPbJ8ArDdpFGR4Bn55aO7zzV0rRI_8Dcg-o88-mxDe6ibVL3Ru9rRKZrI_6x0aJQMrmf0LHZQ0TL2Umr0CSW3CHK7LM1lkRHX8738g5p3W0TpsQQozim2KnpL7Z5JVzByS03YBfwG5aK3lbKT63tFc6eEeuyBC0xV4C5MLi8e8GBj12d3QOgpQM3cDEL4GE928FN_awI="
+      "encrypted_content": "gAAAAABqFAEbg1vxOa5PEaKGG57imlUGHW7tvOIS-JTij0dsSsbKH0dQ4nxLtfo1HQi4ulW7EUxSYkxY-MsFDGXSYvsBZdQDU_edQI6A6CluHBjRlW4Qg3RswrF0bVHbnxneE34hizQ_jQqpHH85fBjkPou9ViBFITjTbFL7y34Hw5KqRQoqwoTZYlJzst7FNDDejdg_QKn0Hk_J9pY2QLAt7tOx1O0qBc5x2zbjEoe0DJHwuf7f76rdCFfifDSZTuilVjc6sfLCVZ6ttONWQiak_jAdz2gfYzZjmztAvalFGGG8qQtODQuTm1Mz_WzxnO96ylQckhCJltbb6kLXmvW3CERGZOgaGCrMAlS7E3Dw97SRFhCYhdnB0OLjjN4rojKeeiL65fKxkNsLFQIlMojE8eRM9E0lHF9xwYGbQoBvYHgorZqAtsXgWqg0ksD6vEdKOhi7krF6QS938UeBPNXP245hHzuEuJUp9mqZxzymztgX93zJ_qZM3DH9a6sFXpGqgTKjyRIJgumIIyNs553v8RddH_91U19OoqInf85w7ey6nIFf_9LzZZC0P-LKnJx67dNX-yuh0ao2I1-fKJH0brX7M_ancIKeZb7d0NmMptmK2aW-clg0hIE2rpLALWAmDHYxgypZpoDfEHM8TxIrelxta1sJHcHwEuqg4b6rk7yL6Q2i6PNOt35cO_BXEypDlWorfAfvT5eDZ1UbsiXG598U5G8lLnbu2QdIrWJfTTD8A00lA_SMEDQn9vCRr0LPUJsIVUHGjk0HcfFbzo1kkteW54e1CThCupbI_8nhnCXclRS4u3JU56Yr_nE4VQstXIs_jbO6S9k4weD-oAkJtzvkp4pNCYxShDR6GOZoy-1dGIjVHP0__VGegURXOPlrMptyJbdsVgeVufL_mSWNKMthJm46a0DuyHz3YPSs-D_FL5sUqpcp22fmVlyhAj0G7FLxCaYuO1rJAm0OOeJUJ9N5OKvlPzseI49UPVakaftBMihtX34="
     },
     {
-      "arguments": "{\"python_expression\":\"tips.assign(percent=tips['tip']/tips['total_bill']).groupby('day')['percent'].mean()\",\"reason\":\"Compute average tip percentage by day (tip/total_bill) and find the day with the highest average.\"}",
-      "call_id": "call_y3UnW2fB1LGTFJGanAekxxsh",
+      "arguments": "{\"python_expression\":\"tips.assign(tip_pct=tips['tip']/tips['total_bill']).groupby('day')['tip_pct'].mean().sort_values(ascending=False)\",\"reason\":\"Compute the average tip percentage by day so we can identify which day has the highest average tip percentage.\"}",
+      "call_id": "call_3RY4ZR3979bQTiwvcVZ60NdJ",
       "name": "run_python_expression",
       "type": "function_call",
-      "id": "fc_02653d39dc5a80dc006a13ac15f510819ab2700209bb6ec79d",
+      "id": "fc_04921387dc1812ea006a14011b63708198ac7f0a6bd1dca209",
       "status": "completed"
     },
     {
       "type": "function_call_output",
-      "call_id": "call_y3UnW2fB1LGTFJGanAekxxsh",
-      "output": "{\"Thur\":0.161275634,\"Fri\":0.1699130287,\"Sat\":0.1531517164,\"Sun\":0.1668972864}"
+      "call_id": "call_3RY4ZR3979bQTiwvcVZ60NdJ",
+      "output": "{\"Fri\":0.1699130287,\"Sun\":0.1668972864,\"Thur\":0.161275634,\"Sat\":0.1531517164}"
     },
     {
-      "id": "rs_02653d39dc5a80dc006a13ac17b35c819aae592931b4a50cc4",
-      "summary": [
-        {
-          "text": "**Identifying the highest result**\n\nI've gathered the results for the week: Thursday is 0.1613, Friday is 0.1699, Saturday is 0.1532, and Sunday is 0.1669. The highest value is from Friday at 0.1699, which is approximately 16.99%. I should provide a summary highlighting this, possibly including a takeaway and a code snippet, formatted in markdown for clarity. This will make the information easy to digest for the user.",
-          "type": "summary_text"
-        }
-      ],
+      "id": "rs_04921387dc1812ea006a14011c61148198a19bd4a453aef831",
+      "summary": [],
       "type": "reasoning",
-      "encrypted_content": "gAAAAABqE6wbJ1YaK1rbxT5Ak1t3eim4n4lN3Ck5dtzHJ-9--iTcQwYZt6YvW72M_7s5T2_QCwYapXVbzPE3YcdwZDoRh10zY9pddtJLRitlQM7cB7gruOWd_dmuI45_drGNtk9nvBjQuPiRsWr_DqD70KEW6Zri_1ghsfskGjx1NaptFXyVKJXO2P6XndB2sFAnvg1d3GNY0_akr38_BRgk4LzIMxWdlQD_5mkUzgWiabaq_PrLpQsdXMQSW6rj_Oqx1SHh9Iq5k6ok-7B4NNuJTWfLhODVgY_sG91wPNfScHdjK1ehoVDuKt_Met-byZj7Ok4pt5pWY31lyPjH40gT9F8yeB5zGtmk8bnhBdozauXxlVPfO1E3T-YVJg1VTF-Og6iYP1aBpIybeX-eHW0McUj_N7xsFV3HE4DiTQHfGG0x8NY-WcB8YU8lX-xME0Du451-ADLVnjItbwTXzTl5nENOESzT8_Mp74p9J5NTckG2eYN5criANho3qdiLucR2XH5WyQKshXg9uRc3wTWSm4x8JqpaJ8oJDGPPe2FyUcJya9WagSaogjsQ4oKxMW_PhxgmoV6JBDl90_jrty4x9K5TxHcNM7j8p9YkBRYQ57S9Ya5iQ8Z-r07bn2GFZREInb-yTtlPQG_K8Uo4Nafbxn5uvL26VbcElFApcywe9qkCo9iuqJ_Fl36iJlkpuevRMXp5KGsusZLZLRo7fW7ZNqxrtrDFhjc2yRODi-zH8HDNxu5yLgYGcD-WYB0_EJOgV9jazz21vC4eAy5khckYsnEWqWN_1jP5EuB_IvG8ybdXh6i5AWImKyVfjN5o943uFA7tXb5zXWoUWg8MpWyAbZaWC7DFAS7ML7oBhNLZJJxolEfpK7TMEbMuKcSDDbVvCTjH33Pf2CyK0rpjQs1lnrvriCvbmBA9G7UCML2QcCQSwIlykcipI9pHexM0bdbqpNrB4-PQWmj4KmH1u2ltMk7jWjPzuHS4AhnzBzCVKdx-xt0iStuSc7lN_84ewt9GRZ2BSE2o13JQ6o6Lw0hOtFg8Ny2-olnxLGcHk0yAv7VmEoL4YovHv53Dt5hCUJAGgRvHmFQAeAratkjWey3HhldXnzvhwv_ZNmEFIl_zu5Pj81zNa_Wsve0HFjMTsH-4r8mgiKN87QzKKppMfm0PauVQQ_19LgjRZRFUfqGVtT51xkv4Cge68OrxdhMHuu01e7ZuMyqJ4WEbR80UptISDCxJTBMI5pVm2c9XpPxBqeYizF9K2Hc="
+      "encrypted_content": "gAAAAABqFAEeiPC2sNRprXI5Ut3ikGlFN8ZaChsjc_N51wlyiF0nT_QQWPfSxJ3Ph5WFGt1MBcMKycP97OcKDrndL949UJFfj-1WvVYhCeRrVb9JNawDsCMO6UHplqSjiDk_3k47DkTpuYI6v2LNIPJuoUgB0yi_ri1CEPQDgn5LvMVfgShxxCgP7wa2adgjUTDmsuogJ38qAtbuGS7N6krpLMy1F4jqfDdjqUkB0oxoxcRelmFCokzIYbsoGWjDw2H-FXpsRmwRQBU5j_i6j0gxZmBwBDidLV7jdtQz96ys5f431hjiw-i0kb9JIC8pvUOPDe_9cuxbQ9IX_5CmesgLnuQSs7FEoXgSw_FW_5VFLlN-R-vRoV1XwX2WIeBpnmTwAevj4dmhvTUuvQJhQZ3ojdYwXahpdrejdqSV1vHmPZZgRfrXgr_taGAzXc20MZUBpAwQQdrN1wpIYP2791ljcOo5QiKvv4itLYzAg8RHbt5LnfFzyQEzMERDseuxBGhS7w3a3C7GpILS0FYDWUh22QPHL1FcQZslht4bMp-RBULJMs94CAPlWylX_GCVO5U7EiNsuguli6UX6ETtVLMP6XZgV2fu7bEAgCxQ5JOo50vAkk3PEAqBKKqTPeebAmcsvGHgyfbOh5rELId1PNtBfQCiIeeu_FrMKZa2kb6Q5cElJgUu7WoYuZ7gYRWGg30JkWKQHckKsYRlMREsvgjU7CbAijLAMDJ9KpL5DW1KuTasil_IgmbCqs46SM-hci6BDgAjg5c3npR2icSJDkXfPt0iJ3jBTvN5nZF7Y00TQLb--IQd2lgQsfemL4bAAUj6pbCKKgA-8gFdzMA76KezS_FJDuppdWnX8j8_Fm4942yoK-SfKt2NafgGmag5i3q4fM-RoNxe4kyhDdh0a5VjLGE7Y5Qs7yGvF17O-USvpg2JUb5vUJ1SMEfn3-8aW15CWUdLUOQTbjKcjWD4VtpOhevebmCOpkRYOXw_n3SfberNN8kY4WmT08ALmSpn3ihXaFE5Oz8R"
     },
     {
-      "id": "msg_02653d39dc5a80dc006a13ac1af2b4819ab4ba3a494a53642f",
+      "id": "msg_04921387dc1812ea006a14011e6ee8819897ff40ef6b0a1b0b",
       "content": [
         {
           "annotations": [],
-          "text": "Here are the average tip percentages by day (tip/total_bill):\n\n- Fri: 0.1699 (\u2248 16.99%)\n- Sun: 0.1669 (\u2248 16.69%)\n- Thur: 0.1613 (\u2248 16.13%)\n- Sat: 0.1532 (\u2248 15.32%)\n\nAnswer: Friday has the highest average tip percentage, at about 17% of the bill. \n\nIf you\u2019d like, I can generate a quick plot or provide the exact per-row percentages used to compute these averages.",
+          "text": "The **day with the highest average tip percentage is Friday (`Fri`)**.\n\n### Average tip percentage by day\nTip percentage = `tip / total_bill`\n\n- **Fri:** 16.99%\n- Sun: 16.69%\n- Thur: 16.13%\n- Sat: 15.32%\n\nSo, **Friday has the highest average tip percentage** in this dataset.",
           "type": "output_text",
           "logprobs": [],
           "parsed": null
@@ -87,24 +77,25 @@
       ],
       "role": "assistant",
       "status": "completed",
-      "type": "message"
+      "type": "message",
+      "phase": "final_answer"
     }
   ],
   "tool_calls": [
     {
-      "arguments": "{\"python_expression\":\"tips.assign(percent=tips['tip']/tips['total_bill']).groupby('day')['percent'].mean()\",\"reason\":\"Compute average tip percentage by day (tip/total_bill) and find the day with the highest average.\"}",
-      "call_id": "call_y3UnW2fB1LGTFJGanAekxxsh",
+      "arguments": "{\"python_expression\":\"tips.assign(tip_pct=tips['tip']/tips['total_bill']).groupby('day')['tip_pct'].mean().sort_values(ascending=False)\",\"reason\":\"Compute the average tip percentage by day so we can identify which day has the highest average tip percentage.\"}",
+      "call_id": "call_3RY4ZR3979bQTiwvcVZ60NdJ",
       "name": "run_python_expression",
       "type": "function_call",
-      "id": "fc_02653d39dc5a80dc006a13ac15f510819ab2700209bb6ec79d",
+      "id": "fc_04921387dc1812ea006a14011b63708198ac7f0a6bd1dca209",
       "status": "completed"
     }
   ],
   "outputs": [
     {
       "type": "function_call_output",
-      "call_id": "call_y3UnW2fB1LGTFJGanAekxxsh",
-      "output": "{\"Thur\":0.161275634,\"Fri\":0.1699130287,\"Sat\":0.1531517164,\"Sun\":0.1668972864}"
+      "call_id": "call_3RY4ZR3979bQTiwvcVZ60NdJ",
+      "output": "{\"Fri\":0.1699130287,\"Sun\":0.1668972864,\"Thur\":0.161275634,\"Sat\":0.1531517164}"
     }
   ],
   "dataset_metadata": {

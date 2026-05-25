@@ -42,32 +42,24 @@ class OpenAIResponsesUtility:
             cost_USD: Cost in USD
         """
         # Standard rates for common models (these can be updated as pricing changes)
-        if model == 'gpt-4.1-nano-2025-04-14':
-            return 0.1*prompt_tokens/1000000 + 0.4*completion_tokens/1000000
-        elif model == 'gpt-4.1-mini-2025-04-14':
-            return 0.4*prompt_tokens/1000000 + 1.6*completion_tokens/1000000
-        elif model == 'o4-mini-2025-04-16':
-            return 1.1*prompt_tokens/1000000 + 4.4*completion_tokens/1000000
-        elif model == 'gpt-4.1-2025-04-14':
-            return 2*prompt_tokens/1000000 + 8*completion_tokens/1000000
-        elif model == 'o3-2025-04-16':
-            return 2*prompt_tokens/1000000 + 8*completion_tokens/1000000
-        elif model == 'o3-pro-2025-06-10':
-            return 20*prompt_tokens/1000000 + 80*completion_tokens/1000000
-        elif model == 'gpt-5-2025-08-07':
-            return 1.25*prompt_tokens/1000000 + 10*completion_tokens/1000000
-        elif model == 'gpt-5-mini-2025-08-07':
-            return 0.25*prompt_tokens/1000000 + 2*completion_tokens/1000000
-        elif model == 'gpt-5-nano-2025-08-07':
-            return 0.05*prompt_tokens/1000000 + 0.4*completion_tokens/1000000
+        if model == 'gpt-5.5-2026-04-23':
+            return 5*prompt_tokens/1000000 + 30*completion_tokens/1000000
+        elif model == 'gpt-5.4-2026-03-05':
+            return 2.5*prompt_tokens/1000000 + 15*completion_tokens/1000000
+        elif model == 'gpt-5.4-mini-2026-03-17':
+            return 0.75*prompt_tokens/1000000 + 4.5*completion_tokens/1000000
+        elif model == 'gpt-5.4-nano-2026-03-17':
+            return 0.2*prompt_tokens/1000000 + 1.25*completion_tokens/1000000
         else:
             raise ValueError(f"Model {model} not recognized for cost calculation.")
 
     def _calculate_context_window_usage(self, tokens, model):
-        if model in ['gpt-5-2025-08-07', 'gpt-5-mini-2025-08-07', 'gpt-5-nano-2025-08-07']:
+        if model in ['gpt-5.4-mini-2026-03-17', 'gpt-5.4-nano-2026-03-17']:
             return tokens/400000
-        elif model in ['gpt-4.1-2025-04-14', 'gpt-4.1-mini-2025-04-14', 'gpt-4.1-nano-2025-04-14']:
-            return tokens/1047576
+        elif model in ['gpt-5.4-2026-03-05', 'gpt-5.5-2026-04-23']:
+            return tokens/1050000
+        else:
+            raise ValueError(f"Model {model} not recognized for context window usage calculation.")
 
     def _responses_with_backoff(self, **kwargs):
         logging.info(f'responses_with_backoff - {st.session_state["session_id"]}')
@@ -245,7 +237,7 @@ class OpenAIResponsesUtility:
             self, 
             messages, 
             temperature = 0.8, 
-            model='gpt-5-nano-2025-08-07', 
+            model='gpt-5.4-nano-2026-03-17', 
             response_format = None, 
             reasoning_effort = 'low', 
             tool_config = None, 

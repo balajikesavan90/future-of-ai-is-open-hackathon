@@ -6,13 +6,17 @@ import re
 import os
 
 from arctic_analytics.core.data_import import gather_metadata
+from arctic_analytics.streamlit.helpers import is_dev_environment
 
 def is_valid_csv(file):
     """Validate if file is a proper CSV and not malicious"""
-    # Check file size (10MB limit)
-    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
-    if file.size > MAX_FILE_SIZE:
-        return False, "File size exceeds 10MB limit"
+
+    # do not check file size in dev environment
+    if not is_dev_environment():
+        # Check file size (10MB limit)
+        MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+        if file.size > MAX_FILE_SIZE:
+            return False, "File size exceeds 10MB limit"
     
     # Define suspicious patterns (e.g., script tags, executable commands)
     suspicious_patterns = [

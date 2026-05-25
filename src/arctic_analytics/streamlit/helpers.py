@@ -5,6 +5,7 @@ import json
 from datetime import datetime, timezone
 import pandas as pd
 import matplotlib.figure as mfigure
+import os
 
 from arctic_analytics import __version__
 
@@ -335,3 +336,9 @@ def render_tool_response(tool_response):
             except json.JSONDecodeError:
                 # Not JSON, display as plain text
                 st.write(tool_response)
+
+def is_dev_environment():
+    try:
+        return st.secrets.get('ENV', os.environ.get('ENV', '')) == 'dev'
+    except FileNotFoundError:
+        return os.environ.get('ENV', '') == 'dev'
