@@ -90,7 +90,7 @@ def test_validate_code_security_rejects_filesystem_attempts(code):
 
 def test_execute_with_timeout_reports_long_running_code():
     with pytest.raises(TimeoutError):
-        execute_with_timeout("while True:\n    pass", {}, None, timeout_sec=0.01)
+        execute_with_timeout("import time\ntime.sleep(0.1)", {}, None, timeout_sec=0.01)
 
 
 def test_safely_execute_code_returns_dataframe():
