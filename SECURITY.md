@@ -15,7 +15,7 @@ Arctic Analytics runs model-generated Python through application-level checks be
 
 The validator blocks imports and calls associated with filesystem access, process execution, dynamic code execution, networking, package installation, environment inspection, and interpreter escape hatches. Examples include `os`, `subprocess`, `socket`, `requests`, `open`, `eval`, `exec`, `compile`, `__import__`, and similar APIs.
 
-The allowlist is intentionally narrow and centered on structured-data analysis libraries such as pandas, numpy, seaborn, matplotlib, datetime, math, scipy, and statsmodels.
+The allowlist is intentionally narrow and centered on structured-data analysis libraries such as pandas, numpy, seaborn, matplotlib, datetime, math, and statsmodels.
 
 ## Timeout Behavior
 
