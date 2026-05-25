@@ -23,7 +23,7 @@ def stream_text(text):
 def render_analytics_agent():
     logging.info(f'render_analytics_agent - {st.session_state["session_id"]}')
     st.divider()
-    st.info('Arctic Analytics AI now has access to files you uploaded. Arctic Analytics will run code to analyze your data and generate insights.')
+    st.info('Arctic Analytics can use uploaded data through visible tool calls and constrained generated code.')
 
     if st.secrets['ENV'] == 'dev':
         st.session_state['model'] = st.sidebar.selectbox(
@@ -35,7 +35,7 @@ def render_analytics_agent():
     else:
         st.session_state['model'] = 'gpt-5-mini-2025-08-07'
 
-    st.info(f'The analytics agent uses the {st.session_state["model"]} model. Agent mode works much better with an advanced model like gpt-5. Please get in touch with [me](https://www.linkedin.com/in/balaji-kesavan/) if you want to use the advanced models.')
+    st.info(f'Agent Mode uses the {st.session_state["model"]} model. Review the tool calls, generated code, and outputs before relying on the analysis.')
 
     st.session_state['system_message'] = construct_system_message(st.session_state['vetted_files'], agent_model = True)
 

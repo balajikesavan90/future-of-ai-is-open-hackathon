@@ -12,8 +12,8 @@ openai_responses_client = OpenAIResponsesUtility()
 def construct_welcome_message():
     logging.info(f'construct_welcome_message - {st.session_state["session_id"]}')
 
-    welcome_message = f"""Hello! I am the Arctic Analytics AI. I can help you analyze your data.
-I have access to the metadata of the files you uploaded. I will use that to generate code snippets and execute them in a sandbox environment.
+    welcome_message = f"""Hello. Arctic Analytics can help generate metadata-aware analysis over your structured data.
+I have access to the metadata of the files you uploaded and will use that context to generate inspectable code for constrained execution.
 \n\n"""
     
     if len(st.session_state['vetted_files']) == 1:
@@ -41,4 +41,3 @@ def generate_ai_response(vetted_files, model, agent_model=False):
             response = openai_chat_completions_client.generate_openai_chat_completions_response(vetted_files, model)
         
     return response
-
