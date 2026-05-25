@@ -6,12 +6,7 @@ import re
 import os
 
 from arctic_analytics.core.data_import import gather_metadata
-
-def _is_dev_environment():
-    try:
-        return st.secrets.get('ENV', os.environ.get('ENV', '')) == 'dev'
-    except Exception:
-        return os.environ.get('ENV', '') == 'dev'
+from arctic_analytics.streamlit.helpers import _is_dev_environment
 
 def is_valid_csv(file):
     """Validate if file is a proper CSV and not malicious"""

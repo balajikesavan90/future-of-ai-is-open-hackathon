@@ -7,6 +7,7 @@ from arctic_analytics.core.system_messages import construct_system_message
 
 from arctic_analytics.streamlit.widgets.prompt_guide import render_tool_calling_analysis_prompt_guide
 from arctic_analytics.streamlit.helpers import render_ai_prompt, safely_escape_dollars, render_tool_call, render_tool_response, disable_sample_button
+from arctic_analytics.streamlit.helpers import _is_dev_environment
 
 
 def stream_text(text):
@@ -22,7 +23,7 @@ def render_analytics_agent():
     st.divider()
     st.info('Tool-Calling Analysis uses uploaded data through visible tool calls and constrained generated code.')
 
-    if st.secrets.get('ENV', '') != 'dev':
+    if not _is_dev_environment():
         st.session_state['model'] = 'gpt-5.4-mini-2026-03-17'
     else:
         st.session_state['model'] = st.sidebar.selectbox(
@@ -133,7 +134,7 @@ def render_analytics_agent():
     if st.session_state['context_window_usage'] > 0.5:
         st.warning('LLMs are known to degrade in performance when context window usage gets higher than 50%. Consider starting a new session.')
 
-    if st.secrets.get('ENV', '') != 'dev':
+    if not _is_dev_environment():
         MAX_CHARS = 1000
     else:
         MAX_CHARS = None
