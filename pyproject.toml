@@ -32,7 +32,7 @@ matplotlib = "^3.10.7"
 
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.3.0"
+pytest = ">=8.3,<10.0"
 
 
 [tool.poetry.scripts]
