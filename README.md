@@ -66,6 +66,7 @@ Current implementation limits:
 - Execution restrictions are not isolation.
 - Examples may require external APIs.
 - Reproducibility is partial.
+- Reusable framework boundaries are partial; the current implementation is still Streamlit-centered.
 - There are no replayable runs.
 - There is no durable audit log, role-based governance, dataset provenance model, or policy engine.
 
@@ -148,6 +149,14 @@ arctic-analytics-app
 - [Threat model](docs/threat_model.md)
 - [Reproducibility](docs/reproducibility.md)
 - [Examples](examples/README.md)
+
+## Citation
+
+If you use Arctic Analytics, cite the software using [CITATION.cff](CITATION.cff).
+
+DOI: `10.5281/zenodo.18514535`
+
+The citation metadata is also mirrored in [.zenodo.json](.zenodo.json). Before citing a newer release, verify that the README, `CITATION.cff`, `.zenodo.json`, package version, and Zenodo record refer to the same version.
 
 ## Contributing
 

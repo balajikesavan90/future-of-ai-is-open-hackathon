@@ -8,3 +8,4 @@ Archived material is retained for migration context and publication traceability
 
 - `legacy_deprecated.md`: migration context for removed legacy workflows and integrations.
 - `commented_image_generation_notes.md`: rationale for removing inactive commented image-generation code from the active LLM path.
+- `REMOVED_FEATURES.md`: second-pass record of implementation remnants removed from active source.

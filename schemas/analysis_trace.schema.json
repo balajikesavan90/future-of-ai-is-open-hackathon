@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/balajikesavan90/arctic-analytics/schemas/analysis_trace.schema.json",
+  "title": "Arctic Analytics Analysis Trace",
+  "description": "Schema for the lightweight, non-replayable analysis trace snapshot exported by Arctic Analytics.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "trace_schema_version",
+    "package_version",
+    "timestamp",
+    "session_id",
+    "model",
+    "cost",
+    "context_window_usage",
+    "system_message",
+    "prompt_str",
+    "messages",
+    "tool_calls",
+    "outputs",
+    "dataset_metadata",
+    "errors",
+    "limitations"
+  ],
+  "properties": {
+    "trace_schema_version": {
+      "type": "string",
+      "const": "0.1.0"
+    },
+    "package_version": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "session_id": {
+      "type": ["string", "null"]
+    },
+    "model": {
+      "type": ["string", "null"]
+    },
+    "cost": {
+      "type": ["number", "integer", "null"]
+    },
+    "context_window_usage": {
+      "type": ["number", "integer", "null"]
+    },
+    "system_message": {
+      "$ref": "#/$defs/json_safe"
+    },
+    "prompt_str": {
+      "$ref": "#/$defs/json_safe"
+    },
+    "messages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/json_safe"
+      }
+    },
+    "tool_calls": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/json_safe"
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/json_safe"
+      }
+    },
+    "dataset_metadata": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "dataset_description",
+          "column_names",
+          "columns_names",
+          "data_types",
+          "primary_key",
+          "data_dictionary"
+        ],
+        "properties": {
+          "dataset_description": {
+            "type": ["string", "null"]
+          },
+          "column_names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "columns_names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "data_types": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "primary_key": {
+            "$ref": "#/$defs/json_safe"
+          },
+          "data_dictionary": {
+            "$ref": "#/$defs/json_safe"
+          },
+          "shape": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pandas_describe": {
+            "$ref": "#/$defs/json_safe"
+          }
+        }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/json_safe"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "json_safe": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/json_safe"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/json_safe"
+          }
+        }
+      ]
+    }
+  }
+}

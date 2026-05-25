@@ -24,3 +24,9 @@ This audit covers repository wording related to Arctic Analytics positioning as 
 - Added explicit non-goals for generic assistant, chat-with-data, governance platform, enterprise product, sandboxed execution environment
 - Rewrote design wording from assistant behavior to model behavior where it was not an API role.
 - Archived legacy migration positioning notes under `docs/archive/`.
+
+## Second-Pass Consistency Notes
+
+- Removed inactive image-generation response handling from `src/arctic_analytics/llm/openai_responses.py`.
+- Removed inactive embedding helper code from `src/arctic_analytics/llm/openai_responses.py`.
+- Added `docs/archive/REMOVED_FEATURES.md` to record removed implementation remnants without keeping them in active source.

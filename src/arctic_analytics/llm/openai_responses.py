@@ -1,25 +1,15 @@
 import streamlit as st
 import base64
-from openai import OpenAI, pydantic_function_tool
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_random_exponential,
-)
+from openai import OpenAI
 import json
 import logging
-from typing import Dict, Any, List, Optional, Type
-from pydantic import BaseModel
 import os
-import uuid
 import matplotlib.pyplot as plt
 import matplotlib.figure as mfigure
 import pandas as pd
 import numpy as np
 import io
-import tiktoken
 
-# from arctic_analytics.core.system_messages import construct_system_message
 from arctic_analytics.streamlit.helpers import safely_escape_dollars, render_tool_call, render_tool_response
 from arctic_analytics.core.security import safely_execute_code
 from arctic_analytics.llm.tokenization import safe_encoding_for_model
@@ -41,26 +31,18 @@ class OpenAIResponsesUtility:
             self.client = OpenAI()
         return self.client
 
-    @retry(wait=wait_random_exponential(min=5, max=10), stop=stop_after_attempt(5))
-    def _embedding_with_backoff(self, **kwargs):
-        logging.info(f'embedding_with_backoff - {st.session_state["session_id"]}')
-        return self._client().embeddings.create(**kwargs)
-
     def _calculate_cost(self, prompt_tokens, completion_tokens=0, model=''):
         """
         Calculate API cost based on token usage and model
         Args:
             prompt_tokens: Number of prompt tokens
-            completion_tokens: Number of completion tokens (default 0 for embeddings)
+            completion_tokens: Number of completion tokens
             model: Model name used for the API call
         Returns:
             cost_USD: Cost in USD
         """
         # Standard rates for common models (these can be updated as pricing changes)
-        if model == 'text-embedding-3-small':
-            # Embedding models
-            return prompt_tokens * 0.02/1000000
-        elif model == 'gpt-4.1-nano-2025-04-14':
+        if model == 'gpt-4.1-nano-2025-04-14':
             return 0.1*prompt_tokens/1000000 + 0.4*completion_tokens/1000000
         elif model == 'gpt-4.1-mini-2025-04-14':
             return 0.4*prompt_tokens/1000000 + 1.6*completion_tokens/1000000
@@ -87,21 +69,6 @@ class OpenAIResponsesUtility:
         elif model in ['gpt-4.1-2025-04-14', 'gpt-4.1-mini-2025-04-14', 'gpt-4.1-nano-2025-04-14']:
             return tokens/1047576
 
-    def create_embedding_APICall(self, text, page, session_id=''):
-        logging.info(f'create_embedding_APICall - {st.session_state["session_id"]}')
-        response = self._embedding_with_backoff(
-            input=text,
-            model='text-embedding-3-small'
-            )
-        
-        embeddings = response.data[0].embedding
-        tokens = response.usage.total_tokens
-        model = response.model
-        cost_USD = self._calculate_cost(tokens, model=model)
-
-        return embeddings   
-
-    # @retry(wait=wait_random_exponential(min=5, max=10), stop=stop_after_attempt(5))
     def _responses_with_backoff(self, **kwargs):
         logging.info(f'responses_with_backoff - {st.session_state["session_id"]}')
         return self._client().responses.parse(**kwargs)
@@ -154,7 +121,7 @@ class OpenAIResponsesUtility:
         return args
     
 
-    def _process_api_response(self, response, messages, session_id, model, image_params):
+    def _process_api_response(self, response, messages, model):
         outputs = response.output
         prompt_tokens = response.usage.input_tokens
         completion_tokens = response.usage.output_tokens
@@ -169,13 +136,9 @@ class OpenAIResponsesUtility:
         # st.toast(f"Cost for this API call: ${cost_USD:.6f}")
         
         tool_calls = []
-        text = None
-        images = []
         for output in outputs:
             if output.type == 'message':
                 messages.append(output.to_dict())
-            # elif output.type == 'web_search_call':
-            #     messages.append(output.to_dict())
             elif output.type == 'reasoning':
                 messages.append(output.to_dict())
                 summary_list = output.to_dict()['summary']
@@ -184,8 +147,6 @@ class OpenAIResponsesUtility:
                         with st.session_state['messages_container']:
                             with st.expander(f"🧠 Agent Reasoning", expanded=True):
                                 st.write(safely_escape_dollars(summary['text']))  # Safely escape dollar signs for LaTeX rendering
-            # elif output.type in ['mcp_list_tools', 'mcp_call']:
-            #     messages.append(output.to_dict())
             elif output.type == 'function_call':
                 id = output.id
                 call_id = output.call_id
@@ -211,37 +172,10 @@ class OpenAIResponsesUtility:
                 if 'parsed_arguments' in output_dict:
                     del output_dict['parsed_arguments']  # Remove parsed_arguments if present
                 messages.append(output_dict)
-            # elif output.type == 'image_generation_call':
-            #     processed_result = None
-            #     try:
-            #         if output.result:
-            #             cost_USD += self._calculate_image_cost(image_params)
-            #             # Save the image bytes to a file
-            #             # decode and save via helper
-            #             image_bytes = base64.b64decode(output.result)
-            #             fname = str(uuid.uuid4())
-            #             file_path = f"images/{session_id}/{fname}.webp"
-            #             try:
-            #                 # Save the image to the bucket
-            #                 save_image_to_bucket(image_bytes, file_path)
-            #                 images.append(file_path)
-            #                 processed_result = file_path
-            #             except Exception as e:
-            #                 logging.error(f"Error saving image to bucket: {e}")
-            #             messages.append({
-            #                 'type': 'image_generation_call',
-            #                 'status': output.status,
-            #                 'result': processed_result,
-            #                 'id': output.id
-            #             })
-            #         else:
-            #             logging.warning("Image generation result is null")
-            #     except Exception as e:
-            #         logging.error(f"Error processing image generation: {e}")
 
-        return tool_calls, cost_USD, messages, images, context_window_usage
+        return tool_calls, cost_USD, messages, context_window_usage
 
-    def _process_tool_call_loop(self, tool_calls, messages, tool_handlers, args, session_id, model):
+    def _process_tool_call_loop(self, tool_calls, messages, tool_handlers, args, model):
         """Handles the recursive tool call processing"""
         tool_cost = 0
         
@@ -296,8 +230,8 @@ class OpenAIResponsesUtility:
             response = self._responses_with_backoff(**args)
 
             # Process the follow-up response
-            tool_calls, cost_USD_inner, messages, images, context_window_usage = self._process_api_response(
-                response, messages, session_id, model, image_params=None
+            tool_calls, cost_USD_inner, messages, context_window_usage = self._process_api_response(
+                response, messages, model
             )
             
             tool_cost += cost_USD_inner
@@ -305,21 +239,17 @@ class OpenAIResponsesUtility:
             if tool_calls is None:
                 tool_calls = []
 
-        return messages, images, tool_cost, context_window_usage
+        return messages, tool_cost, context_window_usage
 
     def responses_APIcall(
             self, 
             messages, 
-            session_id = '', 
             temperature = 0.8, 
             model='gpt-5-nano-2025-08-07', 
             response_format = None, 
             reasoning_effort = 'low', 
             tool_config = None, 
             tool_choice = 'auto', 
-            allow_image_generation = False,
-            image_params = None,
-            # include = ['web_search_call.action.sources', 'reasoning.encrypted_content']
             include = ['reasoning.encrypted_content']
         ):
         logging.info(f'responses_APIcall - {st.session_state["session_id"]}')
@@ -330,33 +260,26 @@ class OpenAIResponsesUtility:
 
         response = self._responses_with_backoff(**args)
 
-        output_images = []
-
         # Process the initial response
-        tool_calls, cost_USD_initial, messages, images_1, context_window_usage_1 = self._process_api_response(
-            response, messages, session_id, model, image_params
+        tool_calls, cost_USD_initial, messages, context_window_usage_1 = self._process_api_response(
+            response, messages, model
         )
 
         # Handle tool calls if present
         cost_USD_tool = 0
         context_window_usage_2 = 0
-        images_2 = None
         if tool_calls is not None and tool_calls != []:
-            messages, images_2, cost_USD_tool, context_window_usage_2 = self._process_tool_call_loop(
-                tool_calls, messages, tool_handlers, args, session_id, model
+            messages, cost_USD_tool, context_window_usage_2 = self._process_tool_call_loop(
+                tool_calls, messages, tool_handlers, args, model
             )
             
         # Calculate total cost at the end
         cost_USD = cost_USD_initial + cost_USD_tool
         # Context window usage is cumulative - use the latest value from tool loop if present, otherwise initial
         context_window_usage = context_window_usage_2 if context_window_usage_2 != 0 else context_window_usage_1
-        if images_1:
-            output_images.extend(images_1)
-        if images_2:
-            output_images.extend(images_2)
 
         logging.info(f'Final cost: ${cost_USD}')
-        return [messages, output_images, cost_USD, context_window_usage]
+        return [messages, cost_USD, context_window_usage]
     
 
     def run_python_function(self, python_code, reason, vetted_files, report_function):
@@ -588,7 +511,7 @@ class OpenAIResponsesUtility:
                 )
             }
         ]
-        response, _, cost, context_window_usage = self.responses_APIcall(st.session_state['messages'], model=model, temperature=0.1, tool_config=tool_config)
+        response, cost, context_window_usage = self.responses_APIcall(st.session_state['messages'], model=model, temperature=0.1, tool_config=tool_config)
 
         st.session_state['prompt_str'] = ""
         st.session_state['cost'] += cost

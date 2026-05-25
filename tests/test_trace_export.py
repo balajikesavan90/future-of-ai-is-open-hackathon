@@ -1,9 +1,19 @@
 import json
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+from jsonschema import Draft202012Validator
 
 from arctic_analytics.streamlit.helpers import build_analysis_trace
+
+
+ROOT = Path(__file__).resolve().parents[1]
+TRACE_SCHEMA = json.loads((ROOT / "schemas" / "analysis_trace.schema.json").read_text())
+
+
+def validate_trace_schema(trace):
+    Draft202012Validator(TRACE_SCHEMA).validate(trace)
 
 
 def test_build_analysis_trace_is_json_safe_and_truncates_large_payloads():
@@ -54,6 +64,7 @@ def test_build_analysis_trace_is_json_safe_and_truncates_large_payloads():
 
     trace = build_analysis_trace()
     dumped = json.dumps(trace)
+    validate_trace_schema(trace)
 
     assert dumped
     assert trace["trace_schema_version"] == "0.1.0"
@@ -70,3 +81,9 @@ def test_build_analysis_trace_is_json_safe_and_truncates_large_payloads():
     assert trace["dataset_metadata"]["sales"]["column_names"] == ["count", "created_at"]
     assert trace["dataset_metadata"]["sales"]["columns_names"] == ["count", "created_at"]
     assert trace["errors"][0]["content"] == "example error"
+
+
+def test_sample_trace_export_matches_schema():
+    trace = json.loads((ROOT / "examples" / "sample_trace_export.json").read_text())
+
+    validate_trace_schema(trace)
