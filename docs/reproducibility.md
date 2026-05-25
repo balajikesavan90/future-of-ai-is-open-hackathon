@@ -1,0 +1,31 @@
+# Reproducibility
+
+Arctic Analytics currently supports partial reproducibility through inspectable artifacts. It does not provide deterministic replay.
+
+## Current State
+
+- Trace exports capture a snapshot of Streamlit session state, messages, tool calls, outputs, metadata, errors, model name, cost, timestamp, trace schema version, and package version when available.
+- Examples provide a small dataset, metadata, and one trace generated through the application path.
+- Tests cover selected data import, prompt construction, execution restriction, dispatch, and trace export behavior.
+
+## Missing
+
+- Replayability.
+- Dataset hashes.
+- Prompt hashes.
+- Output hashes.
+- Stable run manifests.
+- Stable dataset, prompt, tool-call, and output IDs.
+- Formal trace schema validation.
+
+## Roadmap
+
+Future optional additions:
+
+- Dataset hashes.
+- Prompt hashes.
+- Output hashes.
+- Trace schemas.
+- Run manifests.
+
+These additions are not implemented today.

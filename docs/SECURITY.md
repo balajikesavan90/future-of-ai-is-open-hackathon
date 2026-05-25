@@ -1,6 +1,6 @@
 # Security
 
-Arctic Analytics runs model-generated Python through application-level checks before execution. These controls reduce accidental misuse, but they are not a complete sandbox.
+Arctic Analytics runs model-generated Python through application-level checks before execution. These controls reduce accidental misuse, but they do not provide security isolation.
 
 ## Execution Restrictions
 
@@ -25,8 +25,8 @@ The timeout is a responsiveness control. It is not a CPU, memory, or process iso
 
 ## What Is Not Provided
 
-- No OS sandbox.
-- No container sandbox.
+- No OS sandboxing.
+- No container sandboxing.
 - No memory isolation.
 - No network isolation.
 - No filesystem isolation beyond blocked Python APIs.
@@ -38,4 +38,4 @@ The timeout is a responsiveness control. It is not a CPU, memory, or process iso
 
 Allowed libraries may expose unexpected behavior or resource-heavy operations. Python-level validation can miss edge cases. Large dataframes or expensive generated code can still consume memory or CPU before timeout handling completes. Users should treat outputs as reviewable analysis artifacts, not trusted autonomous decisions.
 
-For untrusted users, sensitive datasets, or production workloads, run Arctic Analytics inside an external sandbox such as a locked-down container, VM, or managed execution service with explicit CPU, memory, filesystem, and network controls.
+For untrusted users, sensitive datasets, or production workloads, run Arctic Analytics inside an external isolation boundary such as a locked-down container, VM, or managed execution service with explicit CPU, memory, filesystem, and network controls.
