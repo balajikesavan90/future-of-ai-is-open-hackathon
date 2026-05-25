@@ -16,12 +16,14 @@ I have access to the metadata of the files you uploaded and will use that contex
         welcome_message += 'I have detected the following pandas dataframe:\n\n'
         for file_name in st.session_state['vetted_files']:
             column_names = ', '.join(st.session_state["vetted_files"][file_name]["columns_names"])
-            welcome_message += f'The pandas dataframe :blue[{file_name}] has :blue[{st.session_state['vetted_files'][file_name]['dataframe'].shape[0]}] rows with columns: :blue[{column_names}].\n\n'
+            row_count = st.session_state['vetted_files'][file_name]['dataframe'].shape[0]
+            welcome_message += f'The pandas dataframe :blue[{file_name}] has :blue[{row_count}] rows with columns: :blue[{column_names}].\n\n'
     else:
         welcome_message += 'I have detected the following pandas dataframes:\n\n'
         for file_name in st.session_state['vetted_files']:
             column_names = ', '.join(st.session_state["vetted_files"][file_name]["columns_names"])
-            welcome_message += f'The pandas dataframe :blue[{file_name}] has :blue[{st.session_state['vetted_files'][file_name]['dataframe'].shape[0]}] rows with columns: :blue[{column_names}].\n\n'
+            row_count = st.session_state['vetted_files'][file_name]['dataframe'].shape[0]
+            welcome_message += f'The pandas dataframe :blue[{file_name}] has :blue[{row_count}] rows with columns: :blue[{column_names}].\n\n'
     return welcome_message
 
 
