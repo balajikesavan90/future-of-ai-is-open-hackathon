@@ -25,12 +25,12 @@ def render_analytics_agent():
     if st.secrets['ENV'] == 'dev':
         st.session_state['model'] = st.sidebar.selectbox(
             label = 'Model',
-            options = ['gpt-5-nano-2025-08-07', 'gpt-5-mini-2025-08-07', 'gpt-5-2025-08-07'],
+            options = ['gpt-5.4-nano-2026-03-17', 'gpt-5.4-mini-2026-03-17', 'gpt-5.4-2026-03-05', 'gpt-5.5-2026-04-23'],
             index = 0,
             key='model_select_sidebar',
         )
     else:
-        st.session_state['model'] = 'gpt-5-mini-2025-08-07'
+        st.session_state['model'] = 'gpt-5.4-mini-2026-03-17'
 
     st.info(f'Tool-Calling Analysis uses the {st.session_state["model"]} model. Review tool calls, generated code, and outputs before relying on the analysis.')
 
