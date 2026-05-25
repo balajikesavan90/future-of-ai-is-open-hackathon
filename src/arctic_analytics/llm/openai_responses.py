@@ -181,8 +181,8 @@ class OpenAIResponsesUtility:
         
         while tool_calls != []:
             for tool_call in tool_calls:
-                    logging.info(f'Calling tool: {tool_call['name']}')
-                    logging.info(f'Tool call arguments: {tool_call['arguments']}')
+                    logging.info(f"Calling tool: {tool_call['name']}")
+                    logging.info(f"Tool call arguments: {tool_call['arguments']}")
 
                     try:
                         tool_name = tool_call['name']
