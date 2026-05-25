@@ -237,7 +237,7 @@ class OpenAIResponsesUtility:
             self, 
             messages, 
             temperature = 0.8, 
-            model='gpt-5-nano-2025-08-07', 
+            model='gpt-5.4-nano-2026-03-17', 
             response_format = None, 
             reasoning_effort = 'low', 
             tool_config = None, 
