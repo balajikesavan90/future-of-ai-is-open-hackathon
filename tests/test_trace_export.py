@@ -1,4 +1,5 @@
 import json
+from functools import lru_cache
 from pathlib import Path
 
 import pandas as pd
@@ -9,11 +10,15 @@ from arctic_analytics.streamlit.helpers import build_analysis_trace
 
 
 ROOT = Path(__file__).resolve().parents[1]
-TRACE_SCHEMA = json.loads((ROOT / "schemas" / "analysis_trace.schema.json").read_text())
+
+
+@lru_cache(maxsize=1)
+def load_trace_schema():
+    return json.loads((ROOT / "schemas" / "analysis_trace.schema.json").read_text())
 
 
 def validate_trace_schema(trace):
-    Draft202012Validator(TRACE_SCHEMA).validate(trace)
+    Draft202012Validator(load_trace_schema()).validate(trace)
 
 
 def test_build_analysis_trace_is_json_safe_and_truncates_large_payloads():
@@ -85,5 +90,12 @@ def test_build_analysis_trace_is_json_safe_and_truncates_large_payloads():
 
 def test_sample_trace_export_matches_schema():
     trace = json.loads((ROOT / "examples" / "sample_trace_export.json").read_text())
+
+    validate_trace_schema(trace)
+
+
+def test_trace_schema_accepts_dataset_metadata_without_legacy_columns_names():
+    trace = json.loads((ROOT / "examples" / "sample_trace_export.json").read_text())
+    del trace["dataset_metadata"]["tips"]["columns_names"]
 
     validate_trace_schema(trace)

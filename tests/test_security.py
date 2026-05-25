@@ -121,6 +121,7 @@ def generate_report():
 
 
 def test_tool_execution_rejects_oversized_text_outputs():
+    st.session_state.clear()
     st.session_state["session_id"] = "test-session"
     client = OpenAIResponsesUtility()
     vetted_files = {

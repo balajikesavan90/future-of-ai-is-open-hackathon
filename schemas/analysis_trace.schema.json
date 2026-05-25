@@ -78,7 +78,6 @@
         "required": [
           "dataset_description",
           "column_names",
-          "columns_names",
           "data_types",
           "primary_key",
           "data_dictionary"
