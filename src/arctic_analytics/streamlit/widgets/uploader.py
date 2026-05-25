@@ -11,7 +11,7 @@ def is_valid_csv(file):
     """Validate if file is a proper CSV and not malicious"""
 
     # do not check file size in dev environment
-    if st.secrets['ENV'] != 'dev':
+    if st.secrets.get('ENV', '') != 'dev':
         # Check file size (10MB limit)
         MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
         if file.size > MAX_FILE_SIZE:
