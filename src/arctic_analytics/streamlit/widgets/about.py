@@ -9,14 +9,14 @@ def render_about():
     with about_me_container:
         st.write(
             """
-            Arctic Analytics is an experimental open-source framework for metadata-aware, transparent, and constrained AI-assisted analysis over structured data.
+            Arctic Analytics is an experimental open-source framework for metadata-aware, inspectable, constrained AI-assisted analysis over structured data.
             """
         )
 
         with st.expander(':blue[What is Arctic Analytics?]', expanded=False):
             st.write(
                 """
-                Arctic Analytics is an experimental framework for metadata-aware, transparent, and constrained AI-assisted analysis over structured data. It focuses on:
+                Arctic Analytics is an experimental framework for metadata-aware, inspectable, constrained AI-assisted analysis over structured data. It focuses on:
                 - editable metadata before inference.
                 - visible reasoning, generated code, and tool calls.
                 - constrained Python execution.
@@ -44,7 +44,7 @@ def render_about():
                 The model sees the current conversation state sent to the API, including:
                 - the system prompt
                 - all prior user inputs in the conversation
-                - all prior assistant responses
+                - all prior model responses
                 - all prior tool calls
                 - all prior tool responses.
 

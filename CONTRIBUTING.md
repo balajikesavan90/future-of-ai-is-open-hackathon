@@ -1,10 +1,10 @@
 # Contributing to Arctic Analytics
 
-First off, thank you for considering contributing to Arctic Analytics. It's people like you that make Arctic Analytics such a great tool.
+Thank you for considering a contribution to Arctic Analytics.
 
 ## Where do I go from here?
 
-If you've noticed a bug or have a focused feature request, make sure to check our issues first. Arctic Analytics is intentionally scoped to metadata-aware, transparent, constrained Tool-Calling Analysis over structured data.
+If you notice a bug or have a focused feature request, check the existing issues first. Arctic Analytics is intentionally scoped to metadata-aware, inspectable, constrained Tool-Calling Analysis over structured data.
 
 ## Fork & create a branch
 

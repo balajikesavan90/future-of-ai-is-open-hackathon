@@ -1,15 +1,17 @@
 # Arctic Analytics
 
-Arctic Analytics is an open-source framework exploring metadata-aware, transparent, and constrained AI-assisted analysis over structured data.
+Arctic Analytics is an experimental open-source framework for metadata-aware, inspectable, constrained AI-assisted analysis over structured data.
 
 The project investigates a narrow question: how should structured-data analysis change when context is explicit, execution is visible, and generated code runs under practical constraints? Arctic Analytics lets users upload or select tabular data, review and edit data dictionaries, inject metadata before inference, inspect generated code or tool calls, execute Python with application-level restrictions, and review outputs before relying on them.
-
-This is not an enterprise governance platform, a general AI copilot, or a novel agent architecture. It is an experimental precursor for studying metadata-aware and inspectable analysis workflows.
 
 > Packaging note: the app is available as the `arctic-analytics` distribution with the `arctic_analytics` import package.
 
 ## What It Does Today
 
+- Explores metadata-aware analysis over structured data.
+- Emphasizes inspectability over opaque answer generation.
+- Exposes execution artifacts, including generated code, tool calls, tool responses, and trace snapshots.
+- Uses constrained execution with application-level Python restrictions.
 - Loads CSV files or bundled sample datasets.
 - Builds dataset metadata, including columns, data types, summary statistics, missing values, and small row samples.
 - Lets users edit dataset descriptions, column descriptions, data types, and primary key flags before analysis.
@@ -24,7 +26,7 @@ This is not an enterprise governance platform, a general AI copilot, or a novel 
 
 The model should receive explicit context before attempting analysis. Arctic Analytics prioritizes editable metadata, dataset descriptions, data dictionaries, dataframe shape, summary statistics, missing values, and sample rows as first-class context inputs.
 
-### Transparency Over Magic
+### Inspectability Over Magic
 
 Generated analysis should be inspectable. The UI exposes the system prompt, message context, generated Python, tool calls, tool-call reasons, and tool responses so users can see how an answer was produced.
 
@@ -50,14 +52,22 @@ Arctic Analytics is designed for human review. Outputs should be checked against
 
 ## Current Limitations
 
-- Python-level restrictions are not OS-level or container sandboxing.
-- There are no durable audit logs.
-- Trace export is a Streamlit session snapshot, not a replayable execution record.
+This project does not provide:
+
+- Deterministic reproducibility.
+- Governance guarantees.
+- Security isolation.
+- Audit-grade provenance.
+- Replacement for human review.
+
+Current implementation limits:
+
+- Traces are snapshots of Streamlit session state.
+- Execution restrictions are not isolation.
+- Examples may require external APIs.
+- Reproducibility is partial.
 - There are no replayable runs.
-- There is no role-based governance.
-- There is no dataset provenance model.
-- There is no policy engine.
-- There is no claim of novel agent architecture.
+- There is no durable audit log, role-based governance, dataset provenance model, or policy engine.
 
 ## Roadmap
 
@@ -135,6 +145,8 @@ arctic-analytics-app
 - [Research questions](docs/research_questions.md)
 - [Architecture](docs/architecture.md)
 - [Security](SECURITY.md)
+- [Threat model](docs/threat_model.md)
+- [Reproducibility](docs/reproducibility.md)
 - [Examples](examples/README.md)
 
 ## Contributing

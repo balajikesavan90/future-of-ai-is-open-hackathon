@@ -13,7 +13,7 @@ repository-code: "https://github.com/balajikesavan90/arctic-analytics"
 license: MIT
 abstract: >
   Arctic Analytics is an experimental open-source framework for metadata-aware,
-  transparent, and constrained AI-assisted analysis over structured data.
+  inspectable, constrained AI-assisted analysis over structured data.
 keywords:
   - metadata
   - structured-data
