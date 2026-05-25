@@ -1,12 +1,8 @@
 import streamlit as st
 import logging
 
-from arctic_analytics.llm.meta_llama import MetaLlama
-from arctic_analytics.llm.openai_chat_completions import OpenAIChatCompletionsUtility
 from arctic_analytics.llm.openai_responses import OpenAIResponsesUtility
 
-llama_client = MetaLlama()
-openai_chat_completions_client = OpenAIChatCompletionsUtility()
 openai_responses_client = OpenAIResponsesUtility()
 
 def construct_welcome_message():
@@ -29,15 +25,6 @@ I have access to the metadata of the files you uploaded and will use that contex
     return welcome_message
 
 
-def generate_ai_response(vetted_files, model, agent_model=False):
+def generate_ai_response(vetted_files, model):
     logging.info(f'generate_ai_response - {st.session_state["session_id"]}')
-    
-    if 'meta' in model.lower() or 'llama' in model.lower():
-        response = llama_client.generate_llama_response(vetted_files, model, False)
-    else:
-        if agent_model:
-            response = openai_responses_client.generate_openai_response(vetted_files, model)
-        else:
-            response = openai_chat_completions_client.generate_openai_chat_completions_response(vetted_files, model)
-        
-    return response
+    return openai_responses_client.generate_openai_response(vetted_files, model)

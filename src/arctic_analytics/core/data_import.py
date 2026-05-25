@@ -3,8 +3,6 @@ import pandas as pd
 import numpy as np
 import itertools
 import os
-import snowflake.connector
-# from sklearn.datasets import load_iris, load_diabetes, load_wine, load_breast_cancer
 from seaborn import load_dataset
 import logging
 
@@ -112,29 +110,7 @@ def gather_metadata(params=None):
             vetted_files[filename]['pandas_describe'] = df.describe(include='all')
             vetted_files[filename]['primary_key'] = []
             vetted_files[filename]['dataframe'] = df
-    
-    if st.session_state['source'] == 'snowflake':
-        con = snowflake.connector.connect(
-            user=params['username'],
-            password=params['password'],
-            account=params['account'],
-            warehouse=params['warehouse'],
-            database=params['database'],
-            schema=params['schema']
-        )
-        cur = con.cursor()
-        cur.execute(params['sql'])
-        df = cur.fetch_pandas_all()
-        filename = 'snowflake_data'
-        df = df.convert_dtypes()
-        vetted_files = {}
-        vetted_files[filename] = {}
-        vetted_files[filename]['columns_names'] = df.columns
-        vetted_files[filename]['data_types'] = df.dtypes
-        vetted_files[filename]['pandas_describe'] = df.describe(include='all')
-        vetted_files[filename]['primary_key'] = []
-        vetted_files[filename]['dataframe'] = df
-    
+
     if st.session_state['source'] in ['tips', 'planets', 'penguins', 'car_crashes', 'diamonds', 'mpg']:
         filename = st.session_state['source']
         df = load_dataset(filename)

@@ -8,19 +8,18 @@ authors:
 title: "Arctic Analytics"
 version: 0.1.0
 date-released: 2026-02-06
-url: "https://github.com/balajikesavan90/future-of-ai-is-open-hackathon"
-repository-code: "https://github.com/balajikesavan90/future-of-ai-is-open-hackathon"
+url: "https://github.com/balajikesavan90/arctic-analytics"
+repository-code: "https://github.com/balajikesavan90/arctic-analytics"
 license: MIT
 abstract: >
-  Arctic Analytics is a powerful tool that can answer questions about your data,
-  build charts and graphs from your data, and help document and debug your codebase.
+  Arctic Analytics is an experimental open-source framework for metadata-aware,
+  transparent, and constrained AI-assisted analysis over structured data.
 keywords:
-  - data-analytics
-  - streamlit
-  - ai
-  - data-visualization
-  - snowflake
-  - arctic
-  - llm
+  - metadata
+  - structured-data
+  - tool-calling
+  - traceability
+  - constrained-execution
+  - human-review
 type: software
 doi: 10.5281/zenodo.18514535

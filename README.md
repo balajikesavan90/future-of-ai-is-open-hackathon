@@ -14,9 +14,9 @@ This is not an enterprise governance platform, a general AI copilot, or a novel 
 - Builds dataset metadata, including columns, data types, summary statistics, missing values, and small row samples.
 - Lets users edit dataset descriptions, column descriptions, data types, and primary key flags before analysis.
 - Injects that metadata into model context before inference.
-- Generates Python analysis code or visible tool calls for structured-data analysis.
+- Uses Tool-Calling Analysis as the only supported analysis workflow.
 - Executes generated Python with AST validation, restricted globals, output constraints, and a timeout.
-- Shows prompts, generated code, tool calls, tool responses, outputs, and a lightweight JSON trace export in the Streamlit UI.
+- Shows prompts, reasoning summaries, generated code, tool calls, tool responses, outputs, and a lightweight JSON trace export in the Streamlit UI.
 
 ## Design Principles
 
@@ -93,8 +93,8 @@ Long-term:
 ### Installation
 
 ```bash
-git clone https://github.com/balajikesavan90/future-of-ai-is-open-hackathon.git
-cd future-of-ai-is-open-hackathon
+git clone https://github.com/balajikesavan90/arctic-analytics.git
+cd arctic-analytics
 poetry install
 ```
 
@@ -113,7 +113,6 @@ Create `.streamlit/secrets.toml` with:
 
 ```toml
 ENV = "dev"
-REPLICATE_API_TOKEN = "<Create a Replicate account and add your API key here.>"
 OPENAI_API_KEY = "<Create an OpenAI account and add your API key here.>"
 ```
 
@@ -134,6 +133,9 @@ arctic-analytics-app
 
 - [Design principles](docs/design_principles.md)
 - [Research questions](docs/research_questions.md)
+- [Architecture](docs/architecture.md)
+- [Security](SECURITY.md)
+- [Examples](examples/README.md)
 
 ## Contributing
 

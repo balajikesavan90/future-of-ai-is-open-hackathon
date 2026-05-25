@@ -5,7 +5,7 @@ description = "An open-source framework exploring metadata-aware, transparent, a
 authors = ["BalajiKesavan <36139209+balajikesavan90@users.noreply.github.com>"]
 readme = "README.md"
 license = "MIT"
-repository = "https://github.com/balajikesavan90/future-of-ai-is-open-hackathon"
+repository = "https://github.com/balajikesavan90/arctic-analytics"
 packages = [{include = "arctic_analytics", from = "src"}]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -20,10 +20,8 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.12"
 streamlit = {extras = ["charts"], version = "^1.50.0"}
-snowflake-connector-python = "^3.17.0"
 seaborn = "^0.13.2"
 plotly = "^6.0.1"
-replicate = "^1.0.4"
 openai = "^1.70.0"
 tiktoken = "^0.9.0"
 pyarrow = "^18.0.0"

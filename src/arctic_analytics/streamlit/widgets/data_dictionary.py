@@ -26,7 +26,7 @@ def render_data_dictionary_widget():
         df['Data Type'] = df['Data Type'].astype(str)
         df['Primary Key'] = df['Column Name'].apply(lambda x: x in st.session_state['vetted_files'][filename]['primary_key'])
 
-        if st.session_state['source'] in (['snowflake', 'uploader']):
+        if st.session_state['source'] == 'uploader':
             df['Description'] = ''
         elif st.session_state['source'] in ['tips', 'planets', 'penguins', 'car_crashes', 'diamonds', 'mpg']:
             df['Description'] = df['Column Name'].apply(lambda x: datasets[st.session_state['source']]['column_descriptions'][x])
@@ -47,7 +47,7 @@ def render_data_dictionary_widget():
             elif data_filter == 'Random 5 rows':
                 st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].sample(5), width='stretch')
 
-        if st.session_state['source'] in (['snowflake', 'uploader']):
+        if st.session_state['source'] == 'uploader':
             value = ''
         else:
             value = st.session_state['vetted_files'][filename]['dataset_description']

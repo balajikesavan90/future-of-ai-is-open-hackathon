@@ -38,26 +38,8 @@ def goto_data_analysis_widget():
     if 'uploaded_files' in st.session_state.keys():
         del st.session_state['uploaded_files']
 
-def reset_data_analyst():
-    logging.info(f'reset_data_analyst - {st.session_state["session_id"]}')
-    st.session_state['messages'] = []
-    st.session_state['count'] = 0
-    st.session_state['cost'] = 0
-    st.session_state['session_id'] = str(uuid.uuid4())
-    print('###############################')
-    print('reset_data_analyst')
-    print('###############################')
-
-def render_reset():
-    logging.info(f'render_reset - {st.session_state["session_id"]}')
-    st.sidebar.button(':red[Reset App]', on_click=reset_app)
-
-def render_reset_data_analyst():
-    logging.info(f'render_reset_data_analyst - {st.session_state["session_id"]}')
-    st.sidebar.button(':red[Reset Data Analyst]', on_click=reset_data_analyst, key='reset_chat_sidebar')
-
-def reset_analytics_agent():
-    logging.info(f'reset_analytics_agent - {st.session_state["session_id"]}')
+def reset_analysis():
+    logging.info(f'reset_analysis - {st.session_state["session_id"]}')
     st.session_state['messages'] = []
     st.session_state['count'] = 0
     st.session_state['cost'] = 0
@@ -66,12 +48,16 @@ def reset_analytics_agent():
     st.session_state['context_window_usage'] = 0
     st.session_state['session_id'] = str(uuid.uuid4())
     print('###############################')
-    print('reset_analytics_agent')
+    print('reset_analysis')
     print('###############################')
 
-def render_reset_analytics_agent():
-    logging.info(f'render_reset_analytics_agent - {st.session_state["session_id"]}')
-    st.sidebar.button(':red[Reset Analytics Agent]', on_click=reset_analytics_agent, key='reset_agent_sidebar')
+def render_reset():
+    logging.info(f'render_reset - {st.session_state["session_id"]}')
+    st.sidebar.button(':red[Reset App]', on_click=reset_app)
+
+def render_reset_analysis():
+    logging.info(f'render_reset_analysis - {st.session_state["session_id"]}')
+    st.sidebar.button(':red[Reset Analysis]', on_click=reset_analysis, key='reset_analysis_sidebar')
 
 def render_session_state():
     logging.info(f'render_session_state - {st.session_state["session_id"]}')
@@ -210,7 +196,6 @@ def build_analysis_trace():
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "session_id": st.session_state.get("session_id"),
         "model": st.session_state.get("model"),
-        "agent_model": st.session_state.get("agent_model"),
         "cost": st.session_state.get("cost"),
         "context_window_usage": st.session_state.get("context_window_usage"),
         "system_message": _json_safe(st.session_state.get("system_message")),

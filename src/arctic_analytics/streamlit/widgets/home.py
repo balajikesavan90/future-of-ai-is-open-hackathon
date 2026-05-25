@@ -3,11 +3,9 @@ import logging
 
 from arctic_analytics.streamlit.widgets.sample_datasets import render_sample_datasets
 from arctic_analytics.streamlit.widgets.uploader import render_uploader
-# from arctic_analytics.legacy.snowflake_connection import render_snowflake_connection
 from arctic_analytics.streamlit.widgets.about import render_about
 from arctic_analytics.streamlit.widgets.data_dictionary import render_data_dictionary_widget
 from arctic_analytics.streamlit.widgets.uploaded_data import render_uploaded_data
-from arctic_analytics.streamlit.widgets.data_analyst import render_data_analyst
 from arctic_analytics.streamlit.widgets.analytics_agent import render_analytics_agent
 
 def setup_home():
@@ -27,14 +25,8 @@ def render_home():
 
         analyze_data, about = st.tabs(['🔍 Analyze Data', '🗒️ About'])
         with analyze_data:
-            st.session_state['agent_model'] = st.toggle(
-                label=':blue[Use Agent Mode]',
-                value=True,
-                help='Allow the model to request constrained Python tool calls over your data. Tool calls and outputs are visible for review.',
-            )
             render_sample_datasets()
             render_uploader()
-            # render_snowflake_connection()
         with about:
             render_about()
 
@@ -46,7 +38,4 @@ def render_home():
             if not st.session_state['datasets_vetted']:
                 render_uploaded_data()
             else:
-                if st.session_state['agent_model']:
-                    render_analytics_agent()
-                else:
-                    render_data_analyst()
+                render_analytics_agent()

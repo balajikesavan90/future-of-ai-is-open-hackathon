@@ -8,7 +8,7 @@ import pandas as pd
 from arctic_analytics.llm.ai import construct_welcome_message, generate_ai_response
 from arctic_analytics.core.system_messages import construct_system_message
 
-from arctic_analytics.streamlit.widgets.prompt_guide import render_analytics_agent_prompt_guide
+from arctic_analytics.streamlit.widgets.prompt_guide import render_tool_calling_analysis_prompt_guide
 from arctic_analytics.streamlit.helpers import render_ai_prompt, safely_escape_dollars, render_tool_call, render_tool_response, disable_sample_button
 
 
@@ -23,7 +23,7 @@ def stream_text(text):
 def render_analytics_agent():
     logging.info(f'render_analytics_agent - {st.session_state["session_id"]}')
     st.divider()
-    st.info('Arctic Analytics can use uploaded data through visible tool calls and constrained generated code.')
+    st.info('Tool-Calling Analysis uses uploaded data through visible tool calls and constrained generated code.')
 
     if st.secrets['ENV'] == 'dev':
         st.session_state['model'] = st.sidebar.selectbox(
@@ -35,9 +35,9 @@ def render_analytics_agent():
     else:
         st.session_state['model'] = 'gpt-5-mini-2025-08-07'
 
-    st.info(f'Agent Mode uses the {st.session_state["model"]} model. Review the tool calls, generated code, and outputs before relying on the analysis.')
+    st.info(f'Tool-Calling Analysis uses the {st.session_state["model"]} model. Review tool calls, generated code, and outputs before relying on the analysis.')
 
-    st.session_state['system_message'] = construct_system_message(st.session_state['vetted_files'], agent_model = True)
+    st.session_state['system_message'] = construct_system_message(st.session_state['vetted_files'])
 
 
     if 'messages' not in st.session_state.keys() or not st.session_state['messages']:
@@ -84,7 +84,7 @@ def render_analytics_agent():
             value=f'${st.session_state["cost"]}',
         )
 
-    render_analytics_agent_prompt_guide()
+    render_tool_calling_analysis_prompt_guide()
     render_ai_prompt()
 
     with st.expander('See uploaded Datasets'):
@@ -114,7 +114,7 @@ def render_analytics_agent():
                 if msg['summary'] != []:
                     summary_list = msg['summary']
                     for summary in summary_list:
-                        with st.expander(f"🧠 Agent Reasoning", expanded=True):
+                        with st.expander("Reasoning", expanded=True):
                             st.write(safely_escape_dollars(summary['text']))  # Safely escape dollar signs for LaTeX rendering
             elif msg['type'] == 'function_call':
                 render_tool_call(msg)
@@ -179,7 +179,7 @@ def render_analytics_agent():
             )
             with st.session_state['messages_container']:
                 st.chat_message('user').write(safely_escape_dollars(st.session_state['user_input']))  # Safely escape dollar signs for LaTeX rendering
-            st.session_state['messages'] = generate_ai_response(st.session_state['vetted_files'], st.session_state['model'], True)
+            st.session_state['messages'] = generate_ai_response(st.session_state['vetted_files'], st.session_state['model'])
             st.session_state['count'] += 1
         st.chat_message('assistant').write_stream(stream_text(safely_escape_dollars(st.session_state['messages'][-1]['content'][0]['text'])))  # Safely escape dollar signs for LaTeX rendering
         st.rerun()

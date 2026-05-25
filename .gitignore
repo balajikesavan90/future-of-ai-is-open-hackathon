@@ -4,6 +4,9 @@ __pycache__/
 *$py.class
 
 secrets.toml
+.streamlit/secrets.toml
+arctic_analytics_trace_*.json
+trace_exports/
 
 .vscode/
 
