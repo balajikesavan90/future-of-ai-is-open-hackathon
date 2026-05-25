@@ -14,7 +14,6 @@ This audit covers repository wording related to Arctic Analytics positioning as 
 | autonomous | Design and security docs warn against autonomous-decision framing. | Keep as limitation wording. | Supports human-review positioning. | Low |
 | enterprise | README, design docs, and research docs say the project is not enterprise governance. | Keep as non-goal wording. | Correctly narrows scope. | Low |
 | governance | README and docs say there is no governance or role-based governance. | Keep as non-goal wording. | Avoids production governance claims. | Low |
-| AIR Insights | No active references found before cleanup. | Add only as explicit non-goal in README. | Distances the OSS project from internal proprietary systems. | Medium |
 | hackathon | No tracked content references found. | Keep absent. | Avoids temporary event framing. | Low |
 | production-ready | No tracked content references found. | Keep absent; use "experimental" and "prototype" where needed. | Avoids maturity overclaims. | Low |
 
@@ -22,6 +21,6 @@ This audit covers repository wording related to Arctic Analytics positioning as 
 
 - Replaced sandboxed execution docstrings with application-level execution restrictions.
 - Reframed the README identity statement around experimental, inspectable, constrained analysis.
-- Added explicit non-goals for generic assistant, chat-with-data, governance platform, enterprise product, sandboxed execution environment, and AIR Insights.
+- Added explicit non-goals for generic assistant, chat-with-data, governance platform, enterprise product, sandboxed execution environment
 - Rewrote design wording from assistant behavior to model behavior where it was not an API role.
 - Archived legacy migration positioning notes under `docs/archive/`.
