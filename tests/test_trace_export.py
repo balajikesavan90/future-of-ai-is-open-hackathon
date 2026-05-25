@@ -56,6 +56,9 @@ def test_build_analysis_trace_is_json_safe_and_truncates_large_payloads():
     dumped = json.dumps(trace)
 
     assert dumped
+    assert trace["trace_schema_version"] == "0.1.0"
+    assert trace["package_version"]
+    assert trace["timestamp"]
     assert trace["system_message"]["truncated"] is True
     assert trace["system_message"]["length_chars"] == 12000
     assert trace["prompt_str"]["truncated"] is True

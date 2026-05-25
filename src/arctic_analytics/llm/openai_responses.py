@@ -324,39 +324,10 @@ class OpenAIResponsesUtility:
         ):
         logging.info(f'responses_APIcall - {st.session_state["session_id"]}')
 
-        # if allow_image_generation:
-        #     tool_config = tool_config or []
-        #     tool_config.append(
-        #         {
-        #             'spec': {"type": "image_generation", "output_format": "webp", "background": image_params["background"], "input_fidelity": image_params["input_fidelity"], "model": image_params["model"], "moderation": image_params["moderation"], "quality": image_params["quality"], "size": image_params["size"]},
-        #             'handler': None
-        #         }
-        #     )
-        #     if 'reference_images' in image_params:
-        #         image_content = []
-        #         for img in image_params['reference_images']:
-        #             image_content.append({
-        #                 'type': 'input_image',
-        #                 'detail': img['detail'],
-        #                 'image_url': img['url']
-        #             })
-        #         messages.append({
-        #             'role': 'user',
-        #             'content': image_content
-        #         })
-        # else:
-        #     image_params = None
-
-        # # Extract tool specs and handlers
         tools, tool_handlers = self._extract_tools_and_handlers(tool_config)
 
-        # # Prepare API arguments
         args = self._prepare_api_args(messages, model, temperature, response_format, reasoning_effort, tools, tool_choice, include)
 
-        # st.write(args['input'])
-        # st.stop()
-
-        # Initial API call
         response = self._responses_with_backoff(**args)
 
         output_images = []
@@ -390,7 +361,7 @@ class OpenAIResponsesUtility:
 
     def run_python_function(self, python_code, reason, vetted_files, report_function):
         """
-        Run a python function in a sandboxed environment
+        Run a python function with application-level execution restrictions.
         Args:
             python_code: The code snippet to run
             vetted_files: The vetted files to use
@@ -425,7 +396,7 @@ class OpenAIResponsesUtility:
 
     def run_python_code(self, python_code, reason, vetted_files, report_function):
         """
-        Run a code snippet in a sandboxed environment
+        Run a code snippet with application-level execution restrictions.
         Args:
             code_snippet: The code snippet to run
             df: The dataframe to use

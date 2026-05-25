@@ -3,8 +3,10 @@ import uuid
 import logging
 import json
 from datetime import datetime, timezone
-import pandas as pd  # Add import for pandas
-import matplotlib.figure as mfigure  # Add import for matplotlib.figure
+import pandas as pd
+import matplotlib.figure as mfigure
+
+from arctic_analytics import __version__
 
 MAX_TRACE_STRING_CHARS = 10000
 TRACE_STRING_PREVIEW_CHARS = 1000
@@ -201,6 +203,8 @@ def _system_message_from_messages(messages):
 def build_analysis_trace():
     messages = st.session_state.get("messages", [])
     return {
+        "trace_schema_version": "0.1.0",
+        "package_version": __version__,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "session_id": st.session_state.get("session_id"),
         "model": st.session_state.get("model"),
@@ -214,7 +218,7 @@ def build_analysis_trace():
         "dataset_metadata": _dataset_metadata_for_trace(),
         "errors": _extract_errors(messages),
         "limitations": [
-            "Execution uses Python-level validation and runtime constraints, not isolated container or OS-level sandboxing.",
+            "Execution uses Python-level validation and runtime constraints, not isolated container or OS-level execution.",
             "Trace export is a snapshot of current Streamlit session state, not a durable audit log.",
             "The trace is not replayable and does not include dataset version hashes or provenance records.",
         ],

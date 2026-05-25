@@ -4,7 +4,7 @@ This directory contains archived code that is not part of the supported Arctic A
 
 ## Reason
 
-Arctic Analytics now focuses on Tool-Calling Analysis for metadata-aware, transparent, and constrained AI-assisted analysis over structured data. The legacy code supports older identities that are out of scope:
+Arctic Analytics now focuses on Tool-Calling Analysis for metadata-aware, inspectable, constrained AI-assisted analysis over structured data. The legacy code supports older identities that are out of scope:
 
 - code-generation-only Data Analyst workflow
 - document/debug assistant workflow

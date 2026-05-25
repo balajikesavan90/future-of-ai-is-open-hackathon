@@ -46,4 +46,4 @@ Output
 
 ## Deprecated Areas
 
-The previous code-generation-only Data Analyst flow, document/debug tools, Snowflake connector UI, Replicate/Llama path, and top-level `utils`/`widgets` compatibility wrappers are removed from active use. See `src/arctic_analytics/legacy/DEPRECATED.md`.
+The previous code-generation-only Data Analyst flow, document/debug tools, Snowflake connector UI, Replicate/Llama path, and top-level `utils`/`widgets` compatibility wrappers are removed from active use. See [legacy archive notes](archive/legacy_deprecated.md).
