@@ -13,7 +13,6 @@ def test_build_analysis_trace_is_json_safe_and_truncates_large_payloads():
 
     st.session_state["session_id"] = "trace-test-session"
     st.session_state["model"] = "gpt-test"
-    st.session_state["agent_model"] = True
     st.session_state["cost"] = 0.123
     st.session_state["system_message"] = long_text
     st.session_state["prompt_str"] = long_text

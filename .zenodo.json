@@ -1,6 +1,6 @@
 {
   "title": "Arctic Analytics",
-  "description": "Arctic Analytics is a powerful tool that can answer questions about your data, build charts and graphs from your data, and help document and debug your codebase.",
+  "description": "Arctic Analytics is an experimental open-source framework for metadata-aware, transparent, and constrained AI-assisted analysis over structured data.",
   "upload_type": "software",
   "license": "MIT",
   "creators": [
@@ -11,19 +11,18 @@
     }
   ],
   "keywords": [
-    "data-analytics",
-    "streamlit",
-    "ai",
-    "data-visualization",
-    "snowflake",
-    "arctic",
-    "llm"
+    "metadata",
+    "structured-data",
+    "tool-calling",
+    "traceability",
+    "constrained-execution",
+    "human-review"
   ],
   "language": "eng",
   "related_identifiers": [
     {
       "relation": "isSupplementTo",
-      "identifier": "https://github.com/balajikesavan90/future-of-ai-is-open-hackathon",
+      "identifier": "https://github.com/balajikesavan90/arctic-analytics",
       "resource_type": "software",
       "scheme": "url"
     }

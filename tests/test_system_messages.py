@@ -14,8 +14,7 @@ def test_construct_system_message_includes_dataframe_metadata():
         }
     }
 
-    message = construct_system_message(vetted_files, agent_model=True)
+    message = construct_system_message(vetted_files)
 
     assert "Sales by region." in message
     assert "The dataset has already been loaded as a pandas DataFrame named sales" in message
-

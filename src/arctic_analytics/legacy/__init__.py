@@ -1,2 +1,1 @@
-"""Legacy commented modules retained for compatibility."""
-
+"""Deprecated modules retained only as temporary migration context."""

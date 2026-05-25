@@ -6,8 +6,7 @@ import streamlit as st
 
 from arctic_analytics.streamlit.helpers import (
     render_reset,
-    render_reset_analytics_agent,
-    render_reset_data_analyst,
+    render_reset_analysis,
     render_session_state,
     setup_session_state,
 )
@@ -33,10 +32,7 @@ def main():
 
     setup_home()
     if st.session_state["datasets_vetted"]:
-        if st.session_state["agent_model"]:
-            render_reset_analytics_agent()
-        else:
-            render_reset_data_analyst()
+        render_reset_analysis()
     render_home()
 
     if st.secrets["ENV"] == "dev":

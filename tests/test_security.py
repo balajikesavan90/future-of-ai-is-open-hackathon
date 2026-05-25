@@ -2,7 +2,6 @@ import pandas as pd
 import pytest
 
 from arctic_analytics.core.security import SecurityError, safely_execute_code, validate_code_security
-from utils.security_helpers import safely_execute_code as compat_safely_execute_code
 
 
 def test_validate_code_security_rejects_unsafe_import():
@@ -34,8 +33,3 @@ def generate_report():
         {"region": "east", "revenue": 25},
         {"region": "west", "revenue": 20},
     ]
-
-
-def test_old_and_new_security_imports_match():
-    assert compat_safely_execute_code is safely_execute_code
-

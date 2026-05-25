@@ -9,11 +9,7 @@ def render_about():
     with about_me_container:
         st.write(
             """
-            My name is [Balaji Kesavan](https://www.balajikesavan.com/) and I am passionate about AI. I am always looking for ways to improve my skills and learn new things.
-            This is my submission to [The future of AI is open](https://arctic-streamlit-hackathon.devpost.com/) hackathon.
-
-            You can access the source code for this project on [GitHub](https://github.com/balajikesavan90/future-of-ai-is-open-hackathon).
-            The best way to reach me is on [LinkedIn](https://www.linkedin.com/in/balaji-kesavan/).
+            Arctic Analytics is an experimental open-source framework for metadata-aware, transparent, and constrained AI-assisted analysis over structured data.
             """
         )
 
@@ -22,16 +18,16 @@ def render_about():
                 """
                 Arctic Analytics is an experimental framework for metadata-aware, transparent, and constrained AI-assisted analysis over structured data. It focuses on:
                 - editable metadata before inference.
-                - visible generated code and tool calls.
+                - visible reasoning, generated code, and tool calls.
                 - constrained Python execution.
+                - JSON trace export.
                 - human review of outputs.
                 """
             )
         with st.expander(':blue[What context is sent to the model?]', expanded=False):
-            st.subheader(':blue[When Agent Mode is disabled]')
             st.write(
                 """
-                The model receives metadata and small row samples rather than direct dataframe tool access. In particular, it receives:
+                The model receives editable metadata and small row samples before it can request constrained tool calls. In particular, it receives:
                 - primary keys
                 - column names
                 - data types
@@ -39,18 +35,29 @@ def render_about():
                 - column descriptions
                 - output of the pandas describe method on your data
                 - first and last 5 rows of your data.
-                """
-            )
-            st.subheader(':blue[When Agent Mode is enabled]')
-            st.write(
-                """
-                The model can request constrained Python tool calls over the loaded data. The tool calls, generated code, and tool outputs are visible for review.
+                The tool calls, generated code, and tool outputs are visible for review.
                 """
             )
         with st.expander(':blue[What can the AI actually see?]', expanded=False):
             st.write(
                 """
-                After you load your data and start an analysis, you can view the prompt/context in the sidebar and export a JSON trace of the current session state.
+                The model sees the current conversation state sent to the API, including:
+                - the system prompt
+                - all prior user inputs in the conversation
+                - all prior assistant responses
+                - all prior tool calls
+                - all prior tool responses.
+
+                The system prompt includes an editable metadata bundle for each loaded dataset:
+                - dataframe name and shape
+                - dataset description
+                - data dictionary
+                - pandas summary statistics
+                - missing-value counts
+                - first 5 rows
+                - last 5 rows.
+
+                The full dataset is loaded in the app as a pandas DataFrame. The model can request visible Python tool calls against that DataFrame, and those tool outputs become part of the conversation history.
                 """
             )
                 

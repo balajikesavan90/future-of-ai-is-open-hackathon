@@ -1,0 +1,48 @@
+{
+  "dataset_name": "tips",
+  "dataset_description": "This dataset contains data on tips given to waitstaff at a restaurant.",
+  "columns": [
+    {
+      "name": "total_bill",
+      "data_type": "Float64",
+      "description": "The total bill for the meal.",
+      "primary_key": false
+    },
+    {
+      "name": "tip",
+      "data_type": "Float64",
+      "description": "The tip given to the waitstaff.",
+      "primary_key": false
+    },
+    {
+      "name": "sex",
+      "data_type": "category",
+      "description": "The gender of the person paying the bill",
+      "primary_key": false
+    },
+    {
+      "name": "smoker",
+      "data_type": "category",
+      "description": "Indicates whether the person was smoking or not",
+      "primary_key": false
+    },
+    {
+      "name": "day",
+      "data_type": "category",
+      "description": "The day of the week the meal took place.",
+      "primary_key": false
+    },
+    {
+      "name": "time",
+      "data_type": "category",
+      "description": "The time of day, either Dinner or Lunch.",
+      "primary_key": false
+    },
+    {
+      "name": "size",
+      "data_type": "Int64",
+      "description": "The size of the party.",
+      "primary_key": false
+    }
+  ]
+}

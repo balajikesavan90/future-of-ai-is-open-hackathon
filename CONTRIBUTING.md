@@ -4,7 +4,7 @@ First off, thank you for considering contributing to Arctic Analytics. It's peop
 
 ## Where do I go from here?
 
-If you've noticed a bug or have a feature request, make sure to check our [issues](https://github.com/balajikesavan90/future-of-ai-is-open-hackathon/issues) if there's something similar to what you have in mind. If there isn't, feel free to open a new issue!
+If you've noticed a bug or have a focused feature request, make sure to check our issues first. Arctic Analytics is intentionally scoped to metadata-aware, transparent, constrained Tool-Calling Analysis over structured data.
 
 ## Fork & create a branch
 
@@ -22,13 +22,13 @@ At this point, you're ready to make your changes! Feel free to ask for help; eve
 ## Get the code
 ```bash
 # Clone your fork of the repo into the current directory
-git clone https://github.com/<your-username>/future-of-ai-is-open-hackathon.git
+git clone https://github.com/<your-username>/arctic-analytics.git
 
 # Navigate to the newly cloned directory
-cd future-of-ai-is-open-hackathon
+cd arctic-analytics
 
 # Assign the original repo to a remote called "upstream"
-git remote add upstream https://github.com/balajikesavan90/future-of-ai-is-open-hackathon.git
+git remote add upstream https://github.com/balajikesavan90/arctic-analytics.git
 
 ## Create a new branch
 git checkout -b <my-branch-name>

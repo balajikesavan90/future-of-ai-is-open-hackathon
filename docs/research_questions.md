@@ -31,7 +31,7 @@ Arctic Analytics is a practical experiment in metadata-aware and inspectable AI-
 - Where should the user be asked to review context before inference?
 - Where should the user be asked to review generated code before trusting outputs?
 - How should the interface communicate uncertainty and limitations without overwhelming the workflow?
-- What should be exportable for peer review or debugging?
+- What should be exportable for peer review and human review?
 
 ## Future Infrastructure
 
