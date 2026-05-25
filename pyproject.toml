@@ -37,6 +37,7 @@ pytest = ">=8.3,<10.0"
 
 [tool.poetry.scripts]
 arctic-analytics-app = "arctic_analytics.cli:main"
+arctic-analytics = "arctic_analytics.cli:main"
 
 
 [tool.pytest.ini_options]

@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Kesavan
+    given-names: Balaji
+    email: 36139209+balajikesavan90@users.noreply.github.com
+    orcid: 'https://orcid.org/0009-0002-7714-518X'
+title: "Arctic Analytics"
+version: 0.1.0
+date-released: 2026-02-06
+url: "https://github.com/balajikesavan90/arctic-analytics"
+repository-code: "https://github.com/balajikesavan90/arctic-analytics"
+license: MIT
+abstract: >
+  Arctic Analytics is an experimental open-source framework for metadata-aware,
+  inspectable, constrained AI-assisted analysis over structured data.
+keywords:
+  - metadata
+  - structured-data
+  - tool-calling
+  - traceability
+  - constrained-execution
+  - human-review
+type: software
+doi: 10.5281/zenodo.18514535

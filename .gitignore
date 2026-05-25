@@ -7,6 +7,10 @@ secrets.toml
 .streamlit/secrets.toml
 arctic_analytics_trace_*.json
 trace_exports/
+runs/
+research_bundle/
+research_bundle*.zip
+arctic_analytics_research_bundle_*.zip
 
 .vscode/
 

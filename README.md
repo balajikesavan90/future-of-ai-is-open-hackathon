@@ -1,34 +1,88 @@
 # Arctic Analytics
 
-Arctic Analytics is an experimental open-source framework for metadata-aware, inspectable, constrained AI-assisted analysis over structured data.
+Arctic Analytics is experimental open-source research software for AI-assisted structured-data research workflows. It is intended to help researchers inspect agent-generated analyses, preserve research artifacts, and support downstream publications, datasets, and methods rather than function as a standalone analytics product.
 
-The project investigates a narrow question: how should structured-data analysis change when context is explicit, execution is visible, and generated code runs under practical constraints? Arctic Analytics lets users upload or select tabular data, review and edit data dictionaries, inject metadata before inference, inspect generated code or tool calls, execute Python with application-level restrictions, and review outputs before relying on them.
+Arctic Analytics currently supports metadata-aware agent analysis over tabular data. Researchers can upload or select CSV data, review and edit data dictionaries, inject metadata before inference, inspect generated code and tool calls, execute Python with application-level restrictions, export traces, and package research bundles for review.
 
 > Packaging note: the app is available as the `arctic-analytics` distribution with the `arctic_analytics` import package.
 
 ## What It Does Today
 
-- Explores metadata-aware analysis over structured data.
-- Emphasizes inspectability over opaque answer generation.
-- Exposes execution artifacts, including generated code, tool calls, tool responses, and trace snapshots.
+- Supports metadata-aware structured-data analysis.
+- Supports exploratory agent workflows with visible evidence, code, and outputs.
+- Exposes generated code, tool calls, tool responses, prompts, outputs, and trace snapshots.
 - Uses constrained execution with application-level Python restrictions.
-- Loads CSV files or bundled sample datasets.
-- Builds dataset metadata, including columns, data types, summary statistics, missing values, and small row samples.
-- Lets users edit dataset descriptions, column descriptions, data types, and primary key flags before analysis.
-- Injects that metadata into model context before inference.
-- Uses Tool-Calling Analysis as the only supported analysis workflow.
-- Executes generated Python with AST validation, restricted globals, output constraints, and a timeout.
-- Shows prompts, reasoning summaries, generated code, tool calls, tool responses, outputs, and a lightweight JSON trace export in the Streamlit UI.
+- Builds dataset metadata, including columns, data types, summary statistics, missing values, and row samples.
+- Lets researchers edit dataset descriptions, column descriptions, data types, and primary key flags before analysis.
+- Injects metadata into model context before agent inference.
+- Exports lightweight JSON analysis traces.
+- Exports local research artifact bundles containing traces, context, prompts, generated code, outputs, environment metadata, methods drafts, limitations, and citation files.
+
+## Intended Usage Model
+
+Streamlit Cloud:
+
+- demos
+- onboarding
+- exploration
+
+Local execution:
+
+- primary workflow
+- publication support
+- reproducible artifacts
+- researcher customization
+
+The Streamlit app remains useful for demonstrations and interactive exploration. Local execution is the intended path for research work that may support publications, supplementary material, datasets, or methods sections.
+
+## Example Research Workflow
+
+```text
+Upload dataset(s)
+    |
+    v
+Set up metadata
+    |
+    v
+Researcher asks a question
+    |
+    v
+Agent performs visible analysis and generates a response
+    |
+    v
+Researcher asks more questions
+    |
+    v
+Agent performs more visible analysis and generates more responses
+    |
+    v
+Repeat as needed
+    |
+    v
+Trace
+    |
+    v
+Artifacts
+    |
+    v
+Publication
+```
+
+## Research Artifact Bundles
+
+After an analysis session, researchers can export a research artifact bundle from the Streamlit sidebar. The bundle packages the dataset metadata, prompts, trace, generated code, outputs, environment details, limitations, and citation files so the evidence behind an analysis can be reviewed and used in papers, appendices, or supplementary material.
+
+Review the checked-in example format at [examples/sample_research_bundle](examples/sample_research_bundle).
 
 ## Design Principles
 
 ### Context Before Inference
 
-The model should receive explicit context before attempting analysis. Arctic Analytics prioritizes editable metadata, dataset descriptions, data dictionaries, dataframe shape, summary statistics, missing values, and sample rows as first-class context inputs.
+Structured-data research depends on context. Arctic Analytics prioritizes editable metadata, dataset descriptions, data dictionaries, dataframe shape, summary statistics, missing values, and row samples as first-class context inputs.
 
 ### Inspectability Over Magic
 
-Generated analysis should be inspectable. The UI exposes the system prompt, message context, generated Python, tool calls, tool-call reasons, and tool responses so users can see how an answer was produced.
+Generated analysis should be inspectable. The UI and exported artifacts expose the system prompt, message context, generated Python, tool calls, tool-call reasons, tool responses, outputs, and limitations so researchers can review how an answer was produced.
 
 ### Constraints Over Unrestricted Execution
 
@@ -38,17 +92,7 @@ Important limitation: these are Python-level restrictions and runtime constraint
 
 ### Human Accountability
 
-Arctic Analytics is designed for human review. Outputs should be checked against the data, generated code, and visible intermediate steps before they are trusted.
-
-## Research Questions
-
-- Does explicit metadata improve structured-data analysis quality?
-- Which metadata matters most: dataset descriptions, data dictionaries, data types, summary statistics, missing values, row samples, or user-written business context?
-- Does visible generated code or visible tool calling improve user trust?
-- Which execution constraints meaningfully reduce risk without blocking useful analysis?
-- What should be included in an AI analysis context bundle?
-- How should intermediate analysis steps be represented for review?
-- What minimum trace is useful before investing in durable audit infrastructure?
+Arctic Analytics is designed for human review. Outputs should be checked against the source data, metadata, generated code, visible intermediate steps, and exported artifacts before they are trusted or cited.
 
 ## Current Limitations
 
@@ -63,35 +107,12 @@ This project does not provide:
 Current implementation limits:
 
 - Traces are snapshots of Streamlit session state.
+- Research bundles package artifacts for review; they are not replayable runs.
 - Execution restrictions are not isolation.
-- Examples may require external APIs.
+- Examples may require external APIs when regenerating traces.
 - Reproducibility is partial.
 - Reusable framework boundaries are partial; the current implementation is still Streamlit-centered.
-- There are no replayable runs.
 - There is no durable audit log, role-based governance, dataset provenance model, or policy engine.
-
-## Roadmap
-
-Near-term:
-
-- Improve trace export coverage.
-- Add clearer context bundle exports.
-- Add hashes for prompts, generated code, dataset metadata, and execution results.
-- Strengthen tests around execution constraints and trace generation.
-
-Medium-term:
-
-- Separate reusable analysis/context logic from Streamlit state.
-- Add structured context bundles.
-- Add replay-oriented run manifests.
-- Track dataset and data-dictionary provenance.
-
-Long-term:
-
-- Move execution into isolated subprocesses or containers.
-- Add replayable runs.
-- Add durable trace storage.
-- Add stronger provenance and versioning for datasets, prompts, generated code, and outputs.
 
 ## Getting Started
 
@@ -118,7 +139,7 @@ pip install arctic-analytics
 poetry install
 ```
 
-### Setting Up Secrets
+### Running The Streamlit Demo
 
 Create `.streamlit/secrets.toml` with:
 
@@ -127,7 +148,7 @@ ENV = "dev"
 OPENAI_API_KEY = "<Create an OpenAI account and add your API key here.>"
 ```
 
-### Running The App
+Then run:
 
 ```bash
 # Compatibility entrypoint
@@ -138,10 +159,30 @@ streamlit run src/arctic_analytics/streamlit_app.py
 
 # Installed console script
 arctic-analytics-app
+
+# Console entrypoint
+arctic-analytics app
 ```
+
+## Citing Arctic Analytics
+
+If Arctic Analytics supports work that appears in a paper, dataset, appendix, or methods section, cite the software using [CITATION.cff](CITATION.cff).
+
+DOI: `10.5281/zenodo.18514535`
+
+Suggested wording:
+
+```text
+Analyses were performed using Arctic Analytics v0.1.0 (DOI: 10.5281/zenodo.18514535).
+```
+
+Before citing a newer release, verify that the README, `CITATION.cff`, `.zenodo.json`, package version, and Zenodo record refer to the same version. See [docs/citing.md](docs/citing.md).
 
 ## Documentation
 
+- [Quickstart: local artifact bundles](quickstart_local.md)
+- [Publication workflow](docs/publication_workflow.md)
+- [Citation guidance](docs/citing.md)
 - [Design principles](docs/design_principles.md)
 - [Research questions](docs/research_questions.md)
 - [Architecture](docs/architecture.md)
@@ -150,17 +191,9 @@ arctic-analytics-app
 - [Reproducibility](docs/reproducibility.md)
 - [Examples](examples/README.md)
 
-## Citation
-
-If you use Arctic Analytics, cite the software using [CITATION.cff](CITATION.cff).
-
-DOI: `10.5281/zenodo.18514535`
-
-The citation metadata is also mirrored in [.zenodo.json](.zenodo.json). Before citing a newer release, verify that the README, `CITATION.cff`, `.zenodo.json`, package version, and Zenodo record refer to the same version.
-
 ## Contributing
 
-Contributions are welcome, especially around trace visibility, context modeling, execution constraints, and documentation of limitations. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+Contributions are welcome, especially around trace visibility, context modeling, execution constraints, artifact bundles, reproducibility, and documentation of limitations. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## License
 

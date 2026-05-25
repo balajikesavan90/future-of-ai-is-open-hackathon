@@ -1,0 +1,315 @@
+{
+  "trace_schema_version": "0.1.0",
+  "package_version": "0.1.0",
+  "timestamp": "2026-05-25T07:58:22.954714+00:00",
+  "session_id": "tips-example-openai-api-session",
+  "model": "gpt-5.4-mini-2026-03-17",
+  "cost": 0.0067215,
+  "context_window_usage": 0.0102075,
+  "system_message": "You support metadata-aware analysis over structured data.\nYou can request tool calls to query the data and provide reviewable answers to the user.\nYou can pass a python expression to run_python_expression tool which will execute the code and return the result.\nYou can pass a python function to run_python_function tool which will execute the function and return the result.\nYou can pass a python function to generate_plot tool which will execute the function and return the matplotlib figure.\nYour goal is to analyze the user's data and generate reviewable findings from it.\nYou might need to run multiple tool calls to get the final result.\n\nUse the run_python_expression tool to run small single line code snippets like \n - df.groupby(['col1', 'col2', 'col3', ...])['col4'].mean()\n - df['col_name'].value_counts()\n - df['col_name'].isna().sum()\n - df['col_name'].median()\n - df['col_name'].min()\n - df['col_name'].max()\n - df['col_name'].nunique()\n - df['col_name'].unique()\n - df.sort_values('col_name').head(5)\n - df[df['col_name'] > 0].shape[0]\n - df['col_name'].str.contains(\"pattern\", case=False, na=False).sum()\nAvoid using the run_python_expression tool for complex multi-line logic or data manipulations.\n\nUse the run_python_function tool to run complex multi-line code and/or data manipulations like\ndef generate_report():\n    # Your complex multi-line data manipulation code here\n    return df_result\n\nUse the generate_plot tool to run complex multi-line code that generates plots like\ndef generate_plot():\n    # Your complex multi-line plotting code here\n    return fig_result\nWhen generating plots, ensure that the plots are well-formatted with appropriate titles, labels, and legends.\nWhen generating plots, ensure the labels and legends fit well within the plot area and are clearly readable. Avoid overlapping text.\nUse the run_python_expression and/or the run_python_function to generate any supporting information needed for the plot.\n\nYour response to the user must include the findings and enough analysis detail for human review.\n**DO NOT** include the URL of the plot in your response. \nThe UI will handle displaying the plot separately.\nGenerate your response in markdown format.\n\n\n\nHere is the metadata of the files uploaded by the user.\n\n\ntips:\n\nShape: (244, 7)\n\nDescription: This dataset contains data on tips given to waitstaff at a restaurant.\n\nData Dictionary:\n\n{\"0\":{\"Primary Key\":false,\"Column Name\":\"total_bill\",\"Data Type\":\"Float64\",\"Description\":\"The total bill for the meal.\"},\"1\":{\"Primary Key\":false,\"Column Name\":\"tip\",\"Data Type\":\"Float64\",\"Description\":\"The tip given to the waitstaff.\"},\"2\":{\"Primary Key\":false,\"Column Name\":\"sex\",\"Data Type\":\"category\",\"Description\":\"The gender of the person paying the bill\"},\"3\":{\"Primary Key\":false,\"Column Name\":\"smoker\",\"Data Type\":\"category\",\"Description\":\"Indicates whether the person was smoking or not\"},\"4\":{\"Primary Key\":false,\"Column Name\":\"day\",\"Data Type\":\"category\",\"Description\":\"The day of the week the meal took place.\"},\"5\":{\"Primary Key\":false,\"Column Name\":\"time\",\"Data Type\":\"category\",\"Description\":\"The time of day, either Dinner or Lunch.\"},\"6\":{\"Primary Key\":false,\"Column Name\":\"size\",\"Data Type\":\"Int64\",\"Description\":\"The size of the party.\"}}\n\nPandas Describe:\n\n{\"total_bill\":{\"count\":244.0,\"unique\":null,\"top\":null,\"freq\":null,\"mean\":19.785942623,\"std\":8.9024119549,\"min\":3.07,\"25%\":13.3475,\"50%\":17.795,\"75%\":24.1275,\"max\":50.81},\"tip\":{\"count\":244.0,\"unique\":null,\"top\":null,\"freq\":null,\"mean\":2.9982786885,\"std\":1.383638189,\"min\":1.0,\"25%\":2.0,\"50%\":2.9,\"75%\":3.5625,\"max\":10.0},\"sex\":{\"count\":244,\"unique\":2,\"top\":\"Male\",\"freq\":157,\"mean\":null,\"std\":null,\"min\":null,\"25%\":null,\"50%\":null,\"75%\":null,\"max\":null},\"smoker\":{\"count\":244,\"unique\":2,\"top\":\"No\",\"freq\":151,\"mean\":null,\"std\":null,\"min\":null,\"25%\":null,\"50%\":null,\"75%\":null,\"max\":null},\"day\":{\"count\":244,\"unique\":4,\"top\":\"Sat\",\"freq\":87,\"mean\":null,\"std\":null,\"min\":null,\"25%\":null,\"50%\":null,\"75%\":null,\"max\":null},\"time\":{\"count\":244,\"unique\":2,\"top\":\"Dinner\",\"freq\":176,\"mean\":null,\"std\":null,\"min\":null,\"25%\":null,\"50%\":null,\"75%\":null,\"max\":null},\"size\":{\"count\":244.0,\"unique\":null,\"top\":null,\"freq\":null,\"mean\":2.5696721311,\"std\":0.9510998047,\"min\":1.0,\"25%\":2.0,\"50%\":2.0,\"75%\":3.0,\"max\":6.0}}\n\nMissing Values by Column:\n\n{\"total_bill\":0,\"tip\":0,\"sex\":0,\"smoker\":0,\"day\":0,\"time\":0,\"size\":0}\n\nFirst 5 rows of the dataset:\n\n{\"0\":{\"total_bill\":16.99,\"tip\":1.01,\"sex\":\"Female\",\"smoker\":\"No\",\"day\":\"Sun\",\"time\":\"Dinner\",\"size\":2},\"1\":{\"total_bill\":10.34,\"tip\":1.66,\"sex\":\"Male\",\"smoker\":\"No\",\"day\":\"Sun\",\"time\":\"Dinner\",\"size\":3},\"2\":{\"total_bill\":21.01,\"tip\":3.5,\"sex\":\"Male\",\"smoker\":\"No\",\"day\":\"Sun\",\"time\":\"Dinner\",\"size\":3},\"3\":{\"total_bill\":23.68,\"tip\":3.31,\"sex\":\"Male\",\"smoker\":\"No\",\"day\":\"Sun\",\"time\":\"Dinner\",\"size\":2},\"4\":{\"total_bill\":24.59,\"tip\":3.61,\"sex\":\"Female\",\"smoker\":\"No\",\"day\":\"Sun\",\"time\":\"Dinner\",\"size\":4}}\n\nLast 5 rows of the dataset:\n\n{\"239\":{\"total_bill\":29.03,\"tip\":5.92,\"sex\":\"Male\",\"smoker\":\"No\",\"day\":\"Sat\",\"time\":\"Dinner\",\"size\":3},\"240\":{\"total_bill\":27.18,\"tip\":2.0,\"sex\":\"Female\",\"smoker\":\"Yes\",\"day\":\"Sat\",\"time\":\"Dinner\",\"size\":2},\"241\":{\"total_bill\":22.67,\"tip\":2.0,\"sex\":\"Male\",\"smoker\":\"Yes\",\"day\":\"Sat\",\"time\":\"Dinner\",\"size\":2},\"242\":{\"total_bill\":17.82,\"tip\":1.75,\"sex\":\"Male\",\"smoker\":\"No\",\"day\":\"Sat\",\"time\":\"Dinner\",\"size\":2},\"243\":{\"total_bill\":18.78,\"tip\":3.0,\"sex\":\"Female\",\"smoker\":\"No\",\"day\":\"Thur\",\"time\":\"Dinner\",\"size\":2}}\n\nThe dataset has already been loaded as a pandas DataFrame named tips\n\nYou must use this metadata to generate your response.\n",
+  "prompt_str": "Which day has the highest average tip percentage? Calculate tip percentage as tip divided by total_bill.",
+  "messages": [
+    {
+      "role": "system",
+      "content": [
+        {
+          "text": "You support metadata-aware analysis over structured data.\nYou can request tool calls to query the data and provide reviewable answers to the user.\nYou can pass a python expression to run_python_expression tool which will execute the code and return the result.\nYou can pass a python function to run_python_function tool which will execute the function and return the result.\nYou can pass a python function to generate_plot tool which will execute the function and return the matplotlib figure.\nYour goal is to analyze the user's data and generate reviewable findings from it.\nYou might need to run multiple tool calls to get the final result.\n\nUse the run_python_expression tool to run small single line code snippets like \n - df.groupby(['col1', 'col2', 'col3', ...])['col4'].mean()\n - df['col_name'].value_counts()\n - df['col_name'].isna().sum()\n - df['col_name'].median()\n - df['col_name'].min()\n - df['col_name'].max()\n - df['col_name'].nunique()\n - df['col_name'].unique()\n - df.sort_values('col_name').head(5)\n - df[df['col_name'] > 0].shape[0]\n - df['col_name'].str.contains(\"pattern\", case=False, na=False).sum()\nAvoid using the run_python_expression tool for complex multi-line logic or data manipulations.\n\nUse the run_python_function tool to run complex multi-line code and/or data manipulations like\ndef generate_report():\n    # Your complex multi-line data manipulation code here\n    return df_result\n\nUse the generate_plot tool to run complex multi-line code that generates plots like\ndef generate_plot():\n    # Your complex multi-line plotting code here\n    return fig_result\nWhen generating plots, ensure that the plots are well-formatted with appropriate titles, labels, and legends.\nWhen generating plots, ensure the labels and legends fit well within the plot area and are clearly readable. Avoid overlapping text.\nUse the run_python_expression and/or the run_python_function to generate any supporting information needed for the plot.\n\nYour response to the user must include the findings and enough analysis detail for human review.\n**DO NOT** include the URL of the plot in your response. \nThe UI will handle displaying the plot separately.\nGenerate your response in markdown format.\n\n\n\nHere is the metadata of the files uploaded by the user.\n\n\ntips:\n\nShape: (244, 7)\n\nDescription: This dataset contains data on tips given to waitstaff at a restaurant.\n\nData Dictionary:\n\n{\"0\":{\"Primary Key\":false,\"Column Name\":\"total_bill\",\"Data Type\":\"Float64\",\"Description\":\"The total bill for the meal.\"},\"1\":{\"Primary Key\":false,\"Column Name\":\"tip\",\"Data Type\":\"Float64\",\"Description\":\"The tip given to the waitstaff.\"},\"2\":{\"Primary Key\":false,\"Column Name\":\"sex\",\"Data Type\":\"category\",\"Description\":\"The gender of the person paying the bill\"},\"3\":{\"Primary Key\":false,\"Column Name\":\"smoker\",\"Data Type\":\"category\",\"Description\":\"Indicates whether the person was smoking or not\"},\"4\":{\"Primary Key\":false,\"Column Name\":\"day\",\"Data Type\":\"category\",\"Description\":\"The day of the week the meal took place.\"},\"5\":{\"Primary Key\":false,\"Column Name\":\"time\",\"Data Type\":\"category\",\"Description\":\"The time of day, either Dinner or Lunch.\"},\"6\":{\"Primary Key\":false,\"Column Name\":\"size\",\"Data Type\":\"Int64\",\"Description\":\"The size of the party.\"}}\n\nPandas Describe:\n\n{\"total_bill\":{\"count\":244.0,\"unique\":null,\"top\":null,\"freq\":null,\"mean\":19.785942623,\"std\":8.9024119549,\"min\":3.07,\"25%\":13.3475,\"50%\":17.795,\"75%\":24.1275,\"max\":50.81},\"tip\":{\"count\":244.0,\"unique\":null,\"top\":null,\"freq\":null,\"mean\":2.9982786885,\"std\":1.383638189,\"min\":1.0,\"25%\":2.0,\"50%\":2.9,\"75%\":3.5625,\"max\":10.0},\"sex\":{\"count\":244,\"unique\":2,\"top\":\"Male\",\"freq\":157,\"mean\":null,\"std\":null,\"min\":null,\"25%\":null,\"50%\":null,\"75%\":null,\"max\":null},\"smoker\":{\"count\":244,\"unique\":2,\"top\":\"No\",\"freq\":151,\"mean\":null,\"std\":null,\"min\":null,\"25%\":null,\"50%\":null,\"75%\":null,\"max\":null},\"day\":{\"count\":244,\"unique\":4,\"top\":\"Sat\",\"freq\":87,\"mean\":null,\"std\":null,\"min\":null,\"25%\":null,\"50%\":null,\"75%\":null,\"max\":null},\"time\":{\"count\":244,\"unique\":2,\"top\":\"Dinner\",\"freq\":176,\"mean\":null,\"std\":null,\"min\":null,\"25%\":null,\"50%\":null,\"75%\":null,\"max\":null},\"size\":{\"count\":244.0,\"unique\":null,\"top\":null,\"freq\":null,\"mean\":2.5696721311,\"std\":0.9510998047,\"min\":1.0,\"25%\":2.0,\"50%\":2.0,\"75%\":3.0,\"max\":6.0}}\n\nMissing Values by Column:\n\n{\"total_bill\":0,\"tip\":0,\"sex\":0,\"smoker\":0,\"day\":0,\"time\":0,\"size\":0}\n\nFirst 5 rows of the dataset:\n\n{\"0\":{\"total_bill\":16.99,\"tip\":1.01,\"sex\":\"Female\",\"smoker\":\"No\",\"day\":\"Sun\",\"time\":\"Dinner\",\"size\":2},\"1\":{\"total_bill\":10.34,\"tip\":1.66,\"sex\":\"Male\",\"smoker\":\"No\",\"day\":\"Sun\",\"time\":\"Dinner\",\"size\":3},\"2\":{\"total_bill\":21.01,\"tip\":3.5,\"sex\":\"Male\",\"smoker\":\"No\",\"day\":\"Sun\",\"time\":\"Dinner\",\"size\":3},\"3\":{\"total_bill\":23.68,\"tip\":3.31,\"sex\":\"Male\",\"smoker\":\"No\",\"day\":\"Sun\",\"time\":\"Dinner\",\"size\":2},\"4\":{\"total_bill\":24.59,\"tip\":3.61,\"sex\":\"Female\",\"smoker\":\"No\",\"day\":\"Sun\",\"time\":\"Dinner\",\"size\":4}}\n\nLast 5 rows of the dataset:\n\n{\"239\":{\"total_bill\":29.03,\"tip\":5.92,\"sex\":\"Male\",\"smoker\":\"No\",\"day\":\"Sat\",\"time\":\"Dinner\",\"size\":3},\"240\":{\"total_bill\":27.18,\"tip\":2.0,\"sex\":\"Female\",\"smoker\":\"Yes\",\"day\":\"Sat\",\"time\":\"Dinner\",\"size\":2},\"241\":{\"total_bill\":22.67,\"tip\":2.0,\"sex\":\"Male\",\"smoker\":\"Yes\",\"day\":\"Sat\",\"time\":\"Dinner\",\"size\":2},\"242\":{\"total_bill\":17.82,\"tip\":1.75,\"sex\":\"Male\",\"smoker\":\"No\",\"day\":\"Sat\",\"time\":\"Dinner\",\"size\":2},\"243\":{\"total_bill\":18.78,\"tip\":3.0,\"sex\":\"Female\",\"smoker\":\"No\",\"day\":\"Thur\",\"time\":\"Dinner\",\"size\":2}}\n\nThe dataset has already been loaded as a pandas DataFrame named tips\n\nYou must use this metadata to generate your response.\n",
+          "type": "input_text"
+        }
+      ],
+      "type": "message"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "text": "Hello. Arctic Analytics can help generate metadata-aware analysis over your structured data.\nI have access to the metadata of the files you uploaded and will use that context to generate inspectable code for constrained execution.\n\n\nI have detected the following pandas dataframe:\n\nThe pandas dataframe :blue[tips] has :blue[244] rows with columns: :blue[total_bill, tip, sex, smoker, day, time, size].\n\n",
+          "type": "output_text"
+        }
+      ],
+      "type": "message"
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "text": "Which day has the highest average tip percentage? Calculate tip percentage as tip divided by total_bill.",
+          "type": "input_text"
+        }
+      ],
+      "type": "message"
+    },
+    {
+      "id": "rs_04921387dc1812ea006a140119bdb081989152003212462918",
+      "summary": [],
+      "type": "reasoning",
+      "encrypted_content": "gAAAAABqFAEbg1vxOa5PEaKGG57imlUGHW7tvOIS-JTij0dsSsbKH0dQ4nxLtfo1HQi4ulW7EUxSYkxY-MsFDGXSYvsBZdQDU_edQI6A6CluHBjRlW4Qg3RswrF0bVHbnxneE34hizQ_jQqpHH85fBjkPou9ViBFITjTbFL7y34Hw5KqRQoqwoTZYlJzst7FNDDejdg_QKn0Hk_J9pY2QLAt7tOx1O0qBc5x2zbjEoe0DJHwuf7f76rdCFfifDSZTuilVjc6sfLCVZ6ttONWQiak_jAdz2gfYzZjmztAvalFGGG8qQtODQuTm1Mz_WzxnO96ylQckhCJltbb6kLXmvW3CERGZOgaGCrMAlS7E3Dw97SRFhCYhdnB0OLjjN4rojKeeiL65fKxkNsLFQIlMojE8eRM9E0lHF9xwYGbQoBvYHgorZqAtsXgWqg0ksD6vEdKOhi7krF6QS938UeBPNXP245hHzuEuJUp9mqZxzymztgX93zJ_qZM3DH9a6sFXpGqgTKjyRIJgumIIyNs553v8RddH_91U19OoqInf85w7ey6nIFf_9LzZZC0P-LKnJx67dNX-yuh0ao2I1-fKJH0brX7M_ancIKeZb7d0NmMptmK2aW-clg0hIE2rpLALWAmDHYxgypZpoDfEHM8TxIrelxta1sJHcHwEuqg4b6rk7yL6Q2i6PNOt35cO_BXEypDlWorfAfvT5eDZ1UbsiXG598U5G8lLnbu2QdIrWJfTTD8A00lA_SMEDQn9vCRr0LPUJsIVUHGjk0HcfFbzo1kkteW54e1CThCupbI_8nhnCXclRS4u3JU56Yr_nE4VQstXIs_jbO6S9k4weD-oAkJtzvkp4pNCYxShDR6GOZoy-1dGIjVHP0__VGegURXOPlrMptyJbdsVgeVufL_mSWNKMthJm46a0DuyHz3YPSs-D_FL5sUqpcp22fmVlyhAj0G7FLxCaYuO1rJAm0OOeJUJ9N5OKvlPzseI49UPVakaftBMihtX34="
+    },
+    {
+      "arguments": "{\"python_expression\":\"tips.assign(tip_pct=tips['tip']/tips['total_bill']).groupby('day')['tip_pct'].mean().sort_values(ascending=False)\",\"reason\":\"Compute the average tip percentage by day so we can identify which day has the highest average tip percentage.\"}",
+      "call_id": "call_3RY4ZR3979bQTiwvcVZ60NdJ",
+      "name": "run_python_expression",
+      "type": "function_call",
+      "id": "fc_04921387dc1812ea006a14011b63708198ac7f0a6bd1dca209",
+      "status": "completed"
+    },
+    {
+      "type": "function_call_output",
+      "call_id": "call_3RY4ZR3979bQTiwvcVZ60NdJ",
+      "output": "{\"Fri\":0.1699130287,\"Sun\":0.1668972864,\"Thur\":0.161275634,\"Sat\":0.1531517164}"
+    },
+    {
+      "id": "rs_04921387dc1812ea006a14011c61148198a19bd4a453aef831",
+      "summary": [],
+      "type": "reasoning",
+      "encrypted_content": "gAAAAABqFAEeiPC2sNRprXI5Ut3ikGlFN8ZaChsjc_N51wlyiF0nT_QQWPfSxJ3Ph5WFGt1MBcMKycP97OcKDrndL949UJFfj-1WvVYhCeRrVb9JNawDsCMO6UHplqSjiDk_3k47DkTpuYI6v2LNIPJuoUgB0yi_ri1CEPQDgn5LvMVfgShxxCgP7wa2adgjUTDmsuogJ38qAtbuGS7N6krpLMy1F4jqfDdjqUkB0oxoxcRelmFCokzIYbsoGWjDw2H-FXpsRmwRQBU5j_i6j0gxZmBwBDidLV7jdtQz96ys5f431hjiw-i0kb9JIC8pvUOPDe_9cuxbQ9IX_5CmesgLnuQSs7FEoXgSw_FW_5VFLlN-R-vRoV1XwX2WIeBpnmTwAevj4dmhvTUuvQJhQZ3ojdYwXahpdrejdqSV1vHmPZZgRfrXgr_taGAzXc20MZUBpAwQQdrN1wpIYP2791ljcOo5QiKvv4itLYzAg8RHbt5LnfFzyQEzMERDseuxBGhS7w3a3C7GpILS0FYDWUh22QPHL1FcQZslht4bMp-RBULJMs94CAPlWylX_GCVO5U7EiNsuguli6UX6ETtVLMP6XZgV2fu7bEAgCxQ5JOo50vAkk3PEAqBKKqTPeebAmcsvGHgyfbOh5rELId1PNtBfQCiIeeu_FrMKZa2kb6Q5cElJgUu7WoYuZ7gYRWGg30JkWKQHckKsYRlMREsvgjU7CbAijLAMDJ9KpL5DW1KuTasil_IgmbCqs46SM-hci6BDgAjg5c3npR2icSJDkXfPt0iJ3jBTvN5nZF7Y00TQLb--IQd2lgQsfemL4bAAUj6pbCKKgA-8gFdzMA76KezS_FJDuppdWnX8j8_Fm4942yoK-SfKt2NafgGmag5i3q4fM-RoNxe4kyhDdh0a5VjLGE7Y5Qs7yGvF17O-USvpg2JUb5vUJ1SMEfn3-8aW15CWUdLUOQTbjKcjWD4VtpOhevebmCOpkRYOXw_n3SfberNN8kY4WmT08ALmSpn3ihXaFE5Oz8R"
+    },
+    {
+      "id": "msg_04921387dc1812ea006a14011e6ee8819897ff40ef6b0a1b0b",
+      "content": [
+        {
+          "annotations": [],
+          "text": "The **day with the highest average tip percentage is Friday (`Fri`)**.\n\n### Average tip percentage by day\nTip percentage = `tip / total_bill`\n\n- **Fri:** 16.99%\n- Sun: 16.69%\n- Thur: 16.13%\n- Sat: 15.32%\n\nSo, **Friday has the highest average tip percentage** in this dataset.",
+          "type": "output_text",
+          "logprobs": [],
+          "parsed": null
+        }
+      ],
+      "role": "assistant",
+      "status": "completed",
+      "type": "message",
+      "phase": "final_answer"
+    }
+  ],
+  "tool_calls": [
+    {
+      "arguments": "{\"python_expression\":\"tips.assign(tip_pct=tips['tip']/tips['total_bill']).groupby('day')['tip_pct'].mean().sort_values(ascending=False)\",\"reason\":\"Compute the average tip percentage by day so we can identify which day has the highest average tip percentage.\"}",
+      "call_id": "call_3RY4ZR3979bQTiwvcVZ60NdJ",
+      "name": "run_python_expression",
+      "type": "function_call",
+      "id": "fc_04921387dc1812ea006a14011b63708198ac7f0a6bd1dca209",
+      "status": "completed"
+    }
+  ],
+  "outputs": [
+    {
+      "type": "function_call_output",
+      "call_id": "call_3RY4ZR3979bQTiwvcVZ60NdJ",
+      "output": "{\"Fri\":0.1699130287,\"Sun\":0.1668972864,\"Thur\":0.161275634,\"Sat\":0.1531517164}"
+    }
+  ],
+  "dataset_metadata": {
+    "tips": {
+      "dataset_description": "This dataset contains data on tips given to waitstaff at a restaurant.",
+      "column_names": [
+        "total_bill",
+        "tip",
+        "sex",
+        "smoker",
+        "day",
+        "time",
+        "size"
+      ],
+      "columns_names": [
+        "total_bill",
+        "tip",
+        "sex",
+        "smoker",
+        "day",
+        "time",
+        "size"
+      ],
+      "data_types": {
+        "total_bill": "Float64",
+        "tip": "Float64",
+        "sex": "category",
+        "smoker": "category",
+        "day": "category",
+        "time": "category",
+        "size": "Int64"
+      },
+      "primary_key": [],
+      "data_dictionary": {
+        "0": {
+          "Primary Key": false,
+          "Column Name": "total_bill",
+          "Data Type": "Float64",
+          "Description": "The total bill for the meal."
+        },
+        "1": {
+          "Primary Key": false,
+          "Column Name": "tip",
+          "Data Type": "Float64",
+          "Description": "The tip given to the waitstaff."
+        },
+        "2": {
+          "Primary Key": false,
+          "Column Name": "sex",
+          "Data Type": "category",
+          "Description": "The gender of the person paying the bill"
+        },
+        "3": {
+          "Primary Key": false,
+          "Column Name": "smoker",
+          "Data Type": "category",
+          "Description": "Indicates whether the person was smoking or not"
+        },
+        "4": {
+          "Primary Key": false,
+          "Column Name": "day",
+          "Data Type": "category",
+          "Description": "The day of the week the meal took place."
+        },
+        "5": {
+          "Primary Key": false,
+          "Column Name": "time",
+          "Data Type": "category",
+          "Description": "The time of day, either Dinner or Lunch."
+        },
+        "6": {
+          "Primary Key": false,
+          "Column Name": "size",
+          "Data Type": "Int64",
+          "Description": "The size of the party."
+        }
+      },
+      "shape": [
+        244,
+        7
+      ],
+      "columns": [
+        "total_bill",
+        "tip",
+        "sex",
+        "smoker",
+        "day",
+        "time",
+        "size"
+      ],
+      "pandas_describe": {
+        "type": "pandas.DataFrame",
+        "shape": [
+          11,
+          7
+        ],
+        "columns": [
+          "total_bill",
+          "tip",
+          "sex",
+          "smoker",
+          "day",
+          "time",
+          "size"
+        ],
+        "data": [
+          {
+            "total_bill": 244.0,
+            "tip": 244.0,
+            "sex": 244,
+            "smoker": 244,
+            "day": 244,
+            "time": 244,
+            "size": 244.0
+          },
+          {
+            "total_bill": null,
+            "tip": null,
+            "sex": 2,
+            "smoker": 2,
+            "day": 4,
+            "time": 2,
+            "size": null
+          },
+          {
+            "total_bill": null,
+            "tip": null,
+            "sex": "Male",
+            "smoker": "No",
+            "day": "Sat",
+            "time": "Dinner",
+            "size": null
+          },
+          {
+            "total_bill": null,
+            "tip": null,
+            "sex": 157,
+            "smoker": 151,
+            "day": 87,
+            "time": 176,
+            "size": null
+          },
+          {
+            "total_bill": 19.785942623,
+            "tip": 2.9982786885,
+            "sex": null,
+            "smoker": null,
+            "day": null,
+            "time": null,
+            "size": 2.5696721311
+          },
+          {
+            "total_bill": 8.9024119549,
+            "tip": 1.383638189,
+            "sex": null,
+            "smoker": null,
+            "day": null,
+            "time": null,
+            "size": 0.9510998047
+          },
+          {
+            "total_bill": 3.07,
+            "tip": 1.0,
+            "sex": null,
+            "smoker": null,
+            "day": null,
+            "time": null,
+            "size": 1.0
+          },
+          {
+            "total_bill": 13.3475,
+            "tip": 2.0,
+            "sex": null,
+            "smoker": null,
+            "day": null,
+            "time": null,
+            "size": 2.0
+          },
+          {
+            "total_bill": 17.795,
+            "tip": 2.9,
+            "sex": null,
+            "smoker": null,
+            "day": null,
+            "time": null,
+            "size": 2.0
+          },
+          {
+            "total_bill": 24.1275,
+            "tip": 3.5625,
+            "sex": null,
+            "smoker": null,
+            "day": null,
+            "time": null,
+            "size": 3.0
+          },
+          {
+            "total_bill": 50.81,
+            "tip": 10.0,
+            "sex": null,
+            "smoker": null,
+            "day": null,
+            "time": null,
+            "size": 6.0
+          }
+        ],
+        "truncated": false
+      }
+    }
+  },
+  "errors": [],
+  "limitations": [
+    "Execution uses Python-level validation and runtime constraints, not isolated container or OS-level sandboxing.",
+    "Trace export is a snapshot of current Streamlit session state, not a durable audit log.",
+    "The trace is not replayable and does not include dataset version hashes or provenance records."
+  ]
+}

@@ -8,6 +8,12 @@ import matplotlib.figure as mfigure
 import os
 
 from arctic_analytics import __version__
+from arctic_analytics.artifacts import (
+    AnalysisTrace,
+    ContextBundle,
+    ResearchSession,
+    build_research_bundle_zip,
+)
 
 MAX_TRACE_STRING_CHARS = 10000
 TRACE_STRING_PREVIEW_CHARS = 1000
@@ -244,6 +250,51 @@ def render_trace_export():
                 mime="application/json",
                 key="download_trace_export",
             )
+
+        if st.button("Prepare Research Bundle", key="prepare_research_bundle"):
+            trace = build_analysis_trace()
+            session = build_research_session_from_streamlit(trace)
+            st.session_state["research_bundle_zip"] = build_research_bundle_zip(session)
+            st.session_state["research_bundle_session_id"] = trace.get("session_id", "session")
+
+        if "research_bundle_zip" in st.session_state:
+            st.download_button(
+                label="Export Research Bundle",
+                data=st.session_state["research_bundle_zip"],
+                file_name=f"arctic_analytics_research_bundle_{st.session_state.get('research_bundle_session_id', 'session')}.zip",
+                mime="application/zip",
+                key="download_research_bundle",
+            )
+
+def build_research_session_from_streamlit(trace=None):
+    trace = trace or build_analysis_trace()
+    context_bundle = {
+        "context_bundle_version": "0.1.0",
+        "prompt": st.session_state.get("prompt_str") or trace.get("prompt_str"),
+        "dataset_metadata": trace.get("dataset_metadata", {}),
+        "researcher_notes": st.session_state.get("researcher_notes", ""),
+        "uploaded_context": {
+            "source": st.session_state.get("source"),
+            "uploaded_files": [
+                getattr(file_obj, "name", str(file_obj))
+                for file_obj in st.session_state.get("uploaded_files", [])
+            ],
+        },
+        "assumptions": [],
+        "limitations": [
+            "This context bundle is derived from the current Streamlit session state.",
+            "The bundle is intended for review and publication support, not deterministic replay.",
+        ],
+    }
+    return ResearchSession(
+        prompt=st.session_state.get("prompt_str") or trace.get("prompt_str"),
+        analysis_trace=AnalysisTrace(trace),
+        context_bundle=ContextBundle(context_bundle),
+        source_files=context_bundle["uploaded_context"],
+        researcher_notes=st.session_state.get("researcher_notes", ""),
+        assumptions=[],
+        command="streamlit research bundle export",
+    )
 
 def safely_escape_dollars(text):
     """

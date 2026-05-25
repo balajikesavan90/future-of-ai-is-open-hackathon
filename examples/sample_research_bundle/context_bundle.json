@@ -1,0 +1,271 @@
+{
+  "context_bundle_version": "0.1.0",
+  "prompt": "Which day has the highest average tip percentage? Calculate tip percentage as tip divided by total_bill.",
+  "metadata": {
+    "dataset_name": "tips",
+    "dataset_description": "This dataset contains data on tips given to waitstaff at a restaurant.",
+    "columns": [
+      {
+        "name": "total_bill",
+        "data_type": "Float64",
+        "description": "The total bill for the meal.",
+        "primary_key": false
+      },
+      {
+        "name": "tip",
+        "data_type": "Float64",
+        "description": "The tip given to the waitstaff.",
+        "primary_key": false
+      },
+      {
+        "name": "sex",
+        "data_type": "category",
+        "description": "The gender of the person paying the bill",
+        "primary_key": false
+      },
+      {
+        "name": "smoker",
+        "data_type": "category",
+        "description": "Indicates whether the person was smoking or not",
+        "primary_key": false
+      },
+      {
+        "name": "day",
+        "data_type": "category",
+        "description": "The day of the week the meal took place.",
+        "primary_key": false
+      },
+      {
+        "name": "time",
+        "data_type": "category",
+        "description": "The time of day, either Dinner or Lunch.",
+        "primary_key": false
+      },
+      {
+        "name": "size",
+        "data_type": "Int64",
+        "description": "The size of the party.",
+        "primary_key": false
+      }
+    ]
+  },
+  "dataset_metadata": {
+    "tips": {
+      "dataset_description": "This dataset contains data on tips given to waitstaff at a restaurant.",
+      "column_names": [
+        "total_bill",
+        "tip",
+        "sex",
+        "smoker",
+        "day",
+        "time",
+        "size"
+      ],
+      "columns_names": [
+        "total_bill",
+        "tip",
+        "sex",
+        "smoker",
+        "day",
+        "time",
+        "size"
+      ],
+      "data_types": {
+        "total_bill": "Float64",
+        "tip": "Float64",
+        "sex": "category",
+        "smoker": "category",
+        "day": "category",
+        "time": "category",
+        "size": "Int64"
+      },
+      "primary_key": [],
+      "data_dictionary": {
+        "0": {
+          "Primary Key": false,
+          "Column Name": "total_bill",
+          "Data Type": "Float64",
+          "Description": "The total bill for the meal."
+        },
+        "1": {
+          "Primary Key": false,
+          "Column Name": "tip",
+          "Data Type": "Float64",
+          "Description": "The tip given to the waitstaff."
+        },
+        "2": {
+          "Primary Key": false,
+          "Column Name": "sex",
+          "Data Type": "category",
+          "Description": "The gender of the person paying the bill"
+        },
+        "3": {
+          "Primary Key": false,
+          "Column Name": "smoker",
+          "Data Type": "category",
+          "Description": "Indicates whether the person was smoking or not"
+        },
+        "4": {
+          "Primary Key": false,
+          "Column Name": "day",
+          "Data Type": "category",
+          "Description": "The day of the week the meal took place."
+        },
+        "5": {
+          "Primary Key": false,
+          "Column Name": "time",
+          "Data Type": "category",
+          "Description": "The time of day, either Dinner or Lunch."
+        },
+        "6": {
+          "Primary Key": false,
+          "Column Name": "size",
+          "Data Type": "Int64",
+          "Description": "The size of the party."
+        }
+      },
+      "shape": [
+        244,
+        7
+      ],
+      "columns": [
+        "total_bill",
+        "tip",
+        "sex",
+        "smoker",
+        "day",
+        "time",
+        "size"
+      ],
+      "pandas_describe": {
+        "type": "pandas.DataFrame",
+        "shape": [
+          11,
+          7
+        ],
+        "columns": [
+          "total_bill",
+          "tip",
+          "sex",
+          "smoker",
+          "day",
+          "time",
+          "size"
+        ],
+        "data": [
+          {
+            "total_bill": 244.0,
+            "tip": 244.0,
+            "sex": 244,
+            "smoker": 244,
+            "day": 244,
+            "time": 244,
+            "size": 244.0
+          },
+          {
+            "total_bill": null,
+            "tip": null,
+            "sex": 2,
+            "smoker": 2,
+            "day": 4,
+            "time": 2,
+            "size": null
+          },
+          {
+            "total_bill": null,
+            "tip": null,
+            "sex": "Male",
+            "smoker": "No",
+            "day": "Sat",
+            "time": "Dinner",
+            "size": null
+          },
+          {
+            "total_bill": null,
+            "tip": null,
+            "sex": 157,
+            "smoker": 151,
+            "day": 87,
+            "time": 176,
+            "size": null
+          },
+          {
+            "total_bill": 19.785942623,
+            "tip": 2.9982786885,
+            "sex": null,
+            "smoker": null,
+            "day": null,
+            "time": null,
+            "size": 2.5696721311
+          },
+          {
+            "total_bill": 8.9024119549,
+            "tip": 1.383638189,
+            "sex": null,
+            "smoker": null,
+            "day": null,
+            "time": null,
+            "size": 0.9510998047
+          },
+          {
+            "total_bill": 3.07,
+            "tip": 1.0,
+            "sex": null,
+            "smoker": null,
+            "day": null,
+            "time": null,
+            "size": 1.0
+          },
+          {
+            "total_bill": 13.3475,
+            "tip": 2.0,
+            "sex": null,
+            "smoker": null,
+            "day": null,
+            "time": null,
+            "size": 2.0
+          },
+          {
+            "total_bill": 17.795,
+            "tip": 2.9,
+            "sex": null,
+            "smoker": null,
+            "day": null,
+            "time": null,
+            "size": 2.0
+          },
+          {
+            "total_bill": 24.1275,
+            "tip": 3.5625,
+            "sex": null,
+            "smoker": null,
+            "day": null,
+            "time": null,
+            "size": 3.0
+          },
+          {
+            "total_bill": 50.81,
+            "tip": 10.0,
+            "sex": null,
+            "smoker": null,
+            "day": null,
+            "time": null,
+            "size": 6.0
+          }
+        ],
+        "truncated": false
+      }
+    }
+  },
+  "researcher_notes": "",
+  "uploaded_context": {
+    "data_file": "examples/sample_dataset.csv",
+    "metadata_file": "examples/sample_metadata.json",
+    "trace_file": "examples/sample_trace_export.json"
+  },
+  "assumptions": [],
+  "limitations": [
+    "This context bundle packages available metadata for review; it is not a full provenance record.",
+    "Research bundles are exported from the local Streamlit app after an analysis session."
+  ]
+}
