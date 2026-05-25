@@ -12,12 +12,10 @@ def is_valid_csv(file):
 
     # do not check file size in dev environment
     if st.secrets['ENV'] != 'dev':
-    # Check file size (10MB limit)
+        # Check file size (10MB limit)
         MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
         if file.size > MAX_FILE_SIZE:
             return False, "File size exceeds 10MB limit"
-    else:
-        return True, ""  # Skip validation in dev environment
     
     # Define suspicious patterns (e.g., script tags, executable commands)
     suspicious_patterns = [

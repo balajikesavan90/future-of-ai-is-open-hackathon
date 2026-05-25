@@ -54,7 +54,7 @@ class OpenAIResponsesUtility:
             raise ValueError(f"Model {model} not recognized for cost calculation.")
 
     def _calculate_context_window_usage(self, tokens, model):
-        if model in ['gpt-5.4-2026-03-05', 'gpt-5.4-mini-2026-03-17', 'gpt-5.4-nano-2026-03-17']:
+        if model in ['gpt-5.4-mini-2026-03-17', 'gpt-5.4-nano-2026-03-17']:
             return tokens/400000
         elif model in ['gpt-5.4-2026-03-05', 'gpt-5.5-2026-04-23']:
             return tokens/1050000
