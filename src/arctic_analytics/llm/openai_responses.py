@@ -181,47 +181,47 @@ class OpenAIResponsesUtility:
         
         while tool_calls != []:
             for tool_call in tool_calls:
-                    logging.info(f"Calling tool: {tool_call['name']}")
-                    logging.info(f"Tool call arguments: {tool_call['arguments']}")
+                logging.info(f"Calling tool: {tool_call['name']}")
+                logging.info(f"Tool call arguments: {tool_call['arguments']}")
 
-                    try:
-                        tool_name = tool_call['name']
-                        args_dict = json.loads(tool_call['arguments'])
-                        
-                        if tool_name in tool_handlers:
-                            tool_response = tool_handlers[tool_name](args_dict)
-                        else:
-                            tool_response = f"Tool '{tool_name}' not implemented or not available."
+                try:
+                    tool_name = tool_call['name']
+                    args_dict = json.loads(tool_call['arguments'])
+                    
+                    if tool_name in tool_handlers:
+                        tool_response = tool_handlers[tool_name](args_dict)
+                    else:
+                        tool_response = f"Tool '{tool_name}' not implemented or not available."
 
-                        if tool_response.startswith('data:image/png;base64,'): 
-                            messages.append({
-                                'type': 'function_call_output',
-                                'call_id': tool_call['call_id'],
-                                'output': [
-                                    {
-                                        'type': 'input_image',
-                                        'image_url': tool_response
-                                    }
-                                ],
-                            })
-                        else:                           
-                            messages.append({
-                                'type': 'function_call_output',
-                                'call_id': tool_call['call_id'],
-                                'output': str(tool_response),
-                            })
-                        with st.session_state['messages_container']:
-                            render_tool_response(tool_response)
-                    except Exception as e:
-                        error_message = f"Error executing tool {tool_call['name']}: {str(e)}"
-                        logging.error(error_message)
+                    if tool_response.startswith('data:image/png;base64,'): 
                         messages.append({
                             'type': 'function_call_output',
                             'call_id': tool_call['call_id'],
-                            'output': error_message
+                            'output': [
+                                {
+                                    'type': 'input_image',
+                                    'image_url': tool_response
+                                }
+                            ],
                         })
-                        with st.session_state['messages_container']:
-                            render_tool_response(error_message)
+                    else:                           
+                        messages.append({
+                            'type': 'function_call_output',
+                            'call_id': tool_call['call_id'],
+                            'output': str(tool_response),
+                        })
+                    with st.session_state['messages_container']:
+                        render_tool_response(tool_response)
+                except Exception as e:
+                    error_message = f"Error executing tool {tool_call['name']}: {str(e)}"
+                    logging.error(error_message)
+                    messages.append({
+                        'type': 'function_call_output',
+                        'call_id': tool_call['call_id'],
+                        'output': error_message
+                    })
+                    with st.session_state['messages_container']:
+                        render_tool_response(error_message)
         
 
             # Update messages in args and set tool_choice to auto for follow-up call
