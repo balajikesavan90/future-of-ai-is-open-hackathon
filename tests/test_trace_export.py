@@ -1,9 +1,47 @@
 import json
+import re
+from datetime import datetime
+from functools import lru_cache
+from pathlib import Path
 
 import pandas as pd
+import pytest
 import streamlit as st
+from jsonschema import Draft202012Validator, FormatChecker, ValidationError
 
 from arctic_analytics.streamlit.helpers import build_analysis_trace
+
+
+ROOT = Path(__file__).resolve().parents[1]
+RFC3339_DATE_TIME_PATTERN = re.compile(
+    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$"
+)
+
+
+@lru_cache(maxsize=1)
+def load_trace_schema():
+    return json.loads((ROOT / "schemas" / "analysis_trace.schema.json").read_text())
+
+
+@lru_cache(maxsize=1)
+def trace_format_checker():
+    format_checker = FormatChecker()
+    if "date-time" not in format_checker.checkers:
+
+        @format_checker.checks("date-time")
+        def is_date_time(value):
+            if not isinstance(value, str):
+                return True
+            if not RFC3339_DATE_TIME_PATTERN.match(value):
+                return False
+            datetime.fromisoformat(value.replace("Z", "+00:00"))
+            return True
+
+    return format_checker
+
+
+def validate_trace_schema(trace):
+    Draft202012Validator(load_trace_schema(), format_checker=trace_format_checker()).validate(trace)
 
 
 def test_build_analysis_trace_is_json_safe_and_truncates_large_payloads():
@@ -54,8 +92,12 @@ def test_build_analysis_trace_is_json_safe_and_truncates_large_payloads():
 
     trace = build_analysis_trace()
     dumped = json.dumps(trace)
+    validate_trace_schema(trace)
 
     assert dumped
+    assert trace["trace_schema_version"] == "0.1.0"
+    assert trace["package_version"]
+    assert trace["timestamp"]
     assert trace["system_message"]["truncated"] is True
     assert trace["system_message"]["length_chars"] == 12000
     assert trace["prompt_str"]["truncated"] is True
@@ -67,3 +109,24 @@ def test_build_analysis_trace_is_json_safe_and_truncates_large_payloads():
     assert trace["dataset_metadata"]["sales"]["column_names"] == ["count", "created_at"]
     assert trace["dataset_metadata"]["sales"]["columns_names"] == ["count", "created_at"]
     assert trace["errors"][0]["content"] == "example error"
+
+
+def test_sample_trace_export_matches_schema():
+    trace = json.loads((ROOT / "examples" / "sample_trace_export.json").read_text())
+
+    validate_trace_schema(trace)
+
+
+def test_trace_schema_accepts_dataset_metadata_without_legacy_columns_names():
+    trace = json.loads((ROOT / "examples" / "sample_trace_export.json").read_text())
+    del trace["dataset_metadata"]["tips"]["columns_names"]
+
+    validate_trace_schema(trace)
+
+
+def test_trace_schema_rejects_invalid_timestamp_format():
+    trace = json.loads((ROOT / "examples" / "sample_trace_export.json").read_text())
+    trace["timestamp"] = "not-a-date-time"
+
+    with pytest.raises(ValidationError):
+        validate_trace_schema(trace)

@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "arctic-analytics"
 version = "0.1.0"
-description = "An open-source framework exploring metadata-aware, transparent, and constrained AI-assisted analysis over structured data."
+description = "An experimental open-source framework for metadata-aware, inspectable, constrained AI-assisted analysis over structured data."
 authors = ["BalajiKesavan <36139209+balajikesavan90@users.noreply.github.com>"]
 readme = "README.md"
 license = "MIT"
@@ -26,12 +26,12 @@ openai = "^1.70.0"
 tiktoken = "^0.9.0"
 pyarrow = "^18.0.0"
 pillow = "^11.3.0"
-pydantic = "^2.11.3"
 statsmodels = "^0.14.4"
 matplotlib = "^3.10.7"
 
 
 [tool.poetry.group.dev.dependencies]
+jsonschema = "^4.25.1"
 pytest = ">=8.3,<10.0"
 
 

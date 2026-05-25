@@ -49,8 +49,55 @@ def validate_code_security(python_syntax):
         'seaborn', 'sns'
     }
     
-    # Still maintain the blacklist for dangerous functions
-    forbidden_functions = ['eval', 'exec', 'compile', 'open', 'input', '__import__', 'globals']
+    # Still maintain blacklists for dangerous functions, names, and escape-oriented attributes.
+    forbidden_functions = [
+        'eval',
+        'exec',
+        'compile',
+        'open',
+        'input',
+        '__import__',
+        'globals',
+        'locals',
+        'vars',
+        'dir',
+        'getattr',
+        'setattr',
+        'delattr',
+    ]
+    forbidden_names = {
+        'os',
+        'subprocess',
+        'socket',
+        'requests',
+        'urllib',
+        'pathlib',
+        'shutil',
+        'sys',
+        'builtins',
+        '__builtins__',
+    }
+    forbidden_attributes = {
+        '__base__',
+        '__bases__',
+        '__builtins__',
+        '__class__',
+        '__closure__',
+        '__code__',
+        '__dict__',
+        '__func__',
+        '__getattribute__',
+        '__globals__',
+        '__mro__',
+        '__module__',
+        '__self__',
+        '__subclasses__',
+        'cr_frame',
+        'f_globals',
+        'f_locals',
+        'gi_frame',
+        'tb_frame',
+    }
     
     # Parse the code to check for security issues
     try:
@@ -65,6 +112,8 @@ def validate_code_security(python_syntax):
                     base_module = module_parts[0]
                     if base_module not in allowed_modules:
                         raise SecurityError(f"Import of module '{name.name}' is not allowed. Only whitelisted modules can be used.")
+                    if name.asname in forbidden_names or name.asname in forbidden_functions:
+                        raise SecurityError(f"Import alias '{name.asname}' is not allowed.")
                         
             elif isinstance(node, ast.ImportFrom):
                 # Check if the module being imported from is in the allowed list
@@ -73,6 +122,13 @@ def validate_code_security(python_syntax):
                     base_module = module_parts[0]
                     if base_module not in allowed_modules:
                         raise SecurityError(f"Import from module '{node.module}' is not allowed. Only whitelisted modules can be used.")
+                for name in node.names:
+                    alias = name.asname or name.name
+                    if alias in forbidden_names or alias in forbidden_functions:
+                        raise SecurityError(f"Import alias '{alias}' is not allowed.")
+            
+            if isinstance(node, ast.Name) and node.id in forbidden_names:
+                raise SecurityError(f"Use of potentially dangerous name '{node.id}' is not allowed")
             
             # Check for dangerous function calls
             if isinstance(node, ast.Call):
@@ -80,6 +136,9 @@ def validate_code_security(python_syntax):
                     raise SecurityError(f"Use of potentially dangerous function '{node.func.id}' is not allowed")
                 elif isinstance(node.func, ast.Attribute) and node.func.attr in forbidden_functions:
                     raise SecurityError(f"Use of potentially dangerous method '{node.func.attr}' is not allowed")
+            
+            if isinstance(node, ast.Attribute) and node.attr in forbidden_attributes:
+                raise SecurityError(f"Use of potentially dangerous attribute '{node.attr}' is not allowed")
     except SyntaxError as e:
         raise SyntaxError(f"Invalid code: {str(e)}")
         

@@ -1,6 +1,6 @@
 {
   "title": "Arctic Analytics",
-  "description": "Arctic Analytics is an experimental open-source framework for metadata-aware, transparent, and constrained AI-assisted analysis over structured data.",
+  "description": "Arctic Analytics is an experimental open-source framework for metadata-aware, inspectable, constrained AI-assisted analysis over structured data.",
   "upload_type": "software",
   "license": "MIT",
   "creators": [

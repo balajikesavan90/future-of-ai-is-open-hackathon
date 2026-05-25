@@ -1,6 +1,6 @@
 # Design Principles
 
-Arctic Analytics is an experimental framework for metadata-aware, transparent, and constrained AI-assisted analysis over structured data. These principles describe what the project should emphasize as it evolves.
+Arctic Analytics is an experimental framework for metadata-aware, inspectable, and constrained AI-assisted analysis over structured data. These principles describe what the project should emphasize as it evolves.
 
 ## Context Before Inference
 
@@ -19,12 +19,12 @@ The current implementation lets users edit data dictionaries before analysis. Th
 
 Future work should make this context more structured. A context bundle should be exportable, hashable, and inspectable without requiring a Streamlit session.
 
-## Transparency Over Magic
+## Inspectability Over Magic
 
-Arctic Analytics should not hide analysis behind opaque assistant behavior. The user should be able to inspect:
+Arctic Analytics should not hide analysis behind opaque model behavior. The user should be able to inspect:
 
 - The system prompt.
-- User and assistant messages.
+- User and model response messages.
 - Generated Python code.
 - Tool calls.
 - Tool-call reasons.
@@ -66,7 +66,7 @@ Arctic Analytics can currently claim:
 It should not currently claim:
 
 - Enterprise governance.
-- Secure sandboxing.
+- Security isolation.
 - Durable auditability.
 - Replayable reproducibility.
 - Role-based access control.
