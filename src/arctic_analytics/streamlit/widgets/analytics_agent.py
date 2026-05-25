@@ -133,9 +133,12 @@ def render_analytics_agent():
     if st.session_state['context_window_usage'] > 0.5:
         st.warning('LLMs are known to degrade in performance when context window usage gets higher than 50%. Consider starting a new session.')
 
-
+    if st.secrets['ENV'] != 'dev':
+        MAX_CHARS = 1000
+    else:
+        MAX_CHARS = None
     st.session_state['user_input'] = st.chat_input(
-        max_chars = 1000, 
+        max_chars = MAX_CHARS, 
     )
 
     if st.session_state['show_sample']:
