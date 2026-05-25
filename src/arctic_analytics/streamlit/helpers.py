@@ -337,7 +337,7 @@ def render_tool_response(tool_response):
                 # Not JSON, display as plain text
                 st.write(tool_response)
 
-def _is_dev_environment():
+def is_dev_environment():
     try:
         return st.secrets.get('ENV', os.environ.get('ENV', '')) == 'dev'
     except FileNotFoundError:

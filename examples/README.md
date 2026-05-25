@@ -20,7 +20,7 @@ This directory contains a small illustrative example of the inspectable Arctic A
 
 ## Trace Provenance
 
-`sample_trace_export.json` was generated with Arctic Analytics' application path using a real external OpenAI API call to `gpt-5-nano-2025-08-07`.
+`sample_trace_export.json` was generated with Arctic Analytics' application path using a real external OpenAI API call. The checked-in trace records the current supported example model, `gpt-5.4-mini-2026-03-17`.
 
 The example session state uses the bundled `tips` dataset and its data dictionary, constructs the system prompt with `arctic_analytics.core.system_messages.construct_system_message()`, calls `arctic_analytics.llm.ai.generate_ai_response()`, executes the model-produced tool call through the constrained execution path, and exports the same JSON structure used by the Streamlit "Export Analysis Trace" control.
 
