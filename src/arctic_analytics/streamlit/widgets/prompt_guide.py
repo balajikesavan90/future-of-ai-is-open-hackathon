@@ -8,7 +8,7 @@ def render_tool_calling_analysis_prompt_guide():
     
     with st.sidebar.expander(':blue[Tool-Calling Analysis Prompt Guide]'):
         st.write("""Arctic Analytics is designed for metadata-aware analysis over structured data. Follow this guide to make the analysis easier to inspect:
-1. Make sure you provided a good dataset description and a short description of each column in your dataset. This will help Arctic Analytics understand your data better.
+1. Make sure you provide a good dataset description and a short description of each column in your dataset. This will help Arctic Analytics understand your data better.
 2. Outline the steps the analysis should take. For example: :green[Group the data by category and calculate average sales].
 3. Provide filter conditions explicitly. For example: :green[Filter to 2020, group by category, and calculate average sales].
 4. Define custom KPIs. For example: :green[Calculate discount percentage as (discount / sales) * 100 by product category].

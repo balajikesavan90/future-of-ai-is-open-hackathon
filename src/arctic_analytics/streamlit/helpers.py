@@ -190,6 +190,14 @@ def _extract_errors(messages):
             errors.append(_json_safe(message))
     return errors
 
+def _system_message_from_messages(messages):
+    if not messages:
+        return st.session_state.get("system_message")
+    try:
+        return messages[0]["content"][0]["text"]
+    except (KeyError, IndexError, TypeError):
+        return st.session_state.get("system_message")
+
 def build_analysis_trace():
     messages = st.session_state.get("messages", [])
     return {
@@ -198,7 +206,7 @@ def build_analysis_trace():
         "model": st.session_state.get("model"),
         "cost": st.session_state.get("cost"),
         "context_window_usage": st.session_state.get("context_window_usage"),
-        "system_message": _json_safe(st.session_state.get("system_message")),
+        "system_message": _json_safe(_system_message_from_messages(messages)),
         "prompt_str": _json_safe(st.session_state.get("prompt_str")),
         "messages": _json_safe(messages),
         "tool_calls": _extract_tool_calls(messages),

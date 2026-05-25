@@ -37,16 +37,14 @@ def render_analytics_agent():
 
     st.info(f'Tool-Calling Analysis uses the {st.session_state["model"]} model. Review tool calls, generated code, and outputs before relying on the analysis.')
 
-    st.session_state['system_message'] = construct_system_message(st.session_state['vetted_files'])
-
-
     if 'messages' not in st.session_state.keys() or not st.session_state['messages']:
+        system_message = construct_system_message(st.session_state['vetted_files'])
         st.session_state['messages'] = [
             {
                 'role': 'system', 
                 'content': [
                     {
-                        'text': st.session_state['system_message'], 
+                        'text': system_message, 
                         'type': 'input_text'
                     }
                 ], 
@@ -63,6 +61,8 @@ def render_analytics_agent():
                 'type': 'message'
             }
         ]
+
+    st.session_state['system_message'] = st.session_state['messages'][0]['content'][0]['text']
 
     if 'cost' not in st.session_state:
         st.session_state['cost'] = 0
