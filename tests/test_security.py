@@ -22,6 +22,7 @@ def test_validate_code_security_rejects_unsafe_import():
     [
         "import os as pd\npd.getcwd()",
         "import pandas as os\nos.DataFrame()",
+        "import pandas as open\nopen.DataFrame()",
         "from pandas import DataFrame as open\nopen()",
     ],
 )

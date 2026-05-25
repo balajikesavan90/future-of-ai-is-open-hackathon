@@ -61,7 +61,7 @@ class OpenAIResponsesUtility:
         elif model == 'gpt-5-nano-2025-08-07':
             return 0.05*prompt_tokens/1000000 + 0.4*completion_tokens/1000000
         else:
-            st.error(f"Model {model} not recognized for cost calculation.")
+            raise ValueError(f"Model {model} not recognized for cost calculation.")
 
     def _calculate_context_window_usage(self, tokens, model):
         if model in ['gpt-5-2025-08-07', 'gpt-5-mini-2025-08-07', 'gpt-5-nano-2025-08-07']:

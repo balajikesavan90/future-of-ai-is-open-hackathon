@@ -112,7 +112,7 @@ def validate_code_security(python_syntax):
                     base_module = module_parts[0]
                     if base_module not in allowed_modules:
                         raise SecurityError(f"Import of module '{name.name}' is not allowed. Only whitelisted modules can be used.")
-                    if name.asname in forbidden_names:
+                    if name.asname in forbidden_names or name.asname in forbidden_functions:
                         raise SecurityError(f"Import alias '{name.asname}' is not allowed.")
                         
             elif isinstance(node, ast.ImportFrom):
