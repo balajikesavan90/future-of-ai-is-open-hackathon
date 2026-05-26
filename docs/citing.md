@@ -28,9 +28,8 @@ Before citing a release:
 
 1. Confirm the package version in `src/arctic_analytics/__init__.py`.
 2. Confirm `CITATION.cff` uses the same version.
-3. Confirm `.zenodo.json` uses the same version and DOI metadata.
-4. Confirm the Zenodo record points to the same repository release or archive.
-5. Archive research bundles, traces, source data, and publication appendices separately when needed.
+3. Confirm the Zenodo record points to the same repository release or archive.
+4. Archive research bundles, traces, source data, and publication appendices separately when needed.
 
 ## Zenodo Recommendations
 

@@ -6,6 +6,19 @@ Arctic Analytics currently supports metadata-aware agent analysis over tabular d
 
 > Packaging note: the app is available as the `arctic-analytics` distribution with the `arctic_analytics` import package.
 
+## First Path Through The Project
+
+Use the path that matches what you need:
+
+| Path | Use it for | Start here |
+| --- | --- | --- |
+| Try demo | Quick onboarding with Streamlit Community Cloud, sample data, and broad exploratory prompts such as "find something interesting." This shows what the tool can do; it is not the primary research workflow. | Streamlit Cloud deployment, when available |
+| Run locally | Real research workflow with local Streamlit, your own data or sample data, editable metadata, visible generated code/tool calls, trace export, and research bundle export. | [Quickstart: local evidence bundle](quickstart_local.md) |
+| Inspect sample bundle | No-API review of the checked-in evidence format before installing anything or configuring OpenAI. | [examples/sample_research_bundle](examples/sample_research_bundle) |
+| Export evidence | Package the trace, context, prompts, generated code, outputs, environment metadata, methods draft, limitations, and citation files after a local analysis session. | Streamlit sidebar, **Analysis Trace** |
+
+Streamlit Community Cloud is for demo and onboarding. Local Streamlit execution is the intended path for research work that may support downstream papers, datasets, appendices, or methods.
+
 ## What It Does Today
 
 - Supports metadata-aware structured-data analysis.
@@ -144,7 +157,7 @@ pip install arctic-analytics
 poetry install
 ```
 
-### Running The Streamlit Demo
+### Running Locally
 
 Use either an environment variable:
 
@@ -169,18 +182,22 @@ OPENAI_API_KEY = "<Create an OpenAI account and add your API key here.>"
 Then run:
 
 ```bash
-# Compatibility entrypoint
-streamlit run app.py
-
-# Package-native Streamlit entrypoint
-streamlit run src/arctic_analytics/streamlit_app.py
-
 # Installed console script
-arctic-analytics-app
+poetry run arctic-analytics-app
 
 # Console entrypoint
-arctic-analytics app
+poetry run arctic-analytics app
+
+# Compatibility entrypoint
+poetry run streamlit run app.py
+
+# Package-native Streamlit entrypoint
+poetry run streamlit run src/arctic_analytics/streamlit_app.py
 ```
+
+For the full 15-minute local walkthrough, including sample data, generated code inspection, trace export, and research bundle export, use [quickstart_local.md](quickstart_local.md).
+
+To inspect the evidence format without an API key, open [examples/sample_research_bundle](examples/sample_research_bundle).
 
 ## Citing Arctic Analytics
 
@@ -194,7 +211,7 @@ Suggested wording:
 Analyses were performed using Arctic Analytics v0.1.0 (DOI: 10.5281/zenodo.18514535).
 ```
 
-Before citing a newer release, verify that the README, `CITATION.cff`, `.zenodo.json`, package version, and Zenodo record refer to the same version. See [docs/citing.md](docs/citing.md).
+Before citing a newer release, verify that the README, `CITATION.cff`, package version, and Zenodo record refer to the same version. See [docs/citing.md](docs/citing.md).
 
 ## Documentation
 

@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 
 from arctic_analytics.artifacts import (
@@ -11,6 +12,7 @@ from arctic_analytics.artifacts import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
+SHA256_PATTERN = re.compile(r"^[a-f0-9]{64}$")
 
 
 def test_write_research_bundle_from_minimal_session(tmp_path):
@@ -69,6 +71,10 @@ def test_write_research_bundle_from_minimal_session(tmp_path):
     assert manifest["provider"] == "openai"
     assert manifest["trace_present"] is True
     assert manifest["generated_by"] == "arctic analytics research bundle export"
+    assert manifest["hash_algorithm"] == "sha256"
+    assert manifest["dataset_content_sha256"] is None
+    assert SHA256_PATTERN.match(manifest["metadata_or_context_sha256"])
+    assert SHA256_PATTERN.match(manifest["analysis_trace_sha256"])
     assert (bundle.output_dir / "context_bundle.json").exists()
     assert (bundle.output_dir / "methods.md").read_text().startswith("# Draft Methods")
     assert "sales['amount'].sum()" in (bundle.output_dir / "generated_code" / "001_run_python_expression.py").read_text()
@@ -101,3 +107,7 @@ def test_checked_in_sample_research_bundle_has_core_files():
     assert manifest["source_data_filename"] == "examples/sample_dataset.csv"
     assert manifest["metadata_filename"] == "examples/sample_metadata.json"
     assert manifest["trace_present"] is True
+    assert manifest["hash_algorithm"] == "sha256"
+    assert SHA256_PATTERN.match(manifest["dataset_content_sha256"])
+    assert SHA256_PATTERN.match(manifest["metadata_or_context_sha256"])
+    assert SHA256_PATTERN.match(manifest["analysis_trace_sha256"])

@@ -1,6 +1,6 @@
 {
   "run_id": "tips-example-openai-api-session",
-  "timestamp_utc": "2026-05-26T04:40:44.532573+00:00",
+  "timestamp_utc": "2026-05-26T05:02:51.159955+00:00",
   "arctic_analytics_version": "0.1.0",
   "python_version": "3.12.4 (main, Jan 25 2026, 21:08:48) [GCC 13.3.0]",
   "platform": "Linux-6.17.0-19-generic-x86_64-with-glibc2.39",
@@ -8,11 +8,15 @@
   "provider": "openai",
   "source_data_filename": "examples/sample_dataset.csv",
   "metadata_filename": "examples/sample_metadata.json",
+  "hash_algorithm": "sha256",
+  "dataset_content_sha256": "22415aaf1e56e675b9a0983cb0d321697dad51f6060a44fb8ecaad7a00de9a09",
+  "metadata_or_context_sha256": "9e1e5637e50d2aef6c873d546b48ffca320913c27b50ef4e9167e33b40e6fd59",
+  "analysis_trace_sha256": "9b996b3167e6c4aafa0e33511f10218273ff7a2bbd29c68b0e7346c36f34a824",
   "trace_present": true,
   "generated_by": "streamlit research bundle export",
   "limitations": [
     "This manifest is a lightweight review aid, not a deterministic replay record.",
-    "Source data and metadata filenames are recorded when available from the active session.",
+    "Source data and metadata filenames and hashes are recorded only when available from the active session.",
     "Model outputs may vary across model versions, providers, and time."
   ]
 }

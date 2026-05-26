@@ -1,4 +1,4 @@
-**Friday** has the highest average tip percentage.
+The day with the **highest average tip percentage** is **Friday (Fri)**.
 
 ### Average tip percentage by day
 Tip percentage = `tip / total_bill`
@@ -8,4 +8,4 @@ Tip percentage = `tip / total_bill`
 - **Thur:** 16.13%
 - **Sat:** 15.32%
 
-So, **Friday** is the highest on average.
+So, **Friday has the highest average tip percentage** in this dataset.

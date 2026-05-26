@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import platform
 import shutil
@@ -102,11 +103,15 @@ def _run_manifest_payload(session: ResearchSession) -> dict[str, Any]:
         "provider": _provider_for_model(model),
         "source_data_filename": source_data_filename,
         "metadata_filename": metadata_filename,
+        "hash_algorithm": "sha256",
+        "dataset_content_sha256": _file_sha256(source_data_filename),
+        "metadata_or_context_sha256": _metadata_or_context_sha256(session, metadata_filename),
+        "analysis_trace_sha256": _trace_sha256(session),
         "trace_present": session.analysis_trace.available,
         "generated_by": session.command or "arctic analytics research bundle export",
         "limitations": [
             "This manifest is a lightweight review aid, not a deterministic replay record.",
-            "Source data and metadata filenames are recorded when available from the active session.",
+            "Source data and metadata filenames and hashes are recorded only when available from the active session.",
             "Model outputs may vary across model versions, providers, and time.",
         ],
     }
@@ -164,6 +169,42 @@ def _metadata_filename(source_files: dict[str, Any]) -> str | None:
     if metadata_file:
         return str(metadata_file)
     return None
+
+
+def _file_sha256(filename: str | None) -> str | None:
+    if not filename:
+        return None
+
+    path = Path(filename)
+    candidates = [path]
+    if not path.is_absolute():
+        candidates.append(Path.cwd() / path)
+        candidates.append(Path(__file__).resolve().parents[3] / path)
+
+    for candidate in candidates:
+        if candidate.is_file():
+            digest = hashlib.sha256()
+            with candidate.open("rb") as handle:
+                for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                    digest.update(chunk)
+            return digest.hexdigest()
+
+    return None
+
+
+def _json_sha256(data: Any) -> str | None:
+    if data is None:
+        return None
+    payload = json.dumps(json_safe(data), sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _metadata_or_context_sha256(session: ResearchSession, metadata_filename: str | None) -> str | None:
+    return _file_sha256(metadata_filename) or _json_sha256(session.context_bundle.data)
+
+
+def _trace_sha256(session: ResearchSession) -> str | None:
+    return _json_sha256(session.analysis_trace.data)
 
 
 def _copy_citation(destination: Path) -> Path:
