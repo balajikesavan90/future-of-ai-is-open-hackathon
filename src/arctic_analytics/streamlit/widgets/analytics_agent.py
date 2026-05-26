@@ -1,7 +1,9 @@
 import streamlit as st
 import logging
 import time
+import os
 
+from arctic_analytics.config import has_openai_api_key
 from arctic_analytics.llm.ai import construct_welcome_message, generate_ai_response
 from arctic_analytics.core.system_messages import construct_system_message
 
@@ -138,8 +140,12 @@ def render_analytics_agent():
         MAX_CHARS = 1000
     else:
         MAX_CHARS = None
+    api_key_available = has_openai_api_key(secrets=st.secrets, environ=os.environ)
+    if not api_key_available:
+        st.warning("Configure `OPENAI_API_KEY` before running agent analysis.")
     st.session_state['user_input'] = st.chat_input(
         max_chars = MAX_CHARS, 
+        disabled=not api_key_available,
     )
 
     if st.session_state['show_sample']:
@@ -149,7 +155,7 @@ def render_analytics_agent():
                 label=':blue[Please find me something interesting in this data and plot it]',
                 width='stretch',
                 on_click=disable_sample_button,
-                disabled=st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False,
+                disabled=(not api_key_available) or (st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False),
             ):
                 st.session_state['user_input'] = 'Find me something interesting in this data and plot it'
                 st.session_state['show_sample'] = False
@@ -158,7 +164,7 @@ def render_analytics_agent():
                 label=':blue[Please identify interesting patterns/correlations in the data and plot them]',
                 width='stretch',
                 on_click=disable_sample_button,
-                disabled=st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False,
+                disabled=(not api_key_available) or (st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False),
             ):
                 st.session_state['user_input'] = 'Please identify interesting patterns/correlations in the data and plot them'
                 st.session_state['show_sample'] = False

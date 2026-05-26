@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Regenerate examples/sample_trace_export.json with a real OpenAI API call."""
+"""Regenerate checked-in example trace and research bundle with a real OpenAI API call."""
 
 from __future__ import annotations
 
 import argparse
 import json
 import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -75,6 +76,51 @@ def load_vetted_files(dataset_path, metadata_path):
     }
 
 
+def build_context_bundle(dataset_path, metadata_path, trace_path, trace, prompt):
+    metadata = json.loads(metadata_path.read_text())
+    return {
+        "context_bundle_version": "0.1.0",
+        "prompt": prompt,
+        "metadata": metadata,
+        "dataset_metadata": trace.get("dataset_metadata", {}),
+        "researcher_notes": "Checked-in example generated from the sample tips dataset.",
+        "source_files": {
+            "data_file": relative_to_root(dataset_path),
+            "metadata_file": relative_to_root(metadata_path),
+            "trace_file": relative_to_root(trace_path),
+        },
+        "assumptions": [
+            "The sample trace was generated with an external OpenAI API call.",
+            "The checked-in bundle is illustrative and is not a deterministic replay artifact.",
+        ],
+        "limitations": [
+            "This context bundle packages available metadata for review; it is not a full provenance record.",
+            "Research bundles are exported from the local Streamlit app after an analysis session.",
+        ],
+    }
+
+
+def build_research_session(trace, prompt, dataset_path, metadata_path, trace_path):
+    from arctic_analytics.artifacts import AnalysisTrace, ContextBundle, ResearchSession
+
+    return ResearchSession(
+        prompt=prompt,
+        analysis_trace=AnalysisTrace(trace),
+        context_bundle=ContextBundle(build_context_bundle(dataset_path, metadata_path, trace_path, trace, prompt)),
+        source_files={
+            "data": relative_to_root(dataset_path),
+            "metadata": relative_to_root(metadata_path),
+            "trace": relative_to_root(trace_path),
+        },
+        researcher_notes="Checked-in example generated from the sample tips dataset.",
+        assumptions=[
+            "The sample trace was generated with an external OpenAI API call.",
+            "The checked-in bundle is illustrative and is not a deterministic replay artifact.",
+        ],
+        command="streamlit research bundle export",
+    )
+
+
 def seed_session_state(session_id, model, prompt, vetted_files):
     from arctic_analytics.core.system_messages import construct_system_message
     from arctic_analytics.llm.ai import construct_welcome_message
@@ -124,6 +170,14 @@ def validate_trace(trace):
     Draft202012Validator(schema, format_checker=FormatChecker()).validate(trace)
 
 
+def relative_to_root(path):
+    path = path.resolve()
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
 def load_openai_api_key():
     if os.environ.get("OPENAI_API_KEY"):
         return
@@ -140,7 +194,7 @@ def load_openai_api_key():
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Run the example analysis through the OpenAI Responses API and regenerate examples/sample_trace_export.json."
+        description="Run the example analysis through the OpenAI Responses API and regenerate checked-in example artifacts."
     )
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--prompt", default=DEFAULT_PROMPT)
@@ -159,7 +213,15 @@ def parse_args():
         "--output",
         type=Path,
         default=ROOT / "examples" / "sample_trace_export.json",
+        help="Path for the regenerated trace JSON.",
     )
+    parser.add_argument(
+        "--bundle-output",
+        type=Path,
+        default=ROOT / "examples" / "sample_research_bundle",
+        help="Directory for the regenerated research bundle.",
+    )
+    parser.add_argument("--trace-only", action="store_true", help="Regenerate only the trace JSON.")
     parser.add_argument("--skip-schema-validation", action="store_true")
     return parser.parse_args()
 
@@ -168,6 +230,7 @@ def main():
     args = parse_args()
     load_openai_api_key()
 
+    from arctic_analytics.artifacts import write_research_bundle
     from arctic_analytics.llm.openai_responses import OpenAIResponsesUtility
     from arctic_analytics.streamlit.helpers import build_analysis_trace
 
@@ -183,8 +246,19 @@ def main():
     if not args.skip_schema_validation:
         validate_trace(trace)
 
+    args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(trace, indent=2, default=str) + "\n")
     print(f"Wrote {args.output}")
+
+    if not args.trace_only:
+        if args.bundle_output.exists():
+            shutil.rmtree(args.bundle_output)
+        session = build_research_session(trace, args.prompt, args.dataset, args.metadata, args.output)
+        write_research_bundle(session, args.bundle_output)
+        figures_dir = args.bundle_output / "figures"
+        if figures_dir.exists() and not any(figures_dir.iterdir()):
+            (figures_dir / ".gitkeep").write_text("")
+        print(f"Wrote {args.bundle_output}")
 
 
 if __name__ == "__main__":

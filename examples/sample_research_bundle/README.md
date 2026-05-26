@@ -7,6 +7,7 @@ This bundle includes an Arctic Analytics analysis trace.
 ## Contents
 
 - `analysis_trace.json`: exported analysis trace or an unavailable marker.
+- `run_manifest.json`: lightweight run metadata for review.
 - `context_bundle.json`: dataset metadata, researcher notes, assumptions, and source file references.
 - `prompts.json`: system/user prompt material available from the exported session.
 - `methods.md`: draft methods text for human review.

@@ -52,6 +52,7 @@ After the analysis session, prepare a research bundle from the local Streamlit s
 
 Review the generated files before using them in a paper:
 
+- `run_manifest.json`: lightweight run metadata for review.
 - `analysis_trace.json`: exported session trace.
 - `context_bundle.json`: metadata and context supplied to the workflow.
 - `prompts.json`: prompt material available for review.

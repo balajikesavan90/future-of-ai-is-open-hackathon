@@ -64,6 +64,11 @@ def test_write_research_bundle_from_minimal_session(tmp_path):
     bundle = write_research_bundle(session, tmp_path / "bundle")
 
     assert (bundle.output_dir / "analysis_trace.json").exists()
+    manifest = json.loads((bundle.output_dir / "run_manifest.json").read_text())
+    assert manifest["model"] == "gpt-test"
+    assert manifest["provider"] == "openai"
+    assert manifest["trace_present"] is True
+    assert manifest["generated_by"] == "arctic analytics research bundle export"
     assert (bundle.output_dir / "context_bundle.json").exists()
     assert (bundle.output_dir / "methods.md").read_text().startswith("# Draft Methods")
     assert "sales['amount'].sum()" in (bundle.output_dir / "generated_code" / "001_run_python_expression.py").read_text()
@@ -75,6 +80,7 @@ def test_checked_in_sample_research_bundle_has_core_files():
     sample_bundle = ROOT / "examples" / "sample_research_bundle"
     expected = [
         "README.md",
+        "run_manifest.json",
         "analysis_trace.json",
         "context_bundle.json",
         "prompts.json",
@@ -89,3 +95,9 @@ def test_checked_in_sample_research_bundle_has_core_files():
 
     for relative_path in expected:
         assert (sample_bundle / relative_path).exists(), relative_path
+
+    manifest = json.loads((sample_bundle / "run_manifest.json").read_text())
+    assert manifest["run_id"] == "tips-example-openai-api-session"
+    assert manifest["source_data_filename"] == "examples/sample_dataset.csv"
+    assert manifest["metadata_filename"] == "examples/sample_metadata.json"
+    assert manifest["trace_present"] is True

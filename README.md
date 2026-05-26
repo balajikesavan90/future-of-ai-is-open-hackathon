@@ -20,20 +20,25 @@ Arctic Analytics currently supports metadata-aware agent analysis over tabular d
 
 ## Intended Usage Model
 
-Streamlit Cloud:
+Arctic Analytics supports two paths:
 
-- demos
-- onboarding
-- exploration
+Demo path:
 
-Local execution:
+- Streamlit Community Cloud
+- sample data
+- broad exploratory prompts such as "find something interesting"
+- quick onboarding and demonstration
 
-- primary workflow
+Research path:
+
+- local Streamlit execution
+- researcher-owned data
+- editable metadata and data dictionaries
+- visible generated code, tool calls, and outputs
+- trace and research bundle export
 - publication support
-- reproducible artifacts
-- researcher customization
 
-The Streamlit app remains useful for demonstrations and interactive exploration. Local execution is the intended path for research work that may support publications, supplementary material, datasets, or methods sections.
+The Streamlit app remains useful for demonstrations and interactive exploration. Local Streamlit execution is the intended path for research work that may support publications, supplementary material, datasets, or methods sections.
 
 ## Example Research Workflow
 
@@ -141,7 +146,20 @@ poetry install
 
 ### Running The Streamlit Demo
 
-Create `.streamlit/secrets.toml` with:
+Use either an environment variable:
+
+```bash
+export OPENAI_API_KEY="<your OpenAI API key>"
+export ENV="dev"
+```
+
+Or copy the example Streamlit secrets file:
+
+```bash
+cp .streamlit/secrets.example.toml .streamlit/secrets.toml
+```
+
+Then edit `.streamlit/secrets.toml` with:
 
 ```toml
 ENV = "dev"

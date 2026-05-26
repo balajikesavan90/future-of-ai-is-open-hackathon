@@ -257,13 +257,16 @@
       }
     }
   },
-  "researcher_notes": "",
-  "uploaded_context": {
+  "researcher_notes": "Checked-in example generated from the sample tips dataset.",
+  "source_files": {
     "data_file": "examples/sample_dataset.csv",
     "metadata_file": "examples/sample_metadata.json",
     "trace_file": "examples/sample_trace_export.json"
   },
-  "assumptions": [],
+  "assumptions": [
+    "The sample trace was generated with an external OpenAI API call.",
+    "The checked-in bundle is illustrative and is not a deterministic replay artifact."
+  ],
   "limitations": [
     "This context bundle packages available metadata for review; it is not a full provenance record.",
     "Research bundles are exported from the local Streamlit app after an analysis session."

@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 import io
 
+from arctic_analytics.config import get_config_value
 from arctic_analytics.streamlit.helpers import safely_escape_dollars, render_tool_call, render_tool_response
 from arctic_analytics.core.security import safely_execute_code
 from arctic_analytics.llm.tokenization import safe_encoding_for_model
@@ -19,10 +20,9 @@ from arctic_analytics.llm.tokenization import safe_encoding_for_model
 class OpenAIResponsesUtility:
     def __init__(self):
         if 'OPENAI_API_KEY' not in os.environ:
-            try:
-                os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
-            except Exception:
-                pass
+            api_key = get_config_value("OPENAI_API_KEY", secrets=st.secrets, environ=os.environ)
+            if api_key:
+                os.environ['OPENAI_API_KEY'] = api_key
         self.client = OpenAI() if 'OPENAI_API_KEY' in os.environ else None
         self.enc_gpt4 = safe_encoding_for_model("gpt-4")
 

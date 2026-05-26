@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from importlib import metadata
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from arctic_analytics import __version__
 from arctic_analytics.artifacts.extractors import (
@@ -35,6 +36,7 @@ def write_research_bundle(session: ResearchSession, output_dir: Path | str) -> R
     output_path.mkdir(parents=True, exist_ok=True)
 
     written: list[Path] = []
+    written.append(_write_json(output_path / "run_manifest.json", _run_manifest_payload(session)))
     written.append(_write_json(output_path / "analysis_trace.json", _analysis_trace_payload(session)))
     written.append(_write_json(output_path / "context_bundle.json", session.context_bundle.data))
     written.append(_write_json(output_path / "prompts.json", extract_prompts(session)))
@@ -85,6 +87,31 @@ def _analysis_trace_payload(session: ResearchSession) -> dict[str, Any]:
     }
 
 
+def _run_manifest_payload(session: ResearchSession) -> dict[str, Any]:
+    trace = session.analysis_trace.data or {}
+    source_data_filename = _source_data_filename(session.source_files)
+    metadata_filename = _metadata_filename(session.source_files)
+    model = trace.get("model")
+    return {
+        "run_id": trace.get("session_id") or str(uuid4()),
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "arctic_analytics_version": __version__,
+        "python_version": sys.version,
+        "platform": platform.platform(),
+        "model": model,
+        "provider": _provider_for_model(model),
+        "source_data_filename": source_data_filename,
+        "metadata_filename": metadata_filename,
+        "trace_present": session.analysis_trace.available,
+        "generated_by": session.command or "arctic analytics research bundle export",
+        "limitations": [
+            "This manifest is a lightweight review aid, not a deterministic replay record.",
+            "Source data and metadata filenames are recorded when available from the active session.",
+            "Model outputs may vary across model versions, providers, and time.",
+        ],
+    }
+
+
 def _environment_payload(session: ResearchSession) -> dict[str, Any]:
     return {
         "arctic_analytics_version": __version__,
@@ -106,6 +133,37 @@ def _selected_dependency_versions() -> dict[str, str | None]:
         except metadata.PackageNotFoundError:
             versions[package] = None
     return versions
+
+
+def _provider_for_model(model: Any) -> str | None:
+    if not isinstance(model, str) or not model:
+        return None
+    if model.startswith(("gpt-", "o3", "o4")):
+        return "openai"
+    return None
+
+
+def _source_data_filename(source_files: dict[str, Any]) -> str | None:
+    data = source_files.get("data")
+    if data:
+        return str(data)
+
+    uploaded_files = source_files.get("uploaded_files")
+    if isinstance(uploaded_files, list) and uploaded_files:
+        return ", ".join(str(item) for item in uploaded_files)
+
+    source = source_files.get("source")
+    if source:
+        return str(source)
+
+    return None
+
+
+def _metadata_filename(source_files: dict[str, Any]) -> str | None:
+    metadata_file = source_files.get("metadata")
+    if metadata_file:
+        return str(metadata_file)
+    return None
 
 
 def _copy_citation(destination: Path) -> Path:

@@ -5,7 +5,7 @@ Arctic Analytics currently supports partial reproducibility through inspectable 
 ## Current State
 
 - Trace exports capture a snapshot of Streamlit session state, messages, tool calls, outputs, metadata, errors, model name, cost, timestamp, trace schema version, and package version when available.
-- Research bundle exports package traces, context bundles, prompts, generated code snippets, tool outputs, environment metadata, methods drafts, limitations, and citation files for review.
+- Research bundle exports package run manifests, traces, context bundles, prompts, generated code snippets, tool outputs, environment metadata, methods drafts, limitations, and citation files for review.
 - A JSON Schema for the lightweight trace shape is available at `schemas/analysis_trace.schema.json` and is validated in tests.
 - Examples provide a small dataset, metadata, and one trace generated through the application path.
 - Tests cover selected data import, prompt construction, execution restriction, dispatch, and trace export behavior.
@@ -16,7 +16,6 @@ Arctic Analytics currently supports partial reproducibility through inspectable 
 - Dataset hashes.
 - Prompt hashes.
 - Output hashes.
-- Stable run manifests.
 - Stable dataset, prompt, tool-call, and output IDs.
 - Full semantic trace validation beyond the current structural schema.
 
@@ -34,6 +33,6 @@ Future optional additions:
 - Prompt hashes.
 - Output hashes.
 - Broader trace schema coverage.
-- Run manifests.
+- More detailed run manifests.
 
 These additions are not implemented today.
