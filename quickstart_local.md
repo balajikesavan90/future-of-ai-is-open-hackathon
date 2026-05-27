@@ -25,34 +25,49 @@ cd arctic-analytics
 
 ## 2. Install Dependencies
 
-Arctic Analytics currently targets Python 3.12 and uses Poetry for local development.
+Arctic Analytics currently targets Python 3.12. The fastest local research path uses `uv` and editable pip install.
 
 ```bash
-python --version
-poetry install
+uv venv --python 3.12
+source .venv/bin/activate
+uv pip install -e .
 ```
 
-If Poetry is not installed:
+Poetry remains the developer/contributor path:
 
 ```bash
-python -m pip install poetry
 poetry install
+poetry run pytest
 ```
 
 ## 3. Configure OpenAI API Access
 
-Agent analysis requires an OpenAI API key. Choose one of the two setup paths below. You do not need both.
+Agent analysis requires an OpenAI API key. Choose one of the setup paths below. You do not need more than one.
 
-The app checks environment variables first, then Streamlit secrets.
+For local terminal runs, `.env` is preferred. The app checks `.env`, environment variables, Streamlit secrets, and the current Streamlit session.
 
-Option A, environment variable path:
+Option A, local `.env` path:
+
+```bash
+cp .env.example .env
+```
+
+Then edit `.env`:
+
+```text
+LLM_PROVIDER=openai
+OPENAI_MODEL=gpt-5.4-mini-2026-03-17
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+Option B, environment variable path:
 
 ```bash
 export OPENAI_API_KEY="your-openai-api-key"
 export ENV="dev"
 ```
 
-Option B, Streamlit secrets path:
+Option C, Streamlit secrets path:
 
 ```bash
 cp .streamlit/secrets.example.toml .streamlit/secrets.toml
@@ -67,15 +82,18 @@ OPENAI_API_KEY = "your-openai-api-key"
 
 Do not commit `.streamlit/secrets.toml`.
 
+If no key is configured before launch, the Streamlit app asks for the key and can save it locally to `.env`.
+
 ## 4. Launch The Local Streamlit App
 
 ```bash
-poetry run arctic-analytics-app
+streamlit run app.py
 ```
 
-Equivalent command:
+Developer/contributor equivalent:
 
 ```bash
+poetry run arctic-analytics-app
 poetry run arctic-analytics app
 ```
 
@@ -199,6 +217,8 @@ examples/sample_research_bundle/
 
 This checked-in bundle demonstrates the evidence format, not live agent execution. It was generated from a sample analysis and is useful for understanding what Arctic Analytics exports before you spend time on local setup.
 
+The sample bundle does not run a new analysis. It lets you inspect a completed analysis artifact.
+
 Key files:
 
 - `README.md`: overview of the bundle contents.
@@ -243,8 +263,15 @@ Poetry install:
 API key setup:
 
 - Agent analysis requires `OPENAI_API_KEY`.
-- The app checks environment variables first, then Streamlit secrets.
+- The app checks `.env`, environment variables, Streamlit secrets, then the current Streamlit session.
 - If chat input is disabled, confirm the key is set in the same shell used to launch Streamlit.
+- If no key is found at launch, enter it in the setup screen and optionally save it to `.env`.
+
+`.env` local credentials:
+
+- Copy `.env.example` to `.env`.
+- Replace the placeholder key.
+- Do not commit `.env`.
 
 Streamlit secrets:
 

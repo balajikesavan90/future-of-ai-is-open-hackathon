@@ -6,6 +6,46 @@ Arctic Analytics currently supports metadata-aware agent analysis over tabular d
 
 > Packaging note: the app is available as the `arctic-analytics` distribution with the `arctic_analytics` import package.
 
+## Start Here: Local Research Run
+
+Fastest local path for researchers who want to run the Streamlit workbench:
+
+```bash
+git clone https://github.com/balajikesavan90/arctic-analytics.git
+cd arctic-analytics
+uv venv --python 3.12
+source .venv/bin/activate
+uv pip install -e .
+cp .env.example .env
+# edit .env and set OPENAI_API_KEY
+streamlit run app.py
+```
+
+Live AI-assisted analysis requires an OpenAI API key. If no key is configured, the app asks for one on first launch and can save it to local `.env`.
+
+Poetry remains the developer/contributor path. `uv`/pip is the recommended fastest path for researchers who just want to run locally.
+
+> No API key needed: inspect the checked-in completed artifact at [examples/sample_research_bundle](examples/sample_research_bundle). The sample bundle does not run a new analysis. It lets you inspect a completed analysis artifact.
+
+## Known Good Local Environment
+
+- Python 3.12
+- `uv`
+- Streamlit
+- OpenAI API key for live model calls
+- Linux/macOS shell commands are expected in the docs
+- Windows users may need PowerShell-equivalent activation commands
+
+## Developer Install
+
+Use Poetry when contributing, running tests, or working on package internals:
+
+```bash
+poetry install
+poetry run streamlit run app.py
+poetry run pytest
+```
+
 ## First Path Through The Project
 
 Use the path that matches what you need:
@@ -18,6 +58,20 @@ Use the path that matches what you need:
 | Export evidence | Package the trace, context, prompts, generated code, outputs, environment metadata, methods draft, limitations, and citation files after a local analysis session. | Streamlit sidebar, **Analysis Trace** |
 
 Streamlit Community Cloud is for demo and onboarding. Local Streamlit execution is the intended path for research work that may support downstream papers, datasets, appendices, or methods.
+
+## No API Key? Inspect A Completed Sample Bundle
+
+Open [examples/sample_research_bundle](examples/sample_research_bundle) to inspect the evidence format before configuring credentials. Useful files include:
+
+- `context_bundle.json`
+- `analysis_trace.json`
+- `generated_code/`
+- `outputs/`
+- `methods.md`
+- `limitations.md`
+- `run_manifest.json`
+
+The sample bundle does not run a new analysis. It lets you inspect a completed analysis artifact.
 
 ## What It Does Today
 
@@ -138,14 +192,16 @@ Current implementation limits:
 
 - Python 3.12
 - pip
-- Poetry
+- `uv` for the fastest local research install, or Poetry for contributor workflows
 
 ### Installation
 
 ```bash
 git clone https://github.com/balajikesavan90/arctic-analytics.git
 cd arctic-analytics
-poetry install
+uv venv --python 3.12
+source .venv/bin/activate
+uv pip install -e .
 ```
 
 ### Installing As A Package
@@ -159,14 +215,28 @@ poetry install
 
 ### Running Locally
 
-Use either an environment variable:
+For local terminal runs, `.env` is preferred:
+
+```bash
+cp .env.example .env
+```
+
+Then edit `.env`:
+
+```text
+LLM_PROVIDER=openai
+OPENAI_MODEL=gpt-5.4-mini-2026-03-17
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+Environment variables are also supported:
 
 ```bash
 export OPENAI_API_KEY="<your OpenAI API key>"
 export ENV="dev"
 ```
 
-Or copy the example Streamlit secrets file:
+Streamlit secrets are also supported:
 
 ```bash
 cp .streamlit/secrets.example.toml .streamlit/secrets.toml
@@ -179,9 +249,14 @@ ENV = "dev"
 OPENAI_API_KEY = "<Create an OpenAI account and add your API key here.>"
 ```
 
+Do not commit real credentials.
+
 Then run:
 
 ```bash
+# Fast local path
+streamlit run app.py
+
 # Installed console script
 poetry run arctic-analytics-app
 
@@ -216,6 +291,9 @@ Before citing a newer release, verify that the README, `CITATION.cff`, package v
 ## Documentation
 
 - [Quickstart: local artifact bundles](quickstart_local.md)
+- [Structured dataset to research bundle walkthrough](docs/walkthrough_structured_bundle.md)
+- [Local flow image capture instructions](docs/assets/README.md)
+- [Sample bundle figure gap note](docs/sample_bundle_figure_gap.md)
 - [Publication workflow](docs/publication_workflow.md)
 - [Citation guidance](docs/citing.md)
 - [Design principles](docs/design_principles.md)
