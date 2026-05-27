@@ -85,7 +85,6 @@ def render_ai_prompt():
             st.subheader(':blue[Messages]')
             messages_wo_system_message = st.session_state['messages'][1:]
             st.write(messages_wo_system_message)
-    render_researcher_notes()
     render_trace_export()
 
 
@@ -95,6 +94,7 @@ def render_researcher_notes():
         key="researcher_notes",
         help="Optional human context to include in context_bundle.json when exporting a research bundle.",
         placeholder="Add assumptions, domain context, data caveats, or review notes to export with the bundle.",
+        height=180,
     )
     st.sidebar.caption("These notes are exported into the research bundle.")
 

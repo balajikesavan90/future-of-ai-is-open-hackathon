@@ -8,7 +8,7 @@ from arctic_analytics.llm.ai import construct_welcome_message, generate_ai_respo
 from arctic_analytics.core.system_messages import construct_system_message
 
 from arctic_analytics.streamlit.widgets.prompt_guide import render_tool_calling_analysis_prompt_guide
-from arctic_analytics.streamlit.helpers import render_ai_prompt, safely_escape_dollars, render_tool_call, render_tool_response, disable_sample_button
+from arctic_analytics.streamlit.helpers import render_ai_prompt, render_researcher_notes, safely_escape_dollars, render_tool_call, render_tool_response, disable_sample_button
 from arctic_analytics.streamlit.helpers import is_dev_environment
 
 
@@ -84,6 +84,7 @@ def render_analytics_agent():
             value=f'${st.session_state["cost"]}',
         )
 
+    render_researcher_notes()
     render_tool_calling_analysis_prompt_guide()
     render_ai_prompt()
 
