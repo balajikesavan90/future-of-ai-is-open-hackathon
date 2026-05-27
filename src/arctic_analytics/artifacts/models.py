@@ -47,3 +47,12 @@ class ResearchArtifactBundle:
 
     output_dir: Path
     files: list[Path]
+
+
+@dataclass
+class BundleValidationResult:
+    """Lightweight completeness check result for a research artifact bundle."""
+
+    valid: bool
+    missing: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)

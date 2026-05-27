@@ -23,7 +23,7 @@ from arctic_analytics.artifacts.extractors import (
     json_safe,
     write_outputs_and_figures,
 )
-from arctic_analytics.artifacts.models import ResearchArtifactBundle, ResearchSession
+from arctic_analytics.artifacts.models import BundleValidationResult, ResearchArtifactBundle, ResearchSession
 from arctic_analytics.artifacts.text import (
     render_bundle_readme,
     render_limitations,
@@ -77,6 +77,45 @@ def build_research_bundle_zip(session: ResearchSession) -> bytes:
                 if path.is_file():
                     archive.write(path, path.relative_to(bundle_dir.parent))
         return zip_path.read_bytes()
+
+
+EXPECTED_BUNDLE_PATHS = [
+    "README.md",
+    "run_manifest.json",
+    "context_bundle.json",
+    "analysis_trace.json",
+    "prompts.json",
+    "generated_code/",
+    "outputs/",
+    "figures/",
+    "environment.json",
+    "methods.md",
+    "limitations.md",
+    "software_citation.md",
+    "citation.cff",
+]
+
+
+def validate_research_bundle(output_dir: Path | str) -> BundleValidationResult:
+    """Check that a bundle has the expected MVP files and directories."""
+    root = Path(output_dir)
+    missing = []
+    warnings = []
+
+    for relative_path in EXPECTED_BUNDLE_PATHS:
+        path = root / relative_path.rstrip("/")
+        if relative_path.endswith("/"):
+            if not path.is_dir():
+                missing.append(relative_path)
+        elif not path.is_file():
+            missing.append(relative_path)
+
+    if (root / "figures").is_dir() and not any((root / "figures").iterdir()):
+        warnings.append("figures/ exists but does not contain exported image artifacts.")
+    if (root / "generated_code").is_dir() and not any((root / "generated_code").iterdir()):
+        warnings.append("generated_code/ exists but does not contain generated code artifacts.")
+
+    return BundleValidationResult(valid=not missing, missing=missing, warnings=warnings)
 
 
 def _analysis_trace_payload(session: ResearchSession) -> dict[str, Any]:

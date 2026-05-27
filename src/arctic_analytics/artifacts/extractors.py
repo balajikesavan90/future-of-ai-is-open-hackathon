@@ -59,9 +59,10 @@ def extract_generated_code(trace: dict[str, Any] | None) -> list[dict[str, str]]
         if not code:
             continue
         tool_name = str(tool_call.get("name") or tool_call.get("function", {}).get("name") or "tool")
+        label = _snippet_label(arguments, tool_name)
         snippets.append(
             {
-                "filename": f"{index:03d}_{_safe_name(tool_name)}.py",
+                "filename": f"step_{index:02d}_{label}.py",
                 "tool_name": tool_name,
                 "reason": str(arguments.get("reason", "")),
                 "code": str(code),
@@ -137,6 +138,19 @@ def _parse_arguments(raw_arguments: Any) -> dict[str, Any]:
 
 def _safe_name(name: str) -> str:
     return "".join(char if char.isalnum() or char in {"_", "-"} else "_" for char in name).strip("_") or "tool"
+
+
+def _snippet_label(arguments: dict[str, Any], tool_name: str) -> str:
+    reason = str(arguments.get("reason") or "").lower()
+    code = str(arguments.get("python_expression") or arguments.get("function_definition") or "").lower()
+    text = f"{reason}\n{code}"
+    if any(term in text for term in ["plot", "figure", "chart", "visual"]):
+        return "make_plot"
+    if any(term in text for term in ["profile", "describe", "summary", "summar"]):
+        return "profile_dataset"
+    if any(term in text for term in ["groupby", "average", "mean", "median", "correlation", "corr", "sum", "total"]):
+        return "analyze_dataset"
+    return _safe_name(tool_name)
 
 
 def _write_image_payload(payload: Any, figures_dir: Path, index: int) -> Path | None:

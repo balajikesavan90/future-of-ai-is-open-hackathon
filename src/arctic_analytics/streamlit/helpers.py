@@ -85,7 +85,18 @@ def render_ai_prompt():
             st.subheader(':blue[Messages]')
             messages_wo_system_message = st.session_state['messages'][1:]
             st.write(messages_wo_system_message)
+    render_researcher_notes()
     render_trace_export()
+
+
+def render_researcher_notes():
+    st.sidebar.text_area(
+        "Researcher notes / analysis context",
+        key="researcher_notes",
+        help="Optional human context to include in context_bundle.json when exporting a research bundle.",
+        placeholder="Add assumptions, domain context, data caveats, or review notes to export with the bundle.",
+    )
+    st.sidebar.caption("These notes are exported into the research bundle.")
 
 def _json_safe(value):
     if isinstance(value, str):
@@ -220,6 +231,7 @@ def build_analysis_trace():
         "system_message": _json_safe(_system_message_from_messages(messages)),
         "prompt_str": _json_safe(st.session_state.get("prompt_str")),
         "messages": _json_safe(messages),
+        "events": _readable_events(messages),
         "tool_calls": _extract_tool_calls(messages),
         "outputs": _extract_outputs(messages),
         "dataset_metadata": _dataset_metadata_for_trace(),
@@ -230,6 +242,48 @@ def build_analysis_trace():
             "The trace is not replayable and does not include full dataset provenance records.",
         ],
     }
+
+
+def _readable_events(messages):
+    events = []
+    for index, message in enumerate(messages, start=1):
+        if not isinstance(message, dict):
+            continue
+        event = {
+            "step_index": index,
+            "event_type": str(message.get("type") or message.get("role") or "unknown"),
+        }
+        if message.get("role"):
+            event["role"] = str(message["role"])
+        if message.get("name"):
+            event["tool_name"] = str(message["name"])
+        elif isinstance(message.get("function"), dict) and message["function"].get("name"):
+            event["tool_name"] = str(message["function"]["name"])
+        summary = _event_summary(message)
+        if summary:
+            event["summary"] = summary
+        events.append(event)
+    return events
+
+
+def _event_summary(message):
+    if message.get("type") == "function_call":
+        raw_arguments = message.get("arguments") or message.get("function", {}).get("arguments")
+        parsed = _parse_json_if_possible(raw_arguments)
+        if isinstance(parsed, dict):
+            return str(parsed.get("reason") or parsed.get("python_expression") or parsed.get("function_definition") or "")[:300]
+    if message.get("type") == "function_call_output":
+        output = message.get("output")
+        if isinstance(output, str):
+            return output[:300]
+        if isinstance(output, list):
+            return f"{len(output)} output item(s)"
+    if message.get("type") == "message":
+        try:
+            return str(message["content"][0]["text"])[:300]
+        except (KeyError, IndexError, TypeError):
+            return None
+    return None
 
 def render_trace_export():
     if "messages" not in st.session_state and "vetted_files" not in st.session_state:
