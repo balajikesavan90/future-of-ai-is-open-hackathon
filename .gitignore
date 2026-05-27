@@ -11,6 +11,8 @@ runs/
 research_bundle/
 research_bundle*.zip
 arctic_analytics_research_bundle_*.zip
+tmp/
+temp/
 
 .vscode/
 

@@ -5,7 +5,12 @@ import os
 
 import streamlit as st
 
-from arctic_analytics.config import get_config_value, has_openai_api_key
+from arctic_analytics.config import (
+    get_config_value,
+    get_openai_api_key,
+    has_openai_api_key,
+    save_openai_api_key_to_env,
+)
 from arctic_analytics.streamlit.helpers import (
     render_reset,
     render_reset_analysis,
@@ -28,9 +33,13 @@ def main():
     if "session_id" not in st.session_state.keys():
         st.session_state.update(setup_session_state())
 
-    render_reset()
-
     st.header(":blue[Arctic Analytics]")
+
+    if not has_openai_api_key(secrets=st.secrets, environ=os.environ, session_state=st.session_state):
+        render_api_key_setup_screen()
+        return
+
+    render_reset()
     render_api_key_setup_notice()
 
     setup_home()
@@ -44,8 +53,41 @@ def main():
     logging.info(f'############################### - {st.session_state["session_id"]}')
 
 
+def render_api_key_setup_screen():
+    st.subheader("Set up OpenAI API key")
+    st.write("Live AI-assisted analysis requires an OpenAI API key.")
+    st.caption(
+        "Your API key is stored locally on this machine if you choose to save it. "
+        "It is not committed to Git and is not included in exported research bundles."
+    )
+
+    with st.form("openai_api_key_setup"):
+        api_key = st.text_input("OpenAI API key", type="password")
+        save_key = st.checkbox("Save this key locally in .env", value=True)
+        submitted = st.form_submit_button("Use OpenAI API key")
+
+    if submitted:
+        cleaned_key = api_key.strip()
+        if not cleaned_key:
+            st.error("Enter an OpenAI API key to continue.")
+            return
+
+        st.session_state["OPENAI_API_KEY"] = cleaned_key
+        os.environ["OPENAI_API_KEY"] = cleaned_key
+        if save_key:
+            save_openai_api_key_to_env(cleaned_key)
+            st.success("Saved OpenAI API key to local .env.")
+        else:
+            st.success("OpenAI API key will be used for this Streamlit session.")
+        st.rerun()
+
+    st.caption("No API key yet? You can still inspect the checked-in sample research bundle from the README.")
+
+
 def render_api_key_setup_notice():
-    if has_openai_api_key(secrets=st.secrets, environ=os.environ):
+    api_key = get_openai_api_key(secrets=st.secrets, environ=os.environ, session_state=st.session_state)
+    if api_key:
+        os.environ.setdefault("OPENAI_API_KEY", api_key)
         return
 
     st.sidebar.warning("OpenAI API key not configured.")

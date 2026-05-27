@@ -3,7 +3,7 @@ import logging
 import time
 import os
 
-from arctic_analytics.config import has_openai_api_key
+from arctic_analytics.config import get_openai_api_key, has_openai_api_key
 from arctic_analytics.llm.ai import construct_welcome_message, generate_ai_response
 from arctic_analytics.core.system_messages import construct_system_message
 
@@ -140,7 +140,10 @@ def render_analytics_agent():
         MAX_CHARS = 1000
     else:
         MAX_CHARS = None
-    api_key_available = has_openai_api_key(secrets=st.secrets, environ=os.environ)
+    api_key = get_openai_api_key(secrets=st.secrets, environ=os.environ, session_state=st.session_state)
+    if api_key:
+        os.environ.setdefault("OPENAI_API_KEY", api_key)
+    api_key_available = has_openai_api_key(secrets=st.secrets, environ=os.environ, session_state=st.session_state)
     if not api_key_available:
         st.warning("Configure `OPENAI_API_KEY` before running agent analysis.")
     st.session_state['user_input'] = st.chat_input(
