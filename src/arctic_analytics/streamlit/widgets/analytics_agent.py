@@ -23,7 +23,7 @@ def stream_text(text):
 def render_analytics_agent():
     logging.info(f'render_analytics_agent - {st.session_state["session_id"]}')
     st.divider()
-    st.info('Tool-Calling Analysis uses uploaded data through visible tool calls and constrained generated code.')
+    st.info('Uploaded data is analyzed through visible tool calls and constrained generated code.')
 
     if not is_dev_environment():
         st.session_state['model'] = 'gpt-5.4-mini-2026-03-17'
@@ -35,7 +35,7 @@ def render_analytics_agent():
             key='model_select_sidebar',
         )
 
-    st.info(f'Tool-Calling Analysis uses the {st.session_state["model"]} model. Review tool calls, generated code, and outputs before relying on the analysis.')
+    st.info(f'This analysis uses the {st.session_state["model"]} model. Review tool calls, generated code, and outputs before relying on the analysis.')
 
     if 'messages' not in st.session_state.keys() or not st.session_state['messages']:
         system_message = construct_system_message(st.session_state['vetted_files'])
