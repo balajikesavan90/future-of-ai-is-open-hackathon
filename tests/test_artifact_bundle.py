@@ -7,6 +7,7 @@ from arctic_analytics.artifacts import (
     ContextBundle,
     ResearchSession,
     build_research_bundle_zip,
+    validate_research_bundle,
     write_research_bundle,
 )
 
@@ -60,12 +61,16 @@ def test_write_research_bundle_from_minimal_session(tmp_path):
     session = ResearchSession(
         prompt="Summarize the data.",
         analysis_trace=AnalysisTrace(trace),
-        context_bundle=ContextBundle({"dataset_metadata": trace["dataset_metadata"]}),
+        context_bundle=ContextBundle({"dataset_metadata": trace["dataset_metadata"], "researcher_notes": "Reviewed by analyst."}),
+        researcher_notes="Reviewed by analyst.",
     )
 
     bundle = write_research_bundle(session, tmp_path / "bundle")
 
     assert (bundle.output_dir / "analysis_trace.json").exists()
+    validation = validate_research_bundle(bundle.output_dir)
+    assert validation.valid is True
+    assert validation.missing == []
     manifest = json.loads((bundle.output_dir / "run_manifest.json").read_text())
     assert manifest["model"] == "gpt-test"
     assert manifest["provider"] == "openai"
@@ -77,7 +82,9 @@ def test_write_research_bundle_from_minimal_session(tmp_path):
     assert SHA256_PATTERN.match(manifest["analysis_trace_sha256"])
     assert (bundle.output_dir / "context_bundle.json").exists()
     assert (bundle.output_dir / "methods.md").read_text().startswith("# Draft Methods")
-    assert "sales['amount'].sum()" in (bundle.output_dir / "generated_code" / "001_run_python_expression.py").read_text()
+    context = json.loads((bundle.output_dir / "context_bundle.json").read_text())
+    assert context["researcher_notes"] == "Reviewed by analyst."
+    assert "sales['amount'].sum()" in (bundle.output_dir / "generated_code" / "step_01_analyze_dataset.py").read_text()
     assert "Total sales were 3." in (bundle.output_dir / "outputs" / "final_answer.md").read_text()
     assert build_research_bundle_zip(session).startswith(b"PK")
 
@@ -111,3 +118,15 @@ def test_checked_in_sample_research_bundle_has_core_files():
     assert SHA256_PATTERN.match(manifest["dataset_content_sha256"])
     assert SHA256_PATTERN.match(manifest["metadata_or_context_sha256"])
     assert SHA256_PATTERN.match(manifest["analysis_trace_sha256"])
+
+
+def test_bundle_validation_reports_missing_files(tmp_path):
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    (bundle_dir / "README.md").write_text("example\n")
+
+    validation = validate_research_bundle(bundle_dir)
+
+    assert validation.valid is False
+    assert "run_manifest.json" in validation.missing
+    assert "generated_code/" in validation.missing

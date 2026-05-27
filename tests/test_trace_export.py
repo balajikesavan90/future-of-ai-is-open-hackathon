@@ -9,7 +9,7 @@ import pytest
 import streamlit as st
 from jsonschema import Draft202012Validator, FormatChecker, ValidationError
 
-from arctic_analytics.streamlit.helpers import build_analysis_trace
+from arctic_analytics.streamlit.helpers import build_analysis_trace, build_research_session_from_streamlit
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -101,6 +101,9 @@ def test_build_analysis_trace_is_json_safe_and_truncates_large_payloads():
     assert trace["system_message"]["truncated"] is True
     assert trace["system_message"]["length_chars"] == 12000
     assert trace["prompt_str"]["truncated"] is True
+    assert trace["events"][0]["step_index"] == 1
+    assert trace["events"][0]["event_type"] == "function_call"
+    assert trace["events"][0]["tool_name"] == "generate_plot"
     assert trace["outputs"][0]["output"]["type"] == "image_base64"
     assert trace["outputs"][0]["output"]["payload_length_chars"] == 12000
     assert trace["outputs"][1]["output"]["data"][0]["count"] == 1
@@ -130,3 +133,15 @@ def test_trace_schema_rejects_invalid_timestamp_format():
 
     with pytest.raises(ValidationError):
         validate_trace_schema(trace)
+
+
+def test_research_session_from_streamlit_includes_researcher_notes():
+    st.session_state.clear()
+    st.session_state["session_id"] = "notes-test-session"
+    st.session_state["researcher_notes"] = "Assume measurements were reviewed for obvious data entry errors."
+    st.session_state["messages"] = []
+    st.session_state["vetted_files"] = {}
+
+    session = build_research_session_from_streamlit()
+
+    assert session.context_bundle.data["researcher_notes"] == "Assume measurements were reviewed for obvious data entry errors."
