@@ -61,7 +61,7 @@ def write_research_bundle(session: ResearchSession, output_dir: Path | str) -> R
 
     outputs_dir = output_path / "outputs"
     figures_dir = output_path / "figures"
-    written.extend(write_outputs_and_figures(session.analysis_trace.data, outputs_dir, figures_dir))
+    written.extend(write_outputs_and_figures(session.analysis_trace.data, outputs_dir, figures_dir, session.raw_outputs))
     written.append(_write_text(outputs_dir / "final_answer.md", final_answer_markdown(session.analysis_trace.data)))
 
     return ResearchArtifactBundle(output_dir=output_path, files=written)

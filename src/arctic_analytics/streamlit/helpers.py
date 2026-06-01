@@ -203,6 +203,24 @@ def _extract_outputs(messages):
             )
     return outputs
 
+def _extract_raw_outputs(messages):
+    outputs = []
+    for message in messages:
+        if not isinstance(message, dict):
+            continue
+        if message.get("type") == "function_call_output":
+            outputs.append(message)
+            continue
+        if "output" in message:
+            outputs.append(
+                {
+                    "role": message.get("role"),
+                    "type": message.get("type"),
+                    "output": message.get("output"),
+                }
+            )
+    return outputs
+
 def _extract_errors(messages):
     errors = []
     for message in messages:
@@ -349,6 +367,7 @@ def build_research_session_from_streamlit(trace=None):
         researcher_notes=st.session_state.get("researcher_notes", ""),
         assumptions=[],
         command="streamlit research bundle export",
+        raw_outputs=_extract_raw_outputs(st.session_state.get("messages", [])),
     )
 
 def safely_escape_dollars(text):

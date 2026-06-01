@@ -145,3 +145,28 @@ def test_research_session_from_streamlit_includes_researcher_notes():
     session = build_research_session_from_streamlit()
 
     assert session.context_bundle.data["researcher_notes"] == "Assume measurements were reviewed for obvious data entry errors."
+
+
+def test_research_session_from_streamlit_preserves_raw_image_outputs_for_bundle():
+    st.session_state.clear()
+    image_payload = "data:image/png;base64,iVBORw0KGgo="
+    st.session_state["session_id"] = "figure-test-session"
+    st.session_state["researcher_notes"] = ""
+    st.session_state["messages"] = [
+        {
+            "type": "function_call_output",
+            "output": [
+                {
+                    "type": "input_image",
+                    "image_url": image_payload,
+                }
+            ],
+        }
+    ]
+    st.session_state["vetted_files"] = {}
+
+    trace = build_analysis_trace()
+    session = build_research_session_from_streamlit(trace)
+
+    assert trace["outputs"][0]["output"][0]["image_url"]["type"] == "image_base64"
+    assert session.raw_outputs[0]["output"][0]["image_url"] == image_payload

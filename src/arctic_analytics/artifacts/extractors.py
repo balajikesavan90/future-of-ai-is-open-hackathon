@@ -70,7 +70,12 @@ def extract_generated_code(trace: dict[str, Any] | None) -> list[dict[str, str]]
     return snippets
 
 
-def write_outputs_and_figures(trace: dict[str, Any] | None, outputs_dir: Path, figures_dir: Path) -> list[Path]:
+def write_outputs_and_figures(
+    trace: dict[str, Any] | None,
+    outputs_dir: Path,
+    figures_dir: Path,
+    raw_outputs: list[Any] | None = None,
+) -> list[Path]:
     written = []
     outputs_dir.mkdir(parents=True, exist_ok=True)
     figures_dir.mkdir(parents=True, exist_ok=True)
@@ -80,19 +85,26 @@ def write_outputs_and_figures(trace: dict[str, Any] | None, outputs_dir: Path, f
         path.write_text("No analysis trace was provided, so tool outputs are unavailable.\n")
         return [path]
 
-    raw_outputs = trace.get("outputs", [])
-    for index, output in enumerate(raw_outputs, start=1):
+    outputs = trace.get("outputs", [])
+    figure_outputs = raw_outputs or outputs
+
+    written_figure_indexes = set()
+    for index, output in enumerate(figure_outputs, start=1):
         payload = output.get("output") if isinstance(output, dict) else output
         image_path = _write_image_payload(payload, figures_dir, index)
         if image_path is not None:
             written.append(image_path)
+            written_figure_indexes.add(index)
+
+    for index, output in enumerate(outputs, start=1):
+        if index in written_figure_indexes:
             continue
 
         path = outputs_dir / f"{index:03d}_output.json"
         path.write_text(json.dumps(json_safe(output), indent=2, default=str) + "\n")
         written.append(path)
 
-    if not raw_outputs:
+    if not outputs:
         path = outputs_dir / "outputs_empty.md"
         path.write_text("The analysis trace did not contain exported tool outputs.\n")
         written.append(path)

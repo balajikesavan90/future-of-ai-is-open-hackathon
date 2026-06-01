@@ -124,7 +124,7 @@ def save_openai_api_key_to_env(
     try:
         if path.exists():
             path.chmod(0o600)
-        with path.open("w", opener=lambda file, flags: os.open(file, flags, 0o600)) as handle:
+        with open(path, "w", opener=lambda file, flags: os.open(file, flags, 0o600)) as handle:
             handle.write("\n".join(lines) + "\n")
         path.chmod(0o600)
     except OSError as exc:

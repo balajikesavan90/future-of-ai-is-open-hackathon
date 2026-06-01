@@ -1,4 +1,6 @@
 import json
+import zipfile
+from io import BytesIO
 import re
 from pathlib import Path
 
@@ -90,6 +92,39 @@ def test_write_research_bundle_from_minimal_session(tmp_path):
     assert "sales['amount'].sum()" in (bundle.output_dir / "generated_code" / "001_run_python_expression.py").read_text()
     assert "Total sales were 3." in (bundle.output_dir / "outputs" / "final_answer.md").read_text()
     assert build_research_bundle_zip(session).startswith(b"PK")
+
+
+def test_research_bundle_writes_raw_image_outputs_from_sanitized_trace(tmp_path):
+    image_payload = "data:image/png;base64,iVBORw0KGgo="
+    session = ResearchSession(
+        analysis_trace=AnalysisTrace(
+            {
+                "outputs": [
+                    {
+                        "type": "function_call_output",
+                        "output": {
+                            "type": "image_base64",
+                            "media_type": "image/png",
+                            "truncated": True,
+                        },
+                    }
+                ],
+            }
+        ),
+        context_bundle=ContextBundle({}),
+        raw_outputs=[{"type": "function_call_output", "output": image_payload}],
+    )
+
+    bundle = write_research_bundle(session, tmp_path / "bundle")
+
+    figure_path = bundle.output_dir / "figures" / "001_figure.png"
+    assert figure_path.exists()
+    assert figure_path.read_bytes() == b"\x89PNG\r\n\x1a\n"
+    assert not (bundle.output_dir / "outputs" / "001_output.json").exists()
+
+    zip_bytes = build_research_bundle_zip(session)
+    with zipfile.ZipFile(BytesIO(zip_bytes)) as archive:
+        assert "research_bundle/figures/001_figure.png" in archive.namelist()
 
 
 def test_checked_in_sample_research_bundle_has_core_files():
