@@ -35,12 +35,11 @@ def main():
 
     st.header(":blue[Arctic Analytics]")
 
-    if not has_openai_api_key(secrets=st.secrets, environ=os.environ, session_state=st.session_state):
-        render_api_key_setup_screen()
-        return
-
     render_reset()
     render_api_key_setup_notice()
+
+    if not has_openai_api_key(secrets=st.secrets, environ=os.environ, session_state=st.session_state):
+        render_api_key_setup_screen()
 
     setup_home()
     if st.session_state["datasets_vetted"]:
