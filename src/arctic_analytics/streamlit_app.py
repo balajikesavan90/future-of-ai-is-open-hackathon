@@ -73,8 +73,13 @@ def render_api_key_setup_screen():
 
         st.session_state["OPENAI_API_KEY"] = cleaned_key
         if save_key:
-            save_openai_api_key_to_env(cleaned_key)
-            st.success("Saved OpenAI API key to local .env.")
+            try:
+                save_openai_api_key_to_env(cleaned_key)
+            except RuntimeError as exc:
+                st.error(str(exc))
+                st.info("The API key will be used for this Streamlit session, but it was not saved to `.env`.")
+            else:
+                st.success("Saved OpenAI API key to local .env.")
         else:
             st.success("OpenAI API key will be used for this Streamlit session.")
         st.rerun()
