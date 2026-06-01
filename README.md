@@ -244,7 +244,6 @@ cp .streamlit/secrets.example.toml .streamlit/secrets.toml
 Then edit `.streamlit/secrets.toml` with:
 
 ```toml
-ENV = "dev"
 OPENAI_API_KEY = "<Create an OpenAI account and add your API key here.>"
 ```
 
