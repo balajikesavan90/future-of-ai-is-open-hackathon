@@ -47,10 +47,9 @@ This methods draft is generated for review and publication support. Researchers 
 """
 
 
-def render_software_citation() -> str:
     return f"""# Software Citation
 
-Analyses were performed using Arctic Analytics v{__version__} (DOI: {DEFAULT_DOI}).
+Analyses were performed using Arctic Analytics v{__version__}. (See `citation.cff` for DOI and citation metadata.)
 
 Please cite the software using the repository `CITATION.cff` metadata and verify that the cited release, package version, and Zenodo record refer to the same version.
 """
