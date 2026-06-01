@@ -6,7 +6,7 @@
   ],
   "assistant_messages": [
     "Hello. Arctic Analytics can help generate metadata-aware analysis over your structured data.\nI have access to the metadata of the files you uploaded and will use that context to generate inspectable code for constrained execution.\n\n\nI have detected the following pandas dataframe:\n\nThe pandas dataframe :blue[tips] has :blue[244] rows with columns: :blue[total_bill, tip, sex, smoker, day, time, size].\n\n",
-    "The day with the **highest average tip percentage** is **Friday (Fri)**.\n\n### Average tip percentage by day\nTip percentage = `tip / total_bill`\n\n- **Fri:** 16.99%\n- **Sun:** 16.69%\n- **Thur:** 16.13%\n- **Sat:** 15.32%\n\nSo, **Friday has the highest average tip percentage** in this dataset."
+    "The day with the **highest average tip percentage** is **Friday**.\n\n### Average tip percentage by day\n- **Fri:** 16.99%\n- **Sun:** 16.69%\n- **Thur:** 16.13%\n- **Sat:** 15.32%\n\n### Method\nTip percentage was calculated as:\n\n\\[\n\\text{tip percentage} = \\frac{\\text{tip}}{\\text{total\\_bill}}\n\\]\n\nThen I averaged that value within each day."
   ],
   "note": "Prompts are exported for review. Model outputs may vary across runs and model versions."
 }
