@@ -1,5 +1,9 @@
+import os
+from types import SimpleNamespace
+
 import pytest
 
+import arctic_analytics.llm.openai_responses as openai_responses
 from arctic_analytics.llm.openai_responses import OpenAIResponsesUtility
 
 
@@ -7,6 +11,28 @@ def test_calculate_cost_returns_numeric_cost_for_known_model():
     client = OpenAIResponsesUtility()
 
     assert client._calculate_cost(1_000_000, 1_000_000, "gpt-5.4-nano-2026-03-17") == pytest.approx(1.45)
+
+
+def test_client_uses_session_api_key_without_mutating_environment(monkeypatch):
+    captured = {}
+
+    class FakeOpenAI:
+        def __init__(self, api_key):
+            captured["api_key"] = api_key
+
+    monkeypatch.setattr(
+        openai_responses,
+        "st",
+        SimpleNamespace(secrets={}, session_state={"OPENAI_API_KEY": "from-session"}),
+    )
+    monkeypatch.setattr(openai_responses, "OpenAI", FakeOpenAI)
+    monkeypatch.setenv("OPENAI_API_KEY", "from-env")
+
+    client = OpenAIResponsesUtility()._client()
+
+    assert isinstance(client, FakeOpenAI)
+    assert captured["api_key"] == "from-session"
+    assert os.environ["OPENAI_API_KEY"] == "from-env"
 
 
 def test_calculate_cost_rejects_unknown_model():

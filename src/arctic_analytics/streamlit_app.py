@@ -72,7 +72,6 @@ def render_api_key_setup_screen():
             return
 
         st.session_state["OPENAI_API_KEY"] = cleaned_key
-        os.environ["OPENAI_API_KEY"] = cleaned_key
         if save_key:
             save_openai_api_key_to_env(cleaned_key)
             st.success("Saved OpenAI API key to local .env.")
@@ -86,7 +85,6 @@ def render_api_key_setup_screen():
 def render_api_key_setup_notice():
     api_key = get_openai_api_key(secrets=st.secrets, environ=os.environ, session_state=st.session_state)
     if api_key:
-        os.environ["OPENAI_API_KEY"] = api_key
         return
 
     st.sidebar.warning("OpenAI API key not configured.")

@@ -72,11 +72,15 @@ def get_openai_api_key(
     session_state: Mapping[str, Any] | None = None,
     env_path: Path | str = DEFAULT_ENV_PATH,
 ) -> str | None:
+    if session_state is not None:
+        session_value = session_state.get("OPENAI_API_KEY")
+        if session_value:
+            return str(session_value)
+
     return get_config_value(
         "OPENAI_API_KEY",
         secrets=secrets,
         environ=environ,
-        session_state=session_state,
         env_path=env_path,
     )
 

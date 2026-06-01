@@ -2,6 +2,7 @@ import pytest
 
 from arctic_analytics.config import (
     get_config_value,
+    get_openai_api_key,
     has_openai_api_key,
     load_runtime_config,
     save_openai_api_key_to_env,
@@ -54,6 +55,18 @@ def test_config_loads_dotenv_before_environment(tmp_path):
             env_path=env_path,
         )
         == "from-dotenv"
+    )
+
+
+def test_openai_api_key_prefers_session_state():
+    assert (
+        get_openai_api_key(
+            secrets={"OPENAI_API_KEY": "from-secrets"},
+            environ={"OPENAI_API_KEY": "from-env"},
+            session_state={"OPENAI_API_KEY": "from-session"},
+            env_path="missing.env",
+        )
+        == "from-session"
     )
 
 
