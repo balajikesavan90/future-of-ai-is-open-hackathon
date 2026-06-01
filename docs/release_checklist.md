@@ -7,6 +7,7 @@ Use this checklist before creating a public release, package publication, or Zen
 - Update `src/arctic_analytics/__init__.py`.
 - Update `pyproject.toml`.
 - Update `CITATION.cff`.
+- Update `.zenodo.json`.
 - Verify the README citation section points to the current DOI or release DOI.
 - Verify the Zenodo record and repository release/tag refer to the same version.
 
