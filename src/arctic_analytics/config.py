@@ -103,8 +103,8 @@ def save_openai_api_key_to_env(
 ) -> Path:
     """Save the OpenAI key to a local .env file and restrict permissions when supported."""
     cleaned_key = api_key.strip()
-    if not cleaned_key:
-        raise ValueError("OpenAI API key cannot be empty.")
+    if not cleaned_key or "\n" in cleaned_key or "\r" in cleaned_key:
+        raise ValueError("OpenAI API key cannot be empty or contain newlines.")
 
     path = Path(env_path)
     existing = load_runtime_config(path)
