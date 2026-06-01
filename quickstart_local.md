@@ -75,7 +75,6 @@ cp .streamlit/secrets.example.toml .streamlit/secrets.toml
 Then edit `.streamlit/secrets.toml`:
 
 ```toml
-ENV = "dev"
 OPENAI_API_KEY = "your-openai-api-key"
 ```
 
