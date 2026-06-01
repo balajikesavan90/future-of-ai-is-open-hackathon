@@ -94,8 +94,7 @@ def render_api_key_setup_notice():
         "Set OPENAI_API_KEY in your shell or copy `.streamlit/secrets.example.toml` "
         "to `.streamlit/secrets.toml` before running agent analysis."
     )
-    with st.expander("Set up local API access", expanded=False):
-        st.write(
+    with st.sidebar.expander("Set up local API access", expanded=False):
             "You can still load sample data and review metadata, but agent analysis "
             "requires an OpenAI API key."
         )
