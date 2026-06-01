@@ -47,6 +47,7 @@ This methods draft is generated for review and publication support. Researchers 
 """
 
 
+def render_software_citation() -> str:
     return f"""# Software Citation
 
 Analyses were performed using Arctic Analytics v{__version__}. (See `citation.cff` for DOI and citation metadata.)
