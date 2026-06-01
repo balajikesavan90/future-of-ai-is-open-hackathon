@@ -6,12 +6,12 @@ import os
 import streamlit as st
 
 from arctic_analytics.config import (
-    get_config_value,
     get_openai_api_key,
     has_openai_api_key,
     save_openai_api_key_to_env,
 )
 from arctic_analytics.streamlit.helpers import (
+    is_dev_environment,
     render_reset,
     render_reset_analysis,
     render_session_state,
@@ -46,7 +46,7 @@ def main():
         render_reset_analysis()
     render_home()
 
-    if get_config_value("ENV", secrets=st.secrets, environ=os.environ, default="") == "dev":
+    if is_dev_environment():
         render_session_state()
 
     logging.info(f'############################### - {st.session_state["session_id"]}')

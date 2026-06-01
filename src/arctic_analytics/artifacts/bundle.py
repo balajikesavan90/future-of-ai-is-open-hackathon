@@ -215,18 +215,12 @@ def _file_sha256(filename: str | None) -> str | None:
         return None
 
     path = Path(filename)
-    candidates = [path]
-    if not path.is_absolute():
-        candidates.append(Path.cwd() / path)
-        candidates.append(Path(__file__).resolve().parents[3] / path)
-
-    for candidate in candidates:
-        if candidate.is_file():
-            digest = hashlib.sha256()
-            with candidate.open("rb") as handle:
-                for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-                    digest.update(chunk)
-            return digest.hexdigest()
+    if path.is_file():
+        digest = hashlib.sha256()
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return digest.hexdigest()
 
     return None
 

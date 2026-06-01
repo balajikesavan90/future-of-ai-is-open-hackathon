@@ -44,7 +44,7 @@ poetry run pytest
 
 Agent analysis requires an OpenAI API key. Choose one of the setup paths below. You do not need more than one.
 
-For local terminal runs, `.env` is preferred. The app checks `.env`, environment variables, Streamlit secrets, and the current Streamlit session.
+For local terminal runs, `.env` is preferred. The app checks the current Streamlit session, `.env`, environment variables, and Streamlit secrets.
 
 Option A, local `.env` path:
 
@@ -263,7 +263,7 @@ Poetry install:
 API key setup:
 
 - Agent analysis requires `OPENAI_API_KEY`.
-- The app checks `.env`, environment variables, Streamlit secrets, then the current Streamlit session.
+- The app checks the current Streamlit session, `.env`, environment variables, then Streamlit secrets.
 - If chat input is disabled, confirm the key is set in the same shell used to launch Streamlit.
 - If no key is found at launch, enter it in the setup screen and optionally save it to `.env`.
 
