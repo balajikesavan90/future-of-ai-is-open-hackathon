@@ -45,6 +45,7 @@ def goto_data_analysis_widget():
     logging.info(f'goto_data_analysis_widget - {st.session_state["session_id"]}')
     st.session_state['datasets_vetted'] = True
     if 'uploaded_files' in st.session_state.keys():
+        st.session_state['uploaded_file_names'] = _uploaded_file_names()
         del st.session_state['uploaded_files']
 
 def reset_analysis():
@@ -221,6 +222,23 @@ def _extract_raw_outputs(messages):
             )
     return outputs
 
+def _uploaded_file_names():
+    uploaded_file_names = st.session_state.get("uploaded_file_names")
+    if uploaded_file_names:
+        return [str(name) for name in uploaded_file_names]
+
+    uploaded_files = st.session_state.get("uploaded_files", [])
+    if uploaded_files:
+        return [getattr(file_obj, "name", str(file_obj)) for file_obj in uploaded_files]
+
+    source_filenames = []
+    for filename, file_info in st.session_state.get("vetted_files", {}).items():
+        if isinstance(file_info, dict):
+            source_filenames.append(str(file_info.get("source_filename") or filename))
+        else:
+            source_filenames.append(str(filename))
+    return source_filenames
+
 def _extract_errors(messages):
     errors = []
     for message in messages:
@@ -348,10 +366,7 @@ def build_research_session_from_streamlit(trace=None):
         "researcher_notes": st.session_state.get("researcher_notes", ""),
         "uploaded_context": {
             "source": st.session_state.get("source"),
-            "uploaded_files": [
-                getattr(file_obj, "name", str(file_obj))
-                for file_obj in st.session_state.get("uploaded_files", [])
-            ],
+            "uploaded_files": _uploaded_file_names(),
         },
         "assumptions": [],
         "limitations": [

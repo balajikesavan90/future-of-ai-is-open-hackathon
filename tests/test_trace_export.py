@@ -9,7 +9,11 @@ import pytest
 import streamlit as st
 from jsonschema import Draft202012Validator, FormatChecker, ValidationError
 
-from arctic_analytics.streamlit.helpers import build_analysis_trace, build_research_session_from_streamlit
+from arctic_analytics.streamlit.helpers import (
+    build_analysis_trace,
+    build_research_session_from_streamlit,
+    goto_data_analysis_widget,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -120,6 +124,14 @@ def test_sample_trace_export_matches_schema():
     validate_trace_schema(trace)
 
 
+def test_trace_schema_rejects_invalid_event_records():
+    trace = json.loads((ROOT / "examples" / "sample_trace_export.json").read_text())
+    trace["events"] = [{"summary": "missing required event fields"}]
+
+    with pytest.raises(ValidationError):
+        validate_trace_schema(trace)
+
+
 def test_trace_schema_accepts_dataset_metadata_without_legacy_columns_names():
     trace = json.loads((ROOT / "examples" / "sample_trace_export.json").read_text())
     del trace["dataset_metadata"]["tips"]["columns_names"]
@@ -170,3 +182,34 @@ def test_research_session_from_streamlit_preserves_raw_image_outputs_for_bundle(
 
     assert trace["outputs"][0]["output"][0]["image_url"]["type"] == "image_base64"
     assert session.raw_outputs[0]["output"][0]["image_url"] == image_payload
+
+
+def test_goto_data_analysis_preserves_uploaded_file_names_before_deleting_files():
+    st.session_state.clear()
+    st.session_state["session_id"] = "uploaded-names-test-session"
+    st.session_state["uploaded_files"] = [
+        type("Upload", (), {"name": "sales.csv"})(),
+        type("Upload", (), {"name": "inventory.csv"})(),
+    ]
+
+    goto_data_analysis_widget()
+
+    assert "uploaded_files" not in st.session_state
+    assert st.session_state["uploaded_file_names"] == ["sales.csv", "inventory.csv"]
+
+
+def test_research_session_uses_vetted_source_filenames_when_upload_objects_are_gone():
+    st.session_state.clear()
+    st.session_state["session_id"] = "vetted-source-filenames-test-session"
+    st.session_state["source"] = "uploader"
+    st.session_state["researcher_notes"] = ""
+    st.session_state["messages"] = []
+    st.session_state["vetted_files"] = {
+        "sales_2026": {"source_filename": "Sales 2026.csv"},
+        "inventory": {},
+    }
+
+    session = build_research_session_from_streamlit()
+
+    assert session.context_bundle.data["uploaded_context"]["uploaded_files"] == ["Sales 2026.csv", "inventory"]
+    assert session.source_files["uploaded_files"] == ["Sales 2026.csv", "inventory"]
