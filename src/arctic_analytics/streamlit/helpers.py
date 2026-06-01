@@ -321,7 +321,8 @@ def render_trace_export():
             )
 
 def build_research_session_from_streamlit(trace=None):
-    trace = trace or build_analysis_trace()
+    if trace is None:
+        trace = build_analysis_trace()
     context_bundle = {
         "context_bundle_version": "0.1.0",
         "prompt": st.session_state.get("prompt_str") or trace.get("prompt_str"),
