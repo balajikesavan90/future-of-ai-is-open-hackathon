@@ -86,7 +86,7 @@ def render_api_key_setup_screen():
 def render_api_key_setup_notice():
     api_key = get_openai_api_key(secrets=st.secrets, environ=os.environ, session_state=st.session_state)
     if api_key:
-        os.environ.setdefault("OPENAI_API_KEY", api_key)
+        os.environ["OPENAI_API_KEY"] = api_key
         return
 
     st.sidebar.warning("OpenAI API key not configured.")
@@ -95,6 +95,7 @@ def render_api_key_setup_notice():
         "to `.streamlit/secrets.toml` before running agent analysis."
     )
     with st.sidebar.expander("Set up local API access", expanded=False):
+        st.write(
             "You can still load sample data and review metadata, but agent analysis "
             "requires an OpenAI API key."
         )

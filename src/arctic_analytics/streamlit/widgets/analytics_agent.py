@@ -142,7 +142,7 @@ def render_analytics_agent():
         MAX_CHARS = None
     api_key = get_openai_api_key(secrets=st.secrets, environ=os.environ, session_state=st.session_state)
     if api_key:
-        os.environ.setdefault("OPENAI_API_KEY", api_key)
+        os.environ["OPENAI_API_KEY"] = api_key
     api_key_available = has_openai_api_key(secrets=st.secrets, environ=os.environ, session_state=st.session_state)
     if not api_key_available:
         st.warning("Configure `OPENAI_API_KEY` before running agent analysis.")
