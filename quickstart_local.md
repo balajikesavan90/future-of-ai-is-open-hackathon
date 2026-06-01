@@ -281,7 +281,6 @@ Environment variable fallback:
 
 ```bash
 export OPENAI_API_KEY="your-openai-api-key"
-export ENV="dev"
 poetry run arctic-analytics-app
 ```
 
