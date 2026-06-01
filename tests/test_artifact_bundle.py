@@ -84,7 +84,7 @@ def test_write_research_bundle_from_minimal_session(tmp_path):
     assert (bundle.output_dir / "methods.md").read_text().startswith("# Draft Methods")
     context = json.loads((bundle.output_dir / "context_bundle.json").read_text())
     assert context["researcher_notes"] == "Reviewed by analyst."
-    assert "sales['amount'].sum()" in (bundle.output_dir / "generated_code" / "step_01_analyze_dataset.py").read_text()
+    assert "sales['amount'].sum()" in (bundle.output_dir / "generated_code" / "001_run_python_expression.py").read_text()
     assert "Total sales were 3." in (bundle.output_dir / "outputs" / "final_answer.md").read_text()
     assert build_research_bundle_zip(session).startswith(b"PK")
 
