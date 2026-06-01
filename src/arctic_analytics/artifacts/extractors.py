@@ -129,10 +129,12 @@ def _message_text(message: dict[str, Any]) -> str | None:
     content = message.get("content")
     if not isinstance(content, list) or not content:
         return None
-    first = content[0]
-    if isinstance(first, dict):
-        return first.get("text")
-    return None
+    texts = [
+        str(item["text"])
+        for item in content
+        if isinstance(item, dict) and item.get("text")
+    ]
+    return "\n".join(texts) if texts else None
 
 
 def _parse_arguments(raw_arguments: Any) -> dict[str, Any]:
