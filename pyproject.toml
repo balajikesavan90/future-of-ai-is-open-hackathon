@@ -7,6 +7,7 @@ readme = "README.md"
 license = "MIT"
 repository = "https://github.com/balajikesavan90/arctic-analytics"
 packages = [{include = "arctic_analytics", from = "src"}]
+include = [{path = "src/arctic_analytics/CITATION.cff", format = ["sdist", "wheel"]}]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",

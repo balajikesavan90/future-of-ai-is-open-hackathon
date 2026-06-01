@@ -82,6 +82,9 @@ def test_write_research_bundle_from_minimal_session(tmp_path):
     assert SHA256_PATTERN.match(manifest["analysis_trace_sha256"])
     assert (bundle.output_dir / "context_bundle.json").exists()
     assert (bundle.output_dir / "methods.md").read_text().startswith("# Draft Methods")
+    citation = (bundle.output_dir / "citation.cff").read_text()
+    assert "doi: 10.5281/zenodo.18514535" in citation
+    assert "family-names: Kesavan" in citation
     context = json.loads((bundle.output_dir / "context_bundle.json").read_text())
     assert context["researcher_notes"] == "Reviewed by analyst."
     assert "sales['amount'].sum()" in (bundle.output_dir / "generated_code" / "001_run_python_expression.py").read_text()

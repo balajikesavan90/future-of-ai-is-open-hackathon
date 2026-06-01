@@ -5,12 +5,12 @@ from __future__ import annotations
 import hashlib
 import json
 import platform
-import shutil
 import sys
 import tempfile
 import zipfile
 from datetime import datetime, timezone
 from importlib import metadata
+from importlib import resources
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -241,12 +241,11 @@ def _trace_sha256(session: ResearchSession) -> str | None:
 
 
 def _copy_citation(destination: Path) -> Path:
-    root = Path(__file__).resolve().parents[3]
-    source = root / "CITATION.cff"
-    if source.exists():
-        shutil.copyfile(source, destination)
-    else:
-        destination.write_text("message: Cite Arctic Analytics using the repository CITATION.cff metadata.\n")
+    try:
+        citation_text = resources.files("arctic_analytics").joinpath("CITATION.cff").read_text()
+    except (FileNotFoundError, ModuleNotFoundError):
+        citation_text = "message: Cite Arctic Analytics using the repository CITATION.cff metadata.\n"
+    destination.write_text(citation_text)
     return destination
 
 
