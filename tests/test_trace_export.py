@@ -10,6 +10,9 @@ import streamlit as st
 from jsonschema import Draft202012Validator, FormatChecker, ValidationError
 
 from arctic_analytics.streamlit.helpers import (
+    _clear_research_bundle_cache,
+    _research_bundle_cache_is_current,
+    _research_bundle_fingerprint,
     build_analysis_trace,
     build_research_session_from_streamlit,
     goto_data_analysis_widget,
@@ -213,3 +216,59 @@ def test_research_session_uses_vetted_source_filenames_when_upload_objects_are_g
 
     assert session.context_bundle.data["uploaded_context"]["uploaded_files"] == ["Sales 2026.csv", "inventory"]
     assert session.source_files["uploaded_files"] == ["Sales 2026.csv", "inventory"]
+
+
+def test_research_bundle_fingerprint_ignores_trace_timestamp():
+    st.session_state.clear()
+    st.session_state["session_id"] = "fingerprint-test-session"
+    st.session_state["researcher_notes"] = "Reviewed."
+    st.session_state["messages"] = []
+    st.session_state["vetted_files"] = {}
+
+    trace = build_analysis_trace()
+    same_trace_new_timestamp = dict(trace)
+    same_trace_new_timestamp["timestamp"] = "2099-01-01T00:00:00+00:00"
+
+    assert _research_bundle_fingerprint(trace) == _research_bundle_fingerprint(same_trace_new_timestamp)
+
+
+def test_research_bundle_cache_invalidates_when_inputs_change():
+    st.session_state.clear()
+    st.session_state["session_id"] = "bundle-cache-test-session"
+    st.session_state["researcher_notes"] = "Initial notes."
+    st.session_state["messages"] = []
+    st.session_state["vetted_files"] = {}
+    st.session_state["research_bundle_zip"] = b"zip"
+    st.session_state["research_bundle_session_id"] = "bundle-cache-test-session"
+    st.session_state["research_bundle_fingerprint"] = _research_bundle_fingerprint()
+
+    assert _research_bundle_cache_is_current() is True
+
+    st.session_state["researcher_notes"] = "Edited notes."
+
+    assert _research_bundle_cache_is_current() is False
+
+    _clear_research_bundle_cache()
+
+    assert "research_bundle_zip" not in st.session_state
+    assert "research_bundle_session_id" not in st.session_state
+    assert "research_bundle_fingerprint" not in st.session_state
+
+
+def test_research_bundle_cache_invalidates_when_messages_change():
+    st.session_state.clear()
+    st.session_state["session_id"] = "bundle-message-cache-test-session"
+    st.session_state["researcher_notes"] = ""
+    st.session_state["messages"] = []
+    st.session_state["vetted_files"] = {}
+    st.session_state["research_bundle_fingerprint"] = _research_bundle_fingerprint()
+
+    st.session_state["messages"] = [
+        {
+            "type": "message",
+            "role": "user",
+            "content": [{"type": "input_text", "text": "New analysis request."}],
+        }
+    ]
+
+    assert _research_bundle_cache_is_current() is False

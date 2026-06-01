@@ -2,6 +2,7 @@ import streamlit as st
 import uuid
 import logging
 import json
+import hashlib
 from datetime import datetime, timezone
 import pandas as pd
 import matplotlib.figure as mfigure
@@ -346,15 +347,45 @@ def render_trace_export():
             session = build_research_session_from_streamlit(trace)
             st.session_state["research_bundle_zip"] = build_research_bundle_zip(session)
             st.session_state["research_bundle_session_id"] = trace.get("session_id", "session")
+            st.session_state["research_bundle_fingerprint"] = _research_bundle_fingerprint(trace)
 
         if "research_bundle_zip" in st.session_state:
-            st.download_button(
-                label="Export Research Bundle",
-                data=st.session_state["research_bundle_zip"],
-                file_name=f"arctic_analytics_research_bundle_{st.session_state.get('research_bundle_session_id', 'session')}.zip",
-                mime="application/zip",
-                key="download_research_bundle",
-            )
+            if _research_bundle_cache_is_current():
+                st.download_button(
+                    label="Export Research Bundle",
+                    data=st.session_state["research_bundle_zip"],
+                    file_name=f"arctic_analytics_research_bundle_{st.session_state.get('research_bundle_session_id', 'session')}.zip",
+                    mime="application/zip",
+                    key="download_research_bundle",
+                )
+            else:
+                _clear_research_bundle_cache()
+                st.info("Analysis inputs changed. Prepare the research bundle again before exporting.")
+
+def _research_bundle_fingerprint(trace=None):
+    if trace is None:
+        trace = build_analysis_trace()
+    trace_for_hash = dict(trace)
+    trace_for_hash.pop("timestamp", None)
+    payload = {
+        "trace": trace_for_hash,
+        "researcher_notes": st.session_state.get("researcher_notes", ""),
+        "uploaded_context": {
+            "source": st.session_state.get("source"),
+            "uploaded_files": _uploaded_file_names(),
+        },
+        "raw_outputs": _json_safe(_extract_raw_outputs(st.session_state.get("messages", []))),
+    }
+    encoded = json.dumps(_json_safe(payload), sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+def _research_bundle_cache_is_current():
+    return st.session_state.get("research_bundle_fingerprint") == _research_bundle_fingerprint()
+
+def _clear_research_bundle_cache():
+    for key in ("research_bundle_zip", "research_bundle_session_id", "research_bundle_fingerprint"):
+        if key in st.session_state:
+            del st.session_state[key]
 
 def build_research_session_from_streamlit(trace=None):
     if trace is None:
