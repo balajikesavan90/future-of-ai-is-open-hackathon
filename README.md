@@ -233,7 +233,6 @@ Environment variables are also supported:
 
 ```bash
 export OPENAI_API_KEY="<your OpenAI API key>"
-export ENV="dev"
 ```
 
 Streamlit secrets are also supported:
