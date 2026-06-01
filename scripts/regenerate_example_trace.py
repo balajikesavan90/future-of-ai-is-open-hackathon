@@ -103,6 +103,8 @@ def build_context_bundle(dataset_path, metadata_path, trace_path, trace, prompt)
 def build_research_session(trace, prompt, dataset_path, metadata_path, trace_path):
     from arctic_analytics.artifacts import AnalysisTrace, ContextBundle, ResearchSession
 
+    from arctic_analytics.streamlit.helpers import _extract_raw_outputs
+
     return ResearchSession(
         prompt=prompt,
         analysis_trace=AnalysisTrace(trace),
@@ -118,6 +120,7 @@ def build_research_session(trace, prompt, dataset_path, metadata_path, trace_pat
             "The checked-in bundle is illustrative and is not a deterministic replay artifact.",
         ],
         command="streamlit research bundle export",
+        raw_outputs=_extract_raw_outputs(st.session_state.get("messages", [])),
     )
 
 
