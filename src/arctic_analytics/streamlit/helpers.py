@@ -224,13 +224,13 @@ def _extract_raw_outputs(messages):
     return outputs
 
 def _uploaded_file_names():
-    uploaded_file_names = st.session_state.get("uploaded_file_names")
-    if uploaded_file_names:
-        return [str(name) for name in uploaded_file_names]
-
     uploaded_files = st.session_state.get("uploaded_files", [])
     if uploaded_files:
         return [getattr(file_obj, "name", str(file_obj)) for file_obj in uploaded_files]
+
+    uploaded_file_names = st.session_state.get("uploaded_file_names")
+    if uploaded_file_names and st.session_state.get("source") == "uploader":
+        return [str(name) for name in uploaded_file_names]
 
     source_filenames = []
     for filename, file_info in st.session_state.get("vetted_files", {}).items():
