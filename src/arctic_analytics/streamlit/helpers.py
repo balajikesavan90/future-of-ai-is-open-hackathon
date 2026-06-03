@@ -401,9 +401,9 @@ def _research_bundle_fingerprint(trace=None):
             "source": st.session_state.get("source"),
             "uploaded_files": _uploaded_file_names(),
         },
-        "raw_outputs": _json_safe(_extract_raw_outputs(st.session_state.get("messages", []))),
+        "raw_outputs": _extract_raw_outputs(st.session_state.get("messages", [])),
     }
-    encoded = json.dumps(_json_safe(payload), sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
 
 def _research_bundle_cache_is_current():
