@@ -74,7 +74,10 @@ def build_research_bundle_zip(session: ResearchSession) -> bytes:
         zip_path = Path(tmpdir) / "research_bundle.zip"
         with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
             for path in sorted(bundle_dir.rglob("*")):
-                if path.is_file():
+                archive_name = path.relative_to(bundle_dir.parent).as_posix()
+                if path.is_dir():
+                    archive.writestr(f"{archive_name}/", "")
+                elif path.is_file():
                     archive.write(path, path.relative_to(bundle_dir.parent))
         return zip_path.read_bytes()
 
