@@ -113,10 +113,9 @@ def save_openai_api_key_to_env(
     path = Path(env_path)
     existing = load_runtime_config(path)
     existing.setdefault("LLM_PROVIDER", "openai")
-    existing.setdefault("OPENAI_MODEL", DEFAULT_OPENAI_MODEL)
     existing["OPENAI_API_KEY"] = cleaned_key
 
-    ordered_keys = ["LLM_PROVIDER", "OPENAI_MODEL", "OPENAI_API_KEY"]
+    ordered_keys = ["LLM_PROVIDER", "OPENAI_API_KEY"]
     lines = [f"{key}={existing[key]}" for key in ordered_keys if key in existing]
     for key in sorted(set(existing) - set(ordered_keys)):
         lines.append(f"{key}={existing[key]}")

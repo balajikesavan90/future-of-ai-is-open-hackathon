@@ -3,7 +3,7 @@ import logging
 import time
 import os
 
-from arctic_analytics.config import has_openai_api_key
+from arctic_analytics.config import DEFAULT_OPENAI_MODEL, has_openai_api_key
 from arctic_analytics.llm.ai import construct_welcome_message, generate_ai_response
 from arctic_analytics.core.system_messages import construct_system_message
 
@@ -25,7 +25,7 @@ def render_analytics_agent():
     st.divider()
 
     if not is_dev_environment():
-        st.session_state['model'] = 'gpt-5.4-mini-2026-03-17'
+        st.session_state['model'] = DEFAULT_OPENAI_MODEL
     else:
         st.session_state['model'] = st.sidebar.selectbox(
             label = 'Model',

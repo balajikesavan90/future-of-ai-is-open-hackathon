@@ -16,6 +16,7 @@ from arctic_analytics.streamlit.helpers import (
     build_analysis_trace,
     build_research_session_from_streamlit,
     goto_data_analysis_widget,
+    redact_sensitive_session_state,
 )
 
 
@@ -272,3 +273,28 @@ def test_research_bundle_cache_invalidates_when_messages_change():
     ]
 
     assert _research_bundle_cache_is_current() is False
+
+
+def test_redact_sensitive_session_state_hides_credentials_without_mutating_original():
+    session_state = {
+        "OPENAI_API_KEY": "sk-test",
+        "session_id": "safe-session-id",
+        "nested": {
+            "access_token": "token-value",
+            "visible": "not-sensitive",
+        },
+        "items": [
+            {"password": "password-value"},
+            {"label": "safe-label"},
+        ],
+    }
+
+    redacted = redact_sensitive_session_state(session_state)
+
+    assert redacted["OPENAI_API_KEY"] == "[redacted]"
+    assert redacted["session_id"] == "safe-session-id"
+    assert redacted["nested"]["access_token"] == "[redacted]"
+    assert redacted["nested"]["visible"] == "not-sensitive"
+    assert redacted["items"][0]["password"] == "[redacted]"
+    assert redacted["items"][1]["label"] == "safe-label"
+    assert session_state["OPENAI_API_KEY"] == "sk-test"

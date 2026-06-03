@@ -225,7 +225,6 @@ Then edit `.env`:
 
 ```text
 LLM_PROVIDER=openai
-OPENAI_MODEL=gpt-5.4-mini-2026-03-17
 OPENAI_API_KEY=your_openai_api_key_here
 ```
 

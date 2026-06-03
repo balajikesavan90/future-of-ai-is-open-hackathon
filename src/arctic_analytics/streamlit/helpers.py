@@ -3,6 +3,7 @@ import uuid
 import logging
 import json
 import hashlib
+from collections.abc import Mapping
 from datetime import datetime, timezone
 import pandas as pd
 import matplotlib.figure as mfigure
@@ -18,6 +19,8 @@ from arctic_analytics.artifacts import (
 
 MAX_TRACE_STRING_CHARS = 10000
 TRACE_STRING_PREVIEW_CHARS = 1000
+REDACTED_SECRET_VALUE = "[redacted]"
+SENSITIVE_SESSION_KEY_MARKERS = ("api_key", "token", "password", "secret")
 
 def setup_session_state():
     logging.info(f'###############################')
@@ -72,7 +75,31 @@ def render_reset_analysis():
 
 def render_session_state():
     logging.info(f'render_session_state - {st.session_state["session_id"]}')
-    st.sidebar.write(st.session_state)
+    st.sidebar.write(redact_sensitive_session_state(st.session_state))
+
+def redact_sensitive_session_state(session_state):
+    return {
+        key: _redact_sensitive_value(key, value)
+        for key, value in session_state.items()
+    }
+
+def _redact_sensitive_value(key, value):
+    if _is_sensitive_session_key(key):
+        return REDACTED_SECRET_VALUE
+    if isinstance(value, Mapping):
+        return {
+            nested_key: _redact_sensitive_value(nested_key, nested_value)
+            for nested_key, nested_value in value.items()
+        }
+    if isinstance(value, list):
+        return [_redact_sensitive_value(key, item) for item in value]
+    if isinstance(value, tuple):
+        return tuple(_redact_sensitive_value(key, item) for item in value)
+    return value
+
+def _is_sensitive_session_key(key):
+    normalized_key = str(key).lower()
+    return any(marker in normalized_key for marker in SENSITIVE_SESSION_KEY_MARKERS)
 
 def disable_sample_button():
     st.session_state['disable_sample_button'] = True

@@ -78,7 +78,6 @@ def test_save_openai_api_key_to_env(tmp_path):
     assert saved_path == env_path
     config = load_runtime_config(env_path)
     assert config["LLM_PROVIDER"] == "openai"
-    assert config["OPENAI_MODEL"]
     assert config["OPENAI_API_KEY"] == "sk-test"
 
 
