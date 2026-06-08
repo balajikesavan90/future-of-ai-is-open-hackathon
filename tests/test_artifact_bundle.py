@@ -127,6 +127,34 @@ def test_research_bundle_writes_raw_image_outputs_from_sanitized_trace(tmp_path)
         assert "research_bundle/figures/001_figure.png" in archive.namelist()
 
 
+def test_research_bundle_skips_invalid_raw_image_payloads(tmp_path):
+    session = ResearchSession(
+        analysis_trace=AnalysisTrace(
+            {
+                "outputs": [
+                    {
+                        "type": "function_call_output",
+                        "output": {
+                            "type": "image_base64",
+                            "media_type": "image/png",
+                            "truncated": True,
+                        },
+                    }
+                ],
+            }
+        ),
+        context_bundle=ContextBundle({}),
+        raw_outputs=[{"type": "function_call_output", "output": "data:image/png;base64,not valid base64"}],
+    )
+
+    bundle = write_research_bundle(session, tmp_path / "bundle")
+
+    assert not (bundle.output_dir / "figures" / "001_figure.png").exists()
+    output_path = bundle.output_dir / "outputs" / "001_output.json"
+    assert output_path.exists()
+    assert json.loads(output_path.read_text())["output"]["type"] == "image_base64"
+
+
 def test_checked_in_sample_research_bundle_has_core_files():
     sample_bundle = ROOT / "examples" / "sample_research_bundle"
     expected = [

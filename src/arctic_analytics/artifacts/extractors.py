@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import binascii
 import json
 from pathlib import Path
 from typing import Any
@@ -158,7 +159,10 @@ def _write_image_payload(payload: Any, figures_dir: Path, index: int) -> Path | 
         header, _, encoded = payload.partition(",")
         extension = header.split("/")[1].split(";")[0] or "png"
         path = figures_dir / f"{index:03d}_figure.{extension}"
-        path.write_bytes(base64.b64decode(encoded))
+        try:
+            path.write_bytes(base64.b64decode(encoded, validate=True))
+        except (binascii.Error, ValueError):
+            return None
         return path
 
     if isinstance(payload, list):
