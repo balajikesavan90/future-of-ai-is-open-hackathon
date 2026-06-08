@@ -4,6 +4,7 @@ from io import BytesIO
 import re
 from pathlib import Path
 
+import arctic_analytics.artifacts.bundle as bundle_module
 from arctic_analytics.artifacts import (
     AnalysisTrace,
     ContextBundle,
@@ -125,6 +126,37 @@ def test_research_bundle_writes_raw_image_outputs_from_sanitized_trace(tmp_path)
     zip_bytes = build_research_bundle_zip(session)
     with zipfile.ZipFile(BytesIO(zip_bytes)) as archive:
         assert "research_bundle/figures/001_figure.png" in archive.namelist()
+
+
+def test_research_bundle_zip_uses_posix_archive_names(monkeypatch):
+    arcnames = []
+
+    class RecordingZipFile:
+        def __init__(self, path, mode, compression):
+            self.path = Path(path)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            self.path.write_bytes(b"PK")
+
+        def writestr(self, arcname, content):
+            arcnames.append(arcname)
+
+        def write(self, path, arcname):
+            arcnames.append(arcname)
+
+    monkeypatch.setattr(bundle_module.zipfile, "ZipFile", RecordingZipFile)
+    session = ResearchSession(
+        analysis_trace=AnalysisTrace({"outputs": []}),
+        context_bundle=ContextBundle({}),
+    )
+
+    assert build_research_bundle_zip(session) == b"PK"
+    assert arcnames
+    assert all(isinstance(arcname, str) for arcname in arcnames)
+    assert all("\\" not in arcname for arcname in arcnames)
 
 
 def test_research_bundle_skips_invalid_raw_image_payloads(tmp_path):

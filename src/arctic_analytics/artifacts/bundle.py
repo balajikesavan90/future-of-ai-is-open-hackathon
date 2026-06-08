@@ -78,7 +78,7 @@ def build_research_bundle_zip(session: ResearchSession) -> bytes:
                 if path.is_dir():
                     archive.writestr(f"{archive_name}/", "")
                 elif path.is_file():
-                    archive.write(path, path.relative_to(bundle_dir.parent))
+                    archive.write(path, archive_name)
         return zip_path.read_bytes()
 
 

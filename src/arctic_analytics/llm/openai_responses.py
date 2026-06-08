@@ -19,12 +19,17 @@ from arctic_analytics.llm.tokenization import safe_encoding_for_model
 class OpenAIResponsesUtility:
     def __init__(self):
         self.enc_gpt4 = safe_encoding_for_model("gpt-4")
+        self._openai_api_key = None
+        self._openai_client = None
 
     def _client(self):
         api_key = get_openai_api_key(secrets=st.secrets, session_state=st.session_state)
         if not api_key:
             raise RuntimeError("OpenAI API key is not configured for this session.")
-        return OpenAI(api_key=api_key)
+        if self._openai_client is None or self._openai_api_key != api_key:
+            self._openai_api_key = api_key
+            self._openai_client = OpenAI(api_key=api_key)
+        return self._openai_client
 
     def _calculate_cost(self, prompt_tokens, completion_tokens=0, model=''):
         """

@@ -81,6 +81,20 @@ def test_save_openai_api_key_to_env(tmp_path):
     assert config["OPENAI_API_KEY"] == "sk-test"
 
 
+def test_save_openai_api_key_writes_when_chmod_is_unsupported(tmp_path, monkeypatch):
+    env_path = tmp_path / ".env"
+
+    def unsupported_chmod(self, mode):
+        raise OSError("chmod unsupported")
+
+    monkeypatch.setattr(type(env_path), "chmod", unsupported_chmod)
+
+    saved_path = save_openai_api_key_to_env("sk-test", env_path=env_path)
+
+    assert saved_path == env_path
+    assert load_runtime_config(env_path)["OPENAI_API_KEY"] == "sk-test"
+
+
 def test_save_openai_api_key_rejects_empty_value(tmp_path):
     with pytest.raises(ValueError):
         save_openai_api_key_to_env(" ", env_path=tmp_path / ".env")

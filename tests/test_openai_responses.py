@@ -35,6 +35,33 @@ def test_client_uses_session_api_key_without_mutating_environment(monkeypatch):
     assert os.environ["OPENAI_API_KEY"] == "from-env"
 
 
+def test_client_is_reused_until_api_key_changes(monkeypatch):
+    created_clients = []
+    session_state = {"OPENAI_API_KEY": "first-key"}
+
+    class FakeOpenAI:
+        def __init__(self, api_key):
+            self.api_key = api_key
+            created_clients.append(self)
+
+    monkeypatch.setattr(
+        openai_responses,
+        "st",
+        SimpleNamespace(secrets={}, session_state=session_state),
+    )
+    monkeypatch.setattr(openai_responses, "OpenAI", FakeOpenAI)
+
+    utility = OpenAIResponsesUtility()
+    first_client = utility._client()
+    second_client = utility._client()
+    session_state["OPENAI_API_KEY"] = "second-key"
+    third_client = utility._client()
+
+    assert second_client is first_client
+    assert third_client is not first_client
+    assert [client.api_key for client in created_clients] == ["first-key", "second-key"]
+
+
 def test_calculate_cost_rejects_unknown_model():
     client = OpenAIResponsesUtility()
 

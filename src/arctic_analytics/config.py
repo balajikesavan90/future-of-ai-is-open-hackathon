@@ -121,11 +121,28 @@ def save_openai_api_key_to_env(
         lines.append(f"{key}={existing[key]}")
 
     try:
-        if path.exists():
-            path.chmod(0o600)
-        with open(path, "w", opener=lambda file, flags: os.open(file, flags, 0o600)) as handle:
-            handle.write("\n".join(lines) + "\n")
-        path.chmod(0o600)
+        _write_env_file(path, "\n".join(lines) + "\n")
     except OSError as exc:
-        raise RuntimeError(f"Unable to write {path} with restricted permissions.") from exc
+        raise RuntimeError(f"Unable to write {path}.") from exc
     return path
+
+
+def _write_env_file(path: Path, content: str) -> None:
+    if os.name == "posix":
+        _restrict_file_permissions(path)
+        with open(path, "w", opener=lambda file, flags: os.open(file, flags, 0o600)) as handle:
+            handle.write(content)
+        _restrict_file_permissions(path)
+        return
+
+    path.write_text(content)
+    _restrict_file_permissions(path)
+
+
+def _restrict_file_permissions(path: Path) -> None:
+    if not path.exists():
+        return
+    try:
+        path.chmod(0o600)
+    except OSError:
+        pass
