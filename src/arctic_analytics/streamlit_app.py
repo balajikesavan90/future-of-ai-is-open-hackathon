@@ -94,14 +94,14 @@ def render_api_key_setup_notice():
 
     st.sidebar.warning("OpenAI API key not configured.")
     st.sidebar.caption(
-        "Set OPENAI_API_KEY in your shell or copy `.streamlit/secrets.example.toml` "
-        "to `.streamlit/secrets.toml` before running agent analysis."
+        "Set OPENAI_API_KEY in local `.env`, your shell, or Streamlit secrets before running agent analysis."
     )
     with st.sidebar.expander("Set up local API access", expanded=False):
         st.write(
             "You can still load sample data and review metadata, but agent analysis "
             "requires an OpenAI API key."
         )
+        st.code("cp .env.example .env\n# then edit .env and set OPENAI_API_KEY", language="bash")
         st.code("export OPENAI_API_KEY='your-key-here'\npoetry run arctic-analytics-app", language="bash")
         st.code(
             "cp .streamlit/secrets.example.toml .streamlit/secrets.toml\n"

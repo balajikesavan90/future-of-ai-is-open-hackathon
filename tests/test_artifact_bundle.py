@@ -197,6 +197,10 @@ def test_software_citation_uses_doi_from_citation_cff(monkeypatch):
     assert "10.5281/zenodo.18514535" not in citation
 
 
+def test_root_and_packaged_citation_cff_match():
+    assert (ROOT / "CITATION.cff").read_text() == (ROOT / "src" / "arctic_analytics" / "CITATION.cff").read_text()
+
+
 def test_research_bundle_skips_invalid_raw_image_payloads(tmp_path):
     session = ResearchSession(
         analysis_trace=AnalysisTrace(
