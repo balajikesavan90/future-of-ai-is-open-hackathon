@@ -285,7 +285,7 @@ def _system_message_from_messages(messages):
 def build_analysis_trace():
     messages = st.session_state.get("messages", [])
     return {
-        "trace_schema_version": "0.1.0",
+        "trace_schema_version": "0.2.0",
         "package_version": __version__,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "session_id": st.session_state.get("session_id"),
