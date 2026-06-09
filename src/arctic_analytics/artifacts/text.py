@@ -5,11 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 from arctic_analytics import __version__
+from arctic_analytics.artifacts.citation import citation_doi
 from arctic_analytics.artifacts.extractors import extract_generated_code
 from arctic_analytics.artifacts.models import ResearchSession
-
-
-DEFAULT_DOI = "10.5281/zenodo.18514535"
 
 
 def render_methods(session: ResearchSession) -> str:
@@ -48,9 +46,11 @@ This methods draft is generated for review and publication support. Researchers 
 
 
 def render_software_citation() -> str:
+    doi = citation_doi()
+    doi_text = f" (DOI: {doi})" if doi else ""
     return f"""# Software Citation
 
-Analyses were performed using Arctic Analytics v{__version__} (DOI: {DEFAULT_DOI}). (See `citation.cff` for full citation metadata.)
+Analyses were performed using Arctic Analytics v{__version__}{doi_text}. (See `citation.cff` for full citation metadata.)
 
 Please cite the software using the repository `CITATION.cff` metadata and verify that the cited release, package version, and Zenodo record refer to the same version.
 """

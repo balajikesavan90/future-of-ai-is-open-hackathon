@@ -4,7 +4,9 @@ from io import BytesIO
 import re
 from pathlib import Path
 
+import arctic_analytics.artifacts.citation as citation_module
 import arctic_analytics.artifacts.bundle as bundle_module
+from arctic_analytics.artifacts.text import render_software_citation
 from arctic_analytics.artifacts import (
     AnalysisTrace,
     ContextBundle,
@@ -157,6 +159,42 @@ def test_research_bundle_zip_uses_posix_archive_names(monkeypatch):
     assert arcnames
     assert all(isinstance(arcname, str) for arcname in arcnames)
     assert all("\\" not in arcname for arcname in arcnames)
+
+
+def test_research_bundle_writes_valid_fallback_citation_cff(tmp_path, monkeypatch):
+    def missing_resources(package):
+        raise ModuleNotFoundError(package)
+
+    monkeypatch.setattr(citation_module.resources, "files", missing_resources)
+    session = ResearchSession(
+        analysis_trace=AnalysisTrace({"outputs": []}),
+        context_bundle=ContextBundle({}),
+    )
+
+    bundle = write_research_bundle(session, tmp_path / "bundle")
+    citation = (bundle.output_dir / "citation.cff").read_text()
+
+    assert citation.startswith("cff-version: 1.2.0\n")
+    assert 'message: "If you use this software, please cite it as below."' in citation
+    assert "title: \"Arctic Analytics\"" in citation
+    assert "doi: 10.5281/zenodo.18514535" in citation
+
+
+def test_software_citation_uses_doi_from_citation_cff(monkeypatch):
+    class CitationResource:
+        def joinpath(self, filename):
+            assert filename == "CITATION.cff"
+            return self
+
+        def read_text(self):
+            return "cff-version: 1.2.0\ndoi: 10.1234/example-doi\n"
+
+    monkeypatch.setattr(citation_module.resources, "files", lambda package: CitationResource())
+
+    citation = render_software_citation()
+
+    assert "DOI: 10.1234/example-doi" in citation
+    assert "10.5281/zenodo.18514535" not in citation
 
 
 def test_research_bundle_skips_invalid_raw_image_payloads(tmp_path):

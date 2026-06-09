@@ -10,12 +10,12 @@ import tempfile
 import zipfile
 from datetime import datetime, timezone
 from importlib import metadata
-from importlib import resources
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
 from arctic_analytics import __version__
+from arctic_analytics.artifacts.citation import citation_cff_text
 from arctic_analytics.artifacts.extractors import (
     extract_generated_code,
     extract_prompts,
@@ -244,11 +244,7 @@ def _trace_sha256(session: ResearchSession) -> str | None:
 
 
 def _copy_citation(destination: Path) -> Path:
-    try:
-        citation_text = resources.files("arctic_analytics").joinpath("CITATION.cff").read_text()
-    except (FileNotFoundError, ModuleNotFoundError):
-        citation_text = "message: Cite Arctic Analytics using the repository CITATION.cff metadata.\n"
-    destination.write_text(citation_text)
+    destination.write_text(citation_cff_text())
     return destination
 
 
