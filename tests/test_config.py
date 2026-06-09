@@ -95,6 +95,21 @@ def test_save_openai_api_key_writes_when_chmod_is_unsupported(tmp_path, monkeypa
     assert load_runtime_config(env_path)["OPENAI_API_KEY"] == "sk-test"
 
 
+def test_save_openai_api_key_refuses_symlink_path(tmp_path):
+    target_path = tmp_path / "target.env"
+    target_path.write_text("OPENAI_API_KEY=existing\n")
+    env_path = tmp_path / ".env"
+    try:
+        env_path.symlink_to(target_path)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlinks are not supported on this filesystem")
+
+    with pytest.raises(RuntimeError, match="Refusing to write API key to symlinked path"):
+        save_openai_api_key_to_env("sk-test", env_path=env_path)
+
+    assert target_path.read_text() == "OPENAI_API_KEY=existing\n"
+
+
 def test_save_openai_api_key_rejects_empty_value(tmp_path):
     with pytest.raises(ValueError):
         save_openai_api_key_to_env(" ", env_path=tmp_path / ".env")

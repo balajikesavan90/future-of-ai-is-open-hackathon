@@ -111,6 +111,9 @@ def save_openai_api_key_to_env(
         raise ValueError("OpenAI API key cannot be empty or contain newlines.")
 
     path = Path(env_path)
+    if path.is_symlink():
+        raise RuntimeError(f"Refusing to write API key to symlinked path: {path}")
+
     existing = load_runtime_config(path)
     existing.setdefault("LLM_PROVIDER", "openai")
     existing["OPENAI_API_KEY"] = cleaned_key
