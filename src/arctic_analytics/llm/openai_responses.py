@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 import io
 
-from arctic_analytics.config import get_openai_api_key
+from arctic_analytics.config import DEFAULT_OPENAI_MODEL, get_openai_api_key, validate_openai_model
 from arctic_analytics.streamlit.helpers import safely_escape_dollars, render_tool_call, render_tool_response
 from arctic_analytics.core.security import safely_execute_code
 from arctic_analytics.llm.tokenization import safe_encoding_for_model
@@ -41,25 +41,40 @@ class OpenAIResponsesUtility:
         Returns:
             cost_USD: Cost in USD
         """
-        # Standard rates for common models (these can be updated as pricing changes)
-        if model == 'gpt-5.5-2026-04-23':
-            return 5*prompt_tokens/1000000 + 30*completion_tokens/1000000
-        elif model == 'gpt-5.4-2026-03-05':
-            return 2.5*prompt_tokens/1000000 + 15*completion_tokens/1000000
-        elif model == 'gpt-5.4-mini-2026-03-17':
-            return 0.75*prompt_tokens/1000000 + 4.5*completion_tokens/1000000
-        elif model == 'gpt-5.4-nano-2026-03-17':
-            return 0.2*prompt_tokens/1000000 + 1.25*completion_tokens/1000000
+        if model == 'gpt-5.6-luna':
+            input_price_per_million = 0.2
+            output_price_per_million = 1.2  
+        elif model == 'gpt-5.6-terra':
+            input_price_per_million = 2
+            output_price_per_million = 12
+        elif model == 'gpt-5.6-sol':
+            input_price_per_million = 4
+            output_price_per_million = 20
+        elif model == 'gpt-6-astra':
+            input_price_per_million = 10 
+            output_price_per_million = 50
         else:
-            raise ValueError(f"Model {model} not recognized for cost calculation.")
+            validate_openai_model(model)
+
+        if input_price_per_million is None or output_price_per_million is None:
+            raise ValueError(f"Pricing has not been configured for {model}.")
+
+        return (
+            input_price_per_million * prompt_tokens / 1_000_000
+            + output_price_per_million * completion_tokens / 1_000_000
+        )
 
     def _calculate_context_window_usage(self, tokens, model):
-        if model in ['gpt-5.4-mini-2026-03-17', 'gpt-5.4-nano-2026-03-17']:
-            return tokens/400000
-        elif model in ['gpt-5.4-2026-03-05', 'gpt-5.5-2026-04-23']:
-            return tokens/1050000
+        if model == 'gpt-5.6-luna':
+            return tokens / 1_050_000
+        elif model == 'gpt-5.6-terra':
+            return tokens / 1_050_000
+        elif model == 'gpt-5.6-sol':
+            return tokens / 1_050_000
+        elif model == 'gpt-6-astra':
+            return tokens / 1_050_000
         else:
-            raise ValueError(f"Model {model} not recognized for context window usage calculation.")
+            validate_openai_model(model)
 
     def _responses_with_backoff(self, **kwargs):
         logging.info(f'responses_with_backoff - {st.session_state["session_id"]}')
@@ -237,7 +252,7 @@ class OpenAIResponsesUtility:
             self, 
             messages, 
             temperature = 0.8, 
-            model='gpt-5.4-nano-2026-03-17', 
+            model=DEFAULT_OPENAI_MODEL,
             response_format = None, 
             reasoning_effort = 'low', 
             tool_config = None, 
@@ -245,6 +260,8 @@ class OpenAIResponsesUtility:
             include = ['reasoning.encrypted_content']
         ):
         logging.info(f'responses_APIcall - {st.session_state["session_id"]}')
+
+        validate_openai_model(model)
 
         tools, tool_handlers = self._extract_tools_and_handlers(tool_config)
 

@@ -9,8 +9,27 @@ from typing import Any
 
 APP_DISPLAY_NAME = "Arctic Analytics"
 DEFAULT_STREAMLIT_ENTRYPOINT = "arctic_analytics.streamlit_app"
-DEFAULT_OPENAI_MODEL = "gpt-5.4-mini-2026-03-17"
+DEFAULT_OPENAI_MODEL = "gpt-5.6-luna"
+SUPPORTED_OPENAI_MODELS = frozenset(
+    {
+        "gpt-5.6-luna",
+        "gpt-5.6-terra",
+        "gpt-5.6-sol",
+        "gpt-6-astra",
+    }
+)
 DEFAULT_ENV_PATH = Path(".env")
+
+
+def validate_openai_model(model: str) -> str:
+    """Return the configured model or reject unsupported model overrides."""
+    if model not in SUPPORTED_OPENAI_MODELS:
+        raise ValueError(
+            f"Model {model!r} is not supported. "
+            "Arctic Analytics only supports GPT-5.6 Luna, GPT-5.6 Terra, "
+            "GPT-5.6 Sol, and GPT-6 Astra."
+        )
+    return model
 
 
 def load_runtime_config(env_path: Path | str = DEFAULT_ENV_PATH) -> dict[str, str]:

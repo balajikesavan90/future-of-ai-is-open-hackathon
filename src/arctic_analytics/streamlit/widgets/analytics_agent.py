@@ -24,15 +24,7 @@ def render_analytics_agent():
     logging.info(f'render_analytics_agent - {st.session_state["session_id"]}')
     st.divider()
 
-    if not is_dev_environment():
-        st.session_state['model'] = DEFAULT_OPENAI_MODEL
-    else:
-        st.session_state['model'] = st.sidebar.selectbox(
-            label = 'Model',
-            options = ['gpt-5.4-nano-2026-03-17', 'gpt-5.4-mini-2026-03-17', 'gpt-5.4-2026-03-05', 'gpt-5.5-2026-04-23'],
-            index = 0,
-            key='model_select_sidebar',
-        )
+    st.session_state['model'] = DEFAULT_OPENAI_MODEL
 
     st.caption(f"Uploaded data is analyzed through visible tool calls and constrained generated code. Review tool calls, generated code, and outputs before relying on the analysis. This analysis uses the {st.session_state['model']} model.")
 

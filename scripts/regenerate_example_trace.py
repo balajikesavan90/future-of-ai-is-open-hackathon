@@ -21,7 +21,7 @@ if str(SRC) not in sys.path:
 
 
 DEFAULT_PROMPT = "Which day has the highest average tip percentage? Calculate tip percentage as tip divided by total_bill."
-DEFAULT_MODEL = "gpt-5.4-mini-2026-03-17"
+DEFAULT_MODEL = "gpt-5.6-luna"
 
 
 class NullContainer:
