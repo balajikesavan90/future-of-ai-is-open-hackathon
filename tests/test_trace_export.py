@@ -122,6 +122,41 @@ def test_build_analysis_trace_is_json_safe_and_truncates_large_payloads():
     assert trace["errors"][0]["content"] == "example error"
 
 
+@pytest.mark.parametrize("stored_prompt", [None, "", "Explicit prompt"])
+def test_trace_and_research_session_use_latest_user_prompt_as_fallback(stored_prompt):
+    st.session_state.clear()
+    if stored_prompt is not None:
+        st.session_state["prompt_str"] = stored_prompt
+    st.session_state["messages"] = [
+        {"type": "message", "role": "user", "content": [{"text": "First request"}]},
+        {
+            "type": "message",
+            "role": "user",
+            "content": [{"text": "Latest request"}, {"type": "input_image"}, {"text": "More detail"}],
+        },
+        {"type": "message", "role": "assistant", "content": [{"text": "The answer"}]},
+    ]
+
+    trace = build_analysis_trace()
+    session = build_research_session_from_streamlit(trace)
+    expected = stored_prompt or "Latest request\nMore detail"
+
+    assert trace["prompt_str"] == expected
+    assert session.prompt == expected
+    assert session.context_bundle.data["prompt"] == expected
+    assert st.session_state.get("prompt_str") == stored_prompt
+    validate_trace_schema(trace)
+
+
+def test_trace_without_user_messages_has_no_prompt():
+    st.session_state.clear()
+    st.session_state["messages"] = [
+        {"type": "message", "role": "assistant", "content": [{"text": "Welcome"}]},
+    ]
+
+    assert build_analysis_trace()["prompt_str"] is None
+
+
 def test_sample_trace_export_matches_schema():
     trace = json.loads((ROOT / "examples" / "sample_trace_export.json").read_text())
 

@@ -282,6 +282,27 @@ def _system_message_from_messages(messages):
     except (KeyError, IndexError, TypeError):
         return st.session_state.get("system_message")
 
+def _latest_user_prompt(messages):
+    for message in reversed(messages):
+        if not isinstance(message, dict) or message.get("role") != "user":
+            continue
+        content = message.get("content")
+        if isinstance(content, str) and content.strip():
+            return content
+        if not isinstance(content, list):
+            continue
+        texts = [
+            item["text"]
+            for item in content
+            if isinstance(item, dict)
+            and isinstance(item.get("text"), str)
+            and item["text"].strip()
+        ]
+        if texts:
+            return "\n".join(texts)
+    return None
+
+
 def build_analysis_trace():
     messages = st.session_state.get("messages", [])
     return {
@@ -293,7 +314,7 @@ def build_analysis_trace():
         "cost": st.session_state.get("cost"),
         "context_window_usage": st.session_state.get("context_window_usage"),
         "system_message": _json_safe(_system_message_from_messages(messages)),
-        "prompt_str": _json_safe(st.session_state.get("prompt_str")),
+        "prompt_str": _json_safe(st.session_state.get("prompt_str") or _latest_user_prompt(messages)),
         "messages": _json_safe(messages),
         "events": _readable_events(messages),
         "tool_calls": _extract_tool_calls(messages),
