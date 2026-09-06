@@ -1,12 +1,14 @@
 import streamlit as st
 import logging
 import time
+import os
 
+from arctic_analytics.config import DEFAULT_OPENAI_MODEL, has_openai_api_key
 from arctic_analytics.llm.ai import construct_welcome_message, generate_ai_response
 from arctic_analytics.core.system_messages import construct_system_message
 
 from arctic_analytics.streamlit.widgets.prompt_guide import render_tool_calling_analysis_prompt_guide
-from arctic_analytics.streamlit.helpers import render_ai_prompt, safely_escape_dollars, render_tool_call, render_tool_response, disable_sample_button
+from arctic_analytics.streamlit.helpers import render_ai_prompt, render_researcher_notes, safely_escape_dollars, render_tool_call, render_tool_response, disable_sample_button
 from arctic_analytics.streamlit.helpers import is_dev_environment
 
 
@@ -21,10 +23,9 @@ def stream_text(text):
 def render_analytics_agent():
     logging.info(f'render_analytics_agent - {st.session_state["session_id"]}')
     st.divider()
-    st.info('Tool-Calling Analysis uses uploaded data through visible tool calls and constrained generated code.')
 
     if not is_dev_environment():
-        st.session_state['model'] = 'gpt-5.4-mini-2026-03-17'
+        st.session_state['model'] = DEFAULT_OPENAI_MODEL
     else:
         st.session_state['model'] = st.sidebar.selectbox(
             label = 'Model',
@@ -33,7 +34,7 @@ def render_analytics_agent():
             key='model_select_sidebar',
         )
 
-    st.info(f'Tool-Calling Analysis uses the {st.session_state["model"]} model. Review tool calls, generated code, and outputs before relying on the analysis.')
+    st.caption(f"Uploaded data is analyzed through visible tool calls and constrained generated code. Review tool calls, generated code, and outputs before relying on the analysis. This analysis uses the {st.session_state['model']} model.")
 
     if 'messages' not in st.session_state.keys() or not st.session_state['messages']:
         system_message = construct_system_message(st.session_state['vetted_files'])
@@ -82,6 +83,7 @@ def render_analytics_agent():
             value=f'${st.session_state["cost"]}',
         )
 
+    render_researcher_notes()
     render_tool_calling_analysis_prompt_guide()
     render_ai_prompt()
 
@@ -138,8 +140,12 @@ def render_analytics_agent():
         MAX_CHARS = 1000
     else:
         MAX_CHARS = None
+    api_key_available = has_openai_api_key(secrets=st.secrets, environ=os.environ, session_state=st.session_state)
+    if not api_key_available:
+        st.warning("Configure `OPENAI_API_KEY` before running agent analysis.")
     st.session_state['user_input'] = st.chat_input(
         max_chars = MAX_CHARS, 
+        disabled=not api_key_available,
     )
 
     if st.session_state['show_sample']:
@@ -149,7 +155,7 @@ def render_analytics_agent():
                 label=':blue[Please find me something interesting in this data and plot it]',
                 width='stretch',
                 on_click=disable_sample_button,
-                disabled=st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False,
+                disabled=(not api_key_available) or (st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False),
             ):
                 st.session_state['user_input'] = 'Find me something interesting in this data and plot it'
                 st.session_state['show_sample'] = False
@@ -158,7 +164,7 @@ def render_analytics_agent():
                 label=':blue[Please identify interesting patterns/correlations in the data and plot them]',
                 width='stretch',
                 on_click=disable_sample_button,
-                disabled=st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False,
+                disabled=(not api_key_available) or (st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False),
             ):
                 st.session_state['user_input'] = 'Please identify interesting patterns/correlations in the data and plot them'
                 st.session_state['show_sample'] = False

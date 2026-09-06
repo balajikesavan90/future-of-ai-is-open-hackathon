@@ -3,13 +3,13 @@ import base64
 from openai import OpenAI
 import json
 import logging
-import os
 import matplotlib.pyplot as plt
 import matplotlib.figure as mfigure
 import pandas as pd
 import numpy as np
 import io
 
+from arctic_analytics.config import get_openai_api_key
 from arctic_analytics.streamlit.helpers import safely_escape_dollars, render_tool_call, render_tool_response
 from arctic_analytics.core.security import safely_execute_code
 from arctic_analytics.llm.tokenization import safe_encoding_for_model
@@ -18,18 +18,18 @@ from arctic_analytics.llm.tokenization import safe_encoding_for_model
 
 class OpenAIResponsesUtility:
     def __init__(self):
-        if 'OPENAI_API_KEY' not in os.environ:
-            try:
-                os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
-            except Exception:
-                pass
-        self.client = OpenAI() if 'OPENAI_API_KEY' in os.environ else None
         self.enc_gpt4 = safe_encoding_for_model("gpt-4")
+        self._openai_api_key = None
+        self._openai_client = None
 
     def _client(self):
-        if self.client is None:
-            self.client = OpenAI()
-        return self.client
+        api_key = get_openai_api_key(secrets=st.secrets, session_state=st.session_state)
+        if not api_key:
+            raise RuntimeError("OpenAI API key is not configured for this session.")
+        if self._openai_client is None or self._openai_api_key != api_key:
+            self._openai_api_key = api_key
+            self._openai_client = OpenAI(api_key=api_key)
+        return self._openai_client
 
     def _calculate_cost(self, prompt_tokens, completion_tokens=0, model=''):
         """

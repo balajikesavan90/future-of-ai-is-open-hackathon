@@ -27,6 +27,9 @@ Constrained execution
 Trace generation
   |
   v
+Artifact bundle generation
+  |
+  v
 Output
 ```
 
@@ -42,7 +45,12 @@ Output
 | Tool calls | `src/arctic_analytics/llm/openai_responses.py` | Defines tool specs and processes model-requested Python expression, function, and plot calls. |
 | Constrained execution | `src/arctic_analytics/core/security.py`, `src/arctic_analytics/llm/openai_responses.py` | Validates generated code, restricts imports/globals, executes with timeout, and checks outputs. |
 | Trace generation | `src/arctic_analytics/streamlit/helpers.py` | Builds JSON-safe session traces with prompts, messages, tool calls, outputs, metadata, and known limitations. |
+| Artifact bundle generation | `src/arctic_analytics/artifacts/` | Packages Streamlit session traces, context, prompts, generated code, outputs, environment metadata, methods drafts, limitations, and citation files. |
 | Output | `src/arctic_analytics/streamlit/widgets/analytics_agent.py` | Displays messages, reasoning summaries, tool calls, tool responses, tables, plots, and trace export controls. |
+
+## Local-First Artifact Boundary
+
+The artifact bundle layer is intentionally pure Python. Streamlit adapts session state into a `ResearchSession`, then uses the artifact layer to create a downloadable bundle. Bundle creation is exposed through the local Streamlit UI after an analysis session.
 
 ## Deprecated Areas
 

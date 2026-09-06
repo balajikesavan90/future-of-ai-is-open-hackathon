@@ -13,14 +13,15 @@ Arctic Analytics is positioned as an experimental framework, but the current imp
 | Tool rendering | `src/arctic_analytics/llm/openai_responses.py`, `src/arctic_analytics/streamlit/helpers.py` | LLM response processing directly renders Streamlit expanders while processing tool calls. |
 | Execution | `src/arctic_analytics/core/security.py`, `src/arctic_analytics/llm/openai_responses.py` | Low-level execution is mostly separable, but output normalization and token-size checks live in the OpenAI/Streamlit-adjacent class. |
 | Trace generation | `src/arctic_analytics/streamlit/helpers.py` | Trace builder reads directly from Streamlit session state instead of accepting a run object. |
+| Artifact generation | `src/arctic_analytics/artifacts/` | Bundle generation is pure Python, but Streamlit still owns most live session construction. |
 
 ## What Prevents Reuse
 
-- There is no framework-level run object representing dataset metadata, prompt, messages, tool calls, outputs, errors, and limitations.
+- There is a lightweight `ResearchSession` for artifact generation, but no framework-level live analysis run object representing dataset metadata, prompt, messages, tool calls, outputs, errors, and limitations.
 - There is no schema-backed context bundle separate from the final system prompt.
 - Tool-call execution and Streamlit rendering happen in the same loop.
 - OpenAI response handling mutates the same message list that the UI renders.
-- Trace generation is tied to `st.session_state`, which makes non-Streamlit usage awkward.
+- Trace generation is tied to `st.session_state`, and artifact bundle creation is currently exposed through the Streamlit UI.
 - Execution result normalization lives in `OpenAIResponsesUtility` rather than a provider-independent execution module.
 - Model configuration, pricing, and context-window assumptions are hard-coded in the OpenAI utility.
 - There is no stable public Python API for loading data, building context, running one analysis step, or exporting a trace.

@@ -7,6 +7,7 @@ readme = "README.md"
 license = "MIT"
 repository = "https://github.com/balajikesavan90/arctic-analytics"
 packages = [{include = "arctic_analytics", from = "src"}]
+include = [{path = "src/arctic_analytics/CITATION.cff", format = ["sdist", "wheel"]}]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -37,6 +38,7 @@ pytest = ">=8.3,<10.0"
 
 [tool.poetry.scripts]
 arctic-analytics-app = "arctic_analytics.cli:main"
+arctic-analytics = "arctic_analytics.cli:main"
 
 
 [tool.pytest.ini_options]

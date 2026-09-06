@@ -51,8 +51,8 @@ def is_valid_csv(file):
         
         # Check each cell in the DataFrame for suspicious patterns
         for column in df.columns:
-            # Convert column to string if it's not already
-            if df[column].dtype != 'object':
+            # Scan text columns, including pandas string extension dtypes.
+            if df[column].dtype != 'object' and not pd.api.types.is_string_dtype(df[column]):
                 continue  # Skip numeric columns
                 
             # Check each cell in string columns

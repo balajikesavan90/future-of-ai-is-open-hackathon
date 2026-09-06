@@ -23,7 +23,9 @@ Use this checklist before creating a public release, package publication, or Zen
 
 - Verify `examples/sample_dataset.csv` and `examples/sample_metadata.json` still load.
 - Verify `examples/sample_trace_export.json` validates against `schemas/analysis_trace.schema.json`.
-- If the sample trace is regenerated, record the model and note that it remains illustrative and external API dependent.
+- If citation metadata changes, update both root `CITATION.cff` and packaged `src/arctic_analytics/CITATION.cff`.
+- If the sample trace is regenerated, regenerate `examples/sample_research_bundle/` from the same run.
+- Record the model and note that the checked-in trace and bundle remain illustrative and external API dependent.
 
 ## Tests
 

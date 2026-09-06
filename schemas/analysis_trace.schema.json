@@ -16,6 +16,7 @@
     "system_message",
     "prompt_str",
     "messages",
+    "events",
     "tool_calls",
     "outputs",
     "dataset_metadata",
@@ -25,7 +26,7 @@
   "properties": {
     "trace_schema_version": {
       "type": "string",
-      "const": "0.1.0"
+      "const": "0.2.0"
     },
     "package_version": {
       "type": "string"
@@ -56,6 +57,13 @@
       "type": "array",
       "items": {
         "$ref": "#/$defs/json_safe"
+      }
+    },
+    "events": {
+      "type": "array",
+      "description": "Readable event timeline derived from the exported messages for consumers that need a compact trace overview.",
+      "items": {
+        "$ref": "#/$defs/event"
       }
     },
     "tool_calls": {
@@ -143,6 +151,37 @@
     }
   },
   "$defs": {
+    "event": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "step_index",
+        "event_type"
+      ],
+      "properties": {
+        "step_index": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "One-based position of the source message in the exported message list."
+        },
+        "event_type": {
+          "type": "string",
+          "description": "Readable event type derived from the source message type or role."
+        },
+        "role": {
+          "type": "string",
+          "description": "Message role when present, such as system, user, or assistant."
+        },
+        "tool_name": {
+          "type": "string",
+          "description": "Tool/function name for tool-call events when present."
+        },
+        "summary": {
+          "type": "string",
+          "description": "Short human-readable summary of the event when available."
+        }
+      }
+    },
     "json_safe": {
       "anyOf": [
         {
