@@ -167,6 +167,19 @@ def test_messages_for_resume_uses_full_fidelity_messages_and_sanitizes_old_chart
     assert messages_for_resume(trace)[1]["output"][0]["image_url"] == "data:image/png;base64,abc"
 
 
+def test_messages_for_resume_discards_non_dict_history_items():
+    trace = resumable_trace()
+    system_message = {
+        "type": "message",
+        "role": "system",
+        "content": [{"type": "input_text", "text": "System prompt"}],
+    }
+    tool_call = {"type": "function_call", "name": "run_python_expression"}
+    trace["resume"]["messages"] = [system_message, "unexpected", 42, tool_call]
+
+    assert messages_for_resume(trace) == [system_message, tool_call]
+
+
 @pytest.mark.parametrize(
     "messages",
     [

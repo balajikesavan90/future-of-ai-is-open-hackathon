@@ -122,7 +122,11 @@ def messages_for_resume(trace: dict[str, Any]) -> list[Any]:
         messages = trace.get("messages", [])
     if not _has_resumable_system_message(messages):
         return []
-    return [_sanitize_resumed_message(message) for message in messages]
+    return [
+        _sanitize_resumed_message(message)
+        for message in messages
+        if isinstance(message, dict)
+    ]
 
 
 def _has_resumable_system_message(messages: Any) -> bool:
