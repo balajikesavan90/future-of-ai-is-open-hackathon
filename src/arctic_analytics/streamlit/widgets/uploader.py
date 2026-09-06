@@ -108,16 +108,16 @@ def render_uploader():
             else:
                 st.warning("Please upload at least one CSV file.")
 
-    st.subheader('Resume saved analysis')
-    st.caption('Upload an Arctic Analytics trace and the CSV files used for that analysis.')
     with st.form(key='resume_analysis'):
+        st.write(':blue[Resume saved analysis]')
+        st.caption('Upload an Arctic Analytics trace and the CSV files used for that analysis.')
         trace_file = st.file_uploader(
             'Analysis trace (.json)', type=['json'], key='resume_trace_file'
         )
         resume_files = st.file_uploader(
             'Original CSV files', type=['csv'], accept_multiple_files=True, key='resume_csv_files'
         )
-        resume_submitted = st.form_submit_button('Resume analysis', width='stretch')
+        resume_submitted = st.form_submit_button(':green[Resume analysis]', width='stretch')
 
     if resume_submitted:
         if trace_file is None or not resume_files:
