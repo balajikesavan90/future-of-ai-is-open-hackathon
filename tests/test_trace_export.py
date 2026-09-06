@@ -190,6 +190,7 @@ def test_upload_trace_includes_resume_manifest_for_uploaded_csvs():
 
     trace = build_analysis_trace()
 
+    assert trace["researcher_notes"] == "Recheck the outliers."
     assert trace["resume"] == {
         "resume_schema_version": "1.0",
         "source": "uploader",
@@ -270,6 +271,7 @@ def test_research_session_from_streamlit_includes_researcher_notes():
     session = build_research_session_from_streamlit()
 
     assert session.context_bundle.data["researcher_notes"] == "Assume measurements were reviewed for obvious data entry errors."
+    assert build_analysis_trace()["researcher_notes"] == "Assume measurements were reviewed for obvious data entry errors."
 
 
 def test_research_session_from_streamlit_preserves_raw_image_outputs_for_bundle():
@@ -419,6 +421,7 @@ def test_restore_trace_session_preserves_api_key_but_not_imported_session_state(
         "model": "gpt-5.6-luna",
         "cost": 1.5,
         "context_window_usage": 0.1,
+        "researcher_notes": "Review the July outliers before publishing.",
         "OPENAI_API_KEY": "untrusted-trace-key",
     }
     preparation = ResumePreparation(vetted_files={"sales": {"source_filename": "sales.csv"}})
@@ -429,3 +432,4 @@ def test_restore_trace_session_preserves_api_key_but_not_imported_session_state(
     assert "unrelated_state" not in st.session_state
     assert st.session_state["resumed_from_session_id"] == "old-session"
     assert st.session_state["session_id"] != "old-session"
+    assert st.session_state["researcher_notes"] == "Review the July outliers before publishing."

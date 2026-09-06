@@ -321,6 +321,8 @@ def build_analysis_trace():
         "model": st.session_state.get("model"),
         "cost": st.session_state.get("cost"),
         "context_window_usage": st.session_state.get("context_window_usage"),
+        "researcher_notes": st.session_state.get("researcher_notes", "")
+        if isinstance(st.session_state.get("researcher_notes", ""), str) else "",
         "system_message": _json_safe(_system_message_from_messages(messages)),
         "prompt_str": _json_safe(st.session_state.get("prompt_str") or _latest_user_prompt(messages)),
         "messages": _json_safe(messages),
@@ -398,6 +400,11 @@ def restore_trace_session(trace, preparation):
         st.session_state["OPENAI_API_KEY"] = api_key
 
     resume = trace.get("resume") if isinstance(trace.get("resume"), dict) else {}
+    researcher_notes = resume.get("researcher_notes")
+    if not isinstance(researcher_notes, str):
+        researcher_notes = trace.get("researcher_notes", "")
+    if not isinstance(researcher_notes, str):
+        researcher_notes = ""
     original_session_id = trace.get("session_id")
     st.session_state.update(
         {
@@ -417,7 +424,7 @@ def restore_trace_session(trace, preparation):
             "count": sum(1 for message in trace.get("messages", []) if isinstance(message, dict) and message.get("role") == "user"),
             "show_sample": False,
             "disable_sample_button": False,
-            "researcher_notes": resume.get("researcher_notes", "") if isinstance(resume.get("researcher_notes", ""), str) else "",
+            "researcher_notes": researcher_notes,
             "data_dictionaries_loaded": False,
             "datasets_vetted": False,
         }

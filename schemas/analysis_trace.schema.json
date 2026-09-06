@@ -47,6 +47,10 @@
     "context_window_usage": {
       "type": ["number", "integer", "null"]
     },
+    "researcher_notes": {
+      "type": "string",
+      "description": "Optional notes entered by the researcher and restored when a trace is resumed."
+    },
     "system_message": {
       "$ref": "#/$defs/json_safe"
     },

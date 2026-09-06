@@ -27,6 +27,7 @@ IMPORT_TRACE_SCHEMA = {
         "model": {"type": ["string", "null"]},
         "cost": {"type": ["number", "null"]},
         "context_window_usage": {"type": ["number", "null"]},
+        "researcher_notes": {"type": "string"},
         "messages": {"type": "array"},
         "events": {"type": "array"},
         "tool_calls": {"type": "array"},
