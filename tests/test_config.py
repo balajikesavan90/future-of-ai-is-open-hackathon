@@ -22,8 +22,11 @@ def test_validate_openai_model_accepts_supported_models(model):
 
 
 def test_validate_openai_model_rejects_unsupported_model():
-    with pytest.raises(ValueError, match="not supported"):
+    with pytest.raises(ValueError, match="not supported") as exc_info:
         validate_openai_model("unknown-model")
+
+    for model in SUPPORTED_OPENAI_MODELS:
+        assert model in str(exc_info.value)
 
 
 def test_config_prefers_environment_values():

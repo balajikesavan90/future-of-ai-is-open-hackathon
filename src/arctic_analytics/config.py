@@ -24,10 +24,10 @@ DEFAULT_ENV_PATH = Path(".env")
 def validate_openai_model(model: str) -> str:
     """Return a supported model ID or reject an unsupported model override."""
     if model not in SUPPORTED_OPENAI_MODELS:
+        supported_models = ", ".join(sorted(SUPPORTED_OPENAI_MODELS))
         raise ValueError(
             f"Model {model!r} is not supported. "
-            "Arctic Analytics only supports GPT-5.6 Luna, GPT-5.6 Terra, "
-            "GPT-5.6 Sol, and GPT-6 Astra."
+            f"Arctic Analytics only supports: {supported_models}."
         )
     return model
 

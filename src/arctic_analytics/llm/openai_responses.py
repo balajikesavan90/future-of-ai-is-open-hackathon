@@ -9,7 +9,12 @@ import pandas as pd
 import numpy as np
 import io
 
-from arctic_analytics.config import DEFAULT_OPENAI_MODEL, get_openai_api_key, validate_openai_model
+from arctic_analytics.config import (
+    DEFAULT_OPENAI_MODEL,
+    SUPPORTED_OPENAI_MODELS,
+    get_openai_api_key,
+    validate_openai_model,
+)
 from arctic_analytics.streamlit.helpers import safely_escape_dollars, render_tool_call, render_tool_response
 from arctic_analytics.core.security import safely_execute_code
 from arctic_analytics.llm.tokenization import safe_encoding_for_model
@@ -109,11 +114,8 @@ class OpenAIResponsesUtility:
             # soon as the model emits it, instead of batching multiple calls.
             args['parallel_tool_calls'] = False
 
-        if model.startswith('o4'):
-            args['tool_choice'] = 'auto'  # Set tool choice to auto for o4 models
-
-        if model.startswith('o4') or model.startswith('o3') or model.startswith(('gpt-5', 'gpt-6')):
-            del args['temperature']  # Remove temperature for o4 and o3 models
+        if model in SUPPORTED_OPENAI_MODELS:
+            del args['temperature']
 
             if reasoning_effort:
                 args['reasoning'] = {'effort': reasoning_effort, 'summary': 'auto'}
