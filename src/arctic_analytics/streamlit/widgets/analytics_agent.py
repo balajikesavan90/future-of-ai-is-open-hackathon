@@ -6,6 +6,7 @@ import os
 from arctic_analytics.config import DEFAULT_OPENAI_MODEL, MAX_MODEL_CONTEXT_TOKENS, has_openai_api_key
 from arctic_analytics.llm.ai import construct_welcome_message, generate_ai_response
 from arctic_analytics.core.system_messages import construct_system_message
+from arctic_analytics.core.trace_resume import replace_resumed_system_message
 
 from arctic_analytics.streamlit.widgets.prompt_guide import render_tool_calling_analysis_prompt_guide
 from arctic_analytics.streamlit.helpers import render_ai_prompt, render_researcher_notes, safely_escape_dollars, render_tool_call, render_tool_response, select_sample_prompt
@@ -52,6 +53,10 @@ def render_analytics_agent():
                 'type': 'message'
             }
         ]
+    elif st.session_state.pop('rebuild_system_message', False):
+        st.session_state['messages'] = replace_resumed_system_message(
+            st.session_state['messages'], construct_system_message(st.session_state['vetted_files'])
+        )
 
     st.session_state['system_message'] = st.session_state['messages'][0]['content'][0]['text']
 

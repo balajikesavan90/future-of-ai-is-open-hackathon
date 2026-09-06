@@ -97,6 +97,18 @@ def test_write_research_bundle_from_minimal_session(tmp_path):
     assert build_research_bundle_zip(session).startswith(b"PK")
 
 
+def test_research_session_positional_arguments_remain_compatible():
+    trace = AnalysisTrace({"outputs": []})
+    context = ContextBundle({"source": "test"})
+
+    session = ResearchSession("Prompt", trace, context)
+
+    assert session.prompt == "Prompt"
+    assert session.analysis_trace is trace
+    assert session.context_bundle is context
+    assert session.model is None
+
+
 def test_research_bundle_writes_raw_image_outputs_from_sanitized_trace(tmp_path):
     image_payload = "data:image/png;base64,iVBORw0KGgo="
     session = ResearchSession(

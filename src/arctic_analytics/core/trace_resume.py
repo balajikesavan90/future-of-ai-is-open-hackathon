@@ -130,6 +130,15 @@ def messages_for_resume(trace: dict[str, Any]) -> list[Any]:
     return [_sanitize_resumed_message(message) for message in messages]
 
 
+def replace_resumed_system_message(messages: list[Any], system_message: str) -> list[Any]:
+    """Replace only restored system context while preserving the conversation."""
+    return [{
+        "role": "system",
+        "content": [{"text": system_message, "type": "input_text"}],
+        "type": "message",
+    }, *messages[1:]]
+
+
 def _has_resumable_system_message(messages: Any) -> bool:
     if not isinstance(messages, list) or not messages:
         return False
@@ -167,10 +176,18 @@ def _is_supported_resumed_message(message: Any) -> bool:
             for item in summary
         )
     if message_type == "function_call":
-        return isinstance(message.get("name"), str) and isinstance(message.get("arguments"), str)
+        return (
+            _valid_call_id(message.get("call_id"))
+            and isinstance(message.get("name"), str)
+            and isinstance(message.get("arguments"), str)
+        )
     if message_type == "function_call_output":
-        return isinstance(message.get("output"), (str, list, dict))
+        return _valid_call_id(message.get("call_id")) and isinstance(message.get("output"), (str, list, dict))
     return False
+
+
+def _valid_call_id(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
 
 
 def _sanitize_resumed_message(message: Any) -> Any:
@@ -212,9 +229,10 @@ def _match_manifest_datasets(datasets: list[Any], uploaded: dict[str, dict[str, 
         columns = item.get("column_names")
         if not isinstance(trace_key, str) or not isinstance(filename, str) or not _valid_columns(columns):
             raise TraceResumeError("The trace resume manifest is incomplete.")
-        # Intentionally match by source filename and ordered columns rather than
-        # content hash: a user may resume with a refreshed version of the same
-        # dataset while retaining the trace's reviewable context.
+        # Intentional behavior: resume accepts a refreshed version of the same
+        # dataset when its source filename and ordered columns match. Content is
+        # not hashed, allowing the user to retain the trace's reviewable context
+        # while continuing with newly uploaded rows.
         candidates = [
             key for key, info in uploaded.items()
             if info.get("source_filename") == filename and _columns_match(info, columns) and key not in used

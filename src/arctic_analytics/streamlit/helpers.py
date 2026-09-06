@@ -474,6 +474,7 @@ def restore_trace_session(trace, preparation):
             ],
             "vetted_files": preparation.vetted_files,
             "messages": resumed_messages,
+            "rebuild_system_message": bool(resumed_messages),
             "cost": cost,
             "context_window_usage": context_window_usage,
             "context_window_tokens": context_window_tokens,

@@ -3,7 +3,13 @@ import json
 import pandas as pd
 import pytest
 
-from arctic_analytics.core.trace_resume import TraceResumeError, load_analysis_trace, messages_for_resume, prepare_resume
+from arctic_analytics.core.trace_resume import (
+    TraceResumeError,
+    load_analysis_trace,
+    messages_for_resume,
+    prepare_resume,
+    replace_resumed_system_message,
+)
 
 
 def uploaded_file(name, columns):
@@ -174,6 +180,7 @@ def test_messages_for_resume_uses_full_fidelity_messages_and_sanitizes_old_chart
     }
     trace["messages"] = [system_message, {
         "type": "function_call_output",
+        "call_id": "call_1",
         "output": [{"type": "input_image", "image_url": {"type": "image_base64"}}],
     }]
 
@@ -181,6 +188,7 @@ def test_messages_for_resume_uses_full_fidelity_messages_and_sanitizes_old_chart
 
     trace["resume"]["messages"] = [system_message, {
         "type": "function_call_output",
+        "call_id": "call_1",
         "output": [{"type": "input_image", "image_url": "data:image/png;base64,abc"}],
     }]
     assert messages_for_resume(trace)[1]["output"][0]["image_url"] == "data:image/png;base64,abc"
@@ -197,6 +205,64 @@ def test_messages_for_resume_discards_non_dict_history_items():
     trace["resume"]["messages"] = [system_message, "unexpected", 42, tool_call]
 
     assert messages_for_resume(trace) == []
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        {"type": "function_call", "call_id": "", "name": "run_python_expression", "arguments": "{}"},
+        {"type": "function_call", "call_id": "  ", "name": "run_python_expression", "arguments": "{}"},
+        {"type": "function_call_output", "call_id": None, "output": "result"},
+        {"type": "function_call_output", "output": "result"},
+    ],
+)
+def test_messages_for_resume_discards_history_with_invalid_tool_call_id(message):
+    trace = resumable_trace()
+    trace["resume"]["messages"] = [
+        {
+            "type": "message",
+            "role": "system",
+            "content": [{"type": "input_text", "text": "System prompt"}],
+        },
+        message,
+    ]
+
+    assert messages_for_resume(trace) == []
+
+
+def test_messages_for_resume_keeps_history_with_tool_call_ids():
+    trace = resumable_trace()
+    trace["resume"]["messages"] = [
+        {
+            "type": "message",
+            "role": "system",
+            "content": [{"type": "input_text", "text": "System prompt"}],
+        },
+        {"type": "function_call", "call_id": "call_1", "name": "run_python_expression", "arguments": "{}"},
+        {"type": "function_call_output", "call_id": "call_1", "output": "result"},
+    ]
+
+    assert messages_for_resume(trace) == trace["resume"]["messages"]
+
+
+def test_replace_resumed_system_message_preserves_following_history():
+    history = [
+        {
+            "type": "message",
+            "role": "system",
+            "content": [{"type": "input_text", "text": "Old system prompt"}],
+        },
+        {
+            "type": "message",
+            "role": "user",
+            "content": [{"type": "input_text", "text": "Continue the analysis."}],
+        },
+    ]
+
+    rebuilt = replace_resumed_system_message(history, "Reviewed system prompt")
+
+    assert rebuilt[0]["content"][0]["text"] == "Reviewed system prompt"
+    assert rebuilt[1:] == history[1:]
 
 
 @pytest.mark.parametrize(
@@ -246,6 +312,7 @@ def test_messages_for_resume_rejects_non_data_image_urls(image_url):
         "content": [{"type": "input_text", "text": "System prompt"}],
     }, {
         "type": "function_call_output",
+        "call_id": "call_1",
         "output": [{"type": "input_image", "image_url": image_url}],
     }]
 
