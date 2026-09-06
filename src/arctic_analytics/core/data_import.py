@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import itertools
 import os
+import keyword
+import re
 from seaborn import load_dataset
 import logging
 
@@ -86,6 +88,31 @@ datasets = {
     }
 }
 
+
+def dataframe_name_from_filename(filename):
+    """Return a filename-derived name that is safe to use in Python code."""
+    stem, _ = os.path.splitext(os.path.basename(filename))
+    dataframe_name = re.sub(r'[^a-z0-9]+', '_', stem.lower()).strip('_')
+
+    if not dataframe_name:
+        dataframe_name = 'unnamed'
+    if dataframe_name[0].isdigit() or keyword.iskeyword(dataframe_name):
+        dataframe_name = f'df_{dataframe_name}'
+
+    return dataframe_name
+
+
+def unique_dataframe_name(dataframe_name, existing_names):
+    """Return a dataframe name that does not collide with an existing name."""
+    if dataframe_name not in existing_names:
+        return dataframe_name
+
+    suffix = 2
+    while f'{dataframe_name}_{suffix}' in existing_names:
+        suffix += 1
+    return f'{dataframe_name}_{suffix}'
+
+
 def gather_metadata(params=None):
     logging.info(f'gather_metadata - {st.session_state["session_id"]}')
     """
@@ -98,10 +125,12 @@ def gather_metadata(params=None):
             for uploaded_file in st.session_state['uploaded_files']
         ]
         for uploaded_file in st.session_state['uploaded_files']:
-            filename, _ = os.path.splitext(uploaded_file.name)
-            filename = filename.replace(' ', '_').replace('-', '_').lower().replace('(', '_').replace(')', '_')
+            filename = unique_dataframe_name(
+                dataframe_name_from_filename(uploaded_file.name), vetted_files
+            )
             vetted_files[filename] = {}
             vetted_files[filename]['source_filename'] = uploaded_file.name
+            vetted_files[filename]['dataset_description'] = ''
             df = pd.read_csv(
                 filepath_or_buffer=uploaded_file, 
                 parse_dates=True,
