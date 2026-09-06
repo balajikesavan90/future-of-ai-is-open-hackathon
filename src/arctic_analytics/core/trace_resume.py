@@ -26,6 +26,10 @@ IMPORT_TRACE_SCHEMA = {
         "session_id": {"type": ["string", "null"]},
         "cost": {"type": ["number", "null"]},
         "context_window_usage": {"type": ["number", "null"]},
+        # Exported values are normally strings or null; long strings are
+        # replaced with JSON-safe truncation descriptors.
+        "system_message": {"type": ["string", "object", "null"]},
+        "prompt_str": {"type": ["string", "object", "null"]},
         "researcher_notes": {"type": "string"},
         "messages": {"type": "array"},
         "events": {"type": "array"},

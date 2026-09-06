@@ -64,6 +64,27 @@ def test_load_analysis_trace_rejects_invalid_json_and_unknown_versions():
     assert load_analysis_trace(json.dumps(resumable_trace()).encode())["session_id"] == "original-session"
 
 
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("system_message", None),
+        ("prompt_str", {"type": "text", "preview": "Question", "truncated": True}),
+        ("system_message", ["unexpected"]),
+        ("prompt_str", 42),
+        ("system_message", False),
+    ],
+)
+def test_load_analysis_trace_validates_system_message_and_prompt_types(field, value):
+    trace = resumable_trace()
+    trace[field] = value
+
+    if isinstance(value, (list, int, bool)) and value is not None:
+        with pytest.raises(TraceResumeError, match="supported import format"):
+            load_analysis_trace(json.dumps(trace).encode())
+    else:
+        assert load_analysis_trace(json.dumps(trace).encode())[field] == value
+
+
 def test_prepare_resume_requires_original_filename_and_columns():
     trace = resumable_trace()
     uploaded = {"other": uploaded_file("Sales 2026.csv", ["id", "amount"])}
