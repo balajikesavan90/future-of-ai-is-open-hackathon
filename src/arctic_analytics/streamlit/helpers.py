@@ -344,7 +344,7 @@ def build_analysis_trace():
 
 def serialize_analysis_trace(trace):
     """Serialize a trace only when it meets the resume import size limit."""
-    payload = json.dumps(trace, indent=2, default=str).encode("utf-8")
+    payload = json.dumps(trace, separators=(",", ":"), default=str).encode("utf-8")
     if len(payload) > MAX_TRACE_BYTES:
         raise TraceExportError(
             "This trace is larger than 10 MiB and cannot be resumed. "

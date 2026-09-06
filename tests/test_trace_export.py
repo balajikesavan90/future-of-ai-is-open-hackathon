@@ -21,7 +21,7 @@ from arctic_analytics.streamlit.helpers import (
     serialize_analysis_trace,
     TraceExportError,
 )
-from arctic_analytics.core.trace_resume import ResumePreparation
+from arctic_analytics.core.trace_resume import MAX_TRACE_BYTES, ResumePreparation, load_analysis_trace
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -244,6 +244,21 @@ def test_resume_trace_export_rejects_payloads_larger_than_import_limit():
 
     with pytest.raises(TraceExportError, match="larger than 10 MiB and cannot be resumed"):
         serialize_analysis_trace(trace)
+
+
+def test_trace_export_uses_compact_json_to_maximize_resumable_size():
+    st.session_state.clear()
+    st.session_state["messages"] = [0] * 2_700_000
+    st.session_state["vetted_files"] = {}
+    trace = build_analysis_trace()
+    compact_payload = json.dumps(trace, separators=(",", ":"), default=str).encode("utf-8")
+    indented_payload = json.dumps(trace, indent=2, default=str).encode("utf-8")
+
+    exported_payload = serialize_analysis_trace(trace)
+
+    assert len(compact_payload) <= MAX_TRACE_BYTES < len(indented_payload)
+    assert exported_payload.encode("utf-8") == compact_payload
+    assert load_analysis_trace(exported_payload.encode("utf-8"))["messages"] == trace["messages"]
 
 
 def test_trace_schema_accepts_dataset_metadata_without_legacy_columns_names():
