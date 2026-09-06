@@ -82,6 +82,18 @@ def test_prepare_resume_requires_original_filename_and_columns():
         prepare_resume(trace, {"other": uploaded_file("Sales 2026.csv", ["amount", "id"])})
 
 
+@pytest.mark.parametrize("source", [None, "sample"])
+def test_prepare_resume_rejects_manifest_without_uploader_source(source):
+    trace = resumable_trace()
+    if source is None:
+        del trace["resume"]["source"]
+    else:
+        trace["resume"]["source"] = source
+
+    with pytest.raises(TraceResumeError, match="must declare uploader"):
+        prepare_resume(trace, {"other": uploaded_file("Sales 2026.csv", ["id", "amount"])})
+
+
 def test_legacy_trace_uses_columns_with_warning_and_rejects_ambiguous_matches():
     trace = resumable_trace()
     del trace["resume"]
@@ -115,6 +127,19 @@ def test_messages_for_resume_uses_full_fidelity_messages_and_sanitizes_old_chart
         "output": [{"type": "input_image", "image_url": "data:image/png;base64,abc"}],
     }]
     assert messages_for_resume(trace)[0]["output"][0]["image_url"] == "data:image/png;base64,abc"
+
+
+@pytest.mark.parametrize("image_url", ["https://example.com/chart.png", "data:text/plain;base64,abc"])
+def test_messages_for_resume_rejects_non_data_image_urls(image_url):
+    trace = resumable_trace()
+    trace["resume"]["messages"] = [{
+        "type": "function_call_output",
+        "output": [{"type": "input_image", "image_url": image_url}],
+    }]
+
+    messages = messages_for_resume(trace)
+
+    assert messages[0]["output"] == "Historical chart output is unavailable in this exported trace."
 
 
 def test_messages_for_resume_sanitizes_direct_legacy_chart_descriptor():

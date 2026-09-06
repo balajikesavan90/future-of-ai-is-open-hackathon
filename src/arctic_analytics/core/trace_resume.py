@@ -82,6 +82,8 @@ def prepare_resume(trace: dict[str, Any], uploaded_vetted_files: dict[str, dict[
 
     resume = trace.get("resume")
     if isinstance(resume, dict) and resume.get("resume_schema_version") == "1.0":
+        if resume.get("source") != "uploader":
+            raise TraceResumeError("The trace resume manifest must declare uploader as its source.")
         datasets = resume.get("datasets")
         if not isinstance(datasets, list) or not datasets:
             raise TraceResumeError("The trace resume manifest has no datasets.")
@@ -136,10 +138,14 @@ def _sanitize_resumed_message(message: Any) -> Any:
         if not isinstance(output_item, dict):
             continue
         image_url = output_item.get("image_url")
-        if image_url is not None and not isinstance(image_url, str):
+        if image_url is not None and not _is_base64_image_data_url(image_url):
             restored["output"] = "Historical chart output is unavailable in this exported trace."
             break
     return restored
+
+
+def _is_base64_image_data_url(value: Any) -> bool:
+    return isinstance(value, str) and value.startswith("data:image/") and ";base64," in value
 
 
 def _match_manifest_datasets(datasets: list[Any], uploaded: dict[str, dict[str, Any]]) -> dict[str, str]:
