@@ -167,7 +167,7 @@ class OpenAIResponsesUtility:
                 warnings.simplefilter('ignore', Image.DecompressionBombWarning)
                 with Image.open(io.BytesIO(base64.b64decode(encoded_image, validate=True))) as image:
                     return image.size
-        except (binascii.Error, ValueError, OSError):
+        except (binascii.Error, Image.DecompressionBombError, ValueError, OSError):
             return None
 
     def _scale_to_max_dimension(self, width, height, maximum_dimension):

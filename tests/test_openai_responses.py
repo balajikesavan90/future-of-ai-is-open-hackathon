@@ -111,6 +111,21 @@ def test_image_dimensions_ignores_malformed_base64():
     assert client._image_dimensions("data:image/png;base64,not-valid!") is None
 
 
+def test_image_dimensions_falls_back_for_decompression_bombs(monkeypatch):
+    client = OpenAIResponsesUtility()
+    image_url = "data:image/png;base64,AAAA"
+
+    def raise_decompression_bomb(*_args, **_kwargs):
+        raise Image.DecompressionBombError("too many pixels")
+
+    monkeypatch.setattr(openai_responses.Image, "open", raise_decompression_bomb)
+
+    assert client._image_dimensions(image_url) is None
+    assert client._estimate_image_input_tokens(
+        {"image_url": image_url}, "gpt-5.6-luna"
+    ) == 36_000
+
+
 def test_client_uses_session_api_key_without_mutating_environment(monkeypatch):
     captured = {}
 
