@@ -128,31 +128,56 @@ def test_prepare_resume_rejects_missing_or_malformed_manifest(manifest):
 
 def test_messages_for_resume_uses_full_fidelity_messages_and_sanitizes_old_chart_descriptors():
     trace = resumable_trace()
-    trace["messages"] = [{
+    system_message = {
+        "type": "message",
+        "role": "system",
+        "content": [{"type": "input_text", "text": "System prompt"}],
+    }
+    trace["messages"] = [system_message, {
         "type": "function_call_output",
         "output": [{"type": "input_image", "image_url": {"type": "image_base64"}}],
     }]
 
-    assert messages_for_resume(trace)[0]["output"] == "Historical chart output is unavailable in this exported trace."
+    assert messages_for_resume(trace)[1]["output"] == "Historical chart output is unavailable in this exported trace."
 
-    trace["resume"]["messages"] = [{
+    trace["resume"]["messages"] = [system_message, {
         "type": "function_call_output",
         "output": [{"type": "input_image", "image_url": "data:image/png;base64,abc"}],
     }]
-    assert messages_for_resume(trace)[0]["output"][0]["image_url"] == "data:image/png;base64,abc"
+    assert messages_for_resume(trace)[1]["output"][0]["image_url"] == "data:image/png;base64,abc"
+
+
+@pytest.mark.parametrize(
+    "messages",
+    [
+        ["not a message"],
+        [{"type": "message", "role": "user", "content": [{"text": "Question"}]}],
+        [{"type": "message", "role": "system", "content": []}],
+        [{"type": "message", "role": "system", "content": [{"text": None}]}],
+    ],
+)
+def test_messages_for_resume_discards_histories_without_a_valid_system_message(messages):
+    trace = resumable_trace()
+    trace["resume"]["messages"] = messages
+
+    assert messages_for_resume(trace) == []
 
 
 @pytest.mark.parametrize("image_url", ["https://example.com/chart.png", "data:text/plain;base64,abc"])
 def test_messages_for_resume_rejects_non_data_image_urls(image_url):
     trace = resumable_trace()
     trace["resume"]["messages"] = [{
+        "type": "message",
+        "role": "system",
+        "content": [{"type": "input_text", "text": "System prompt"}],
+    }, {
         "type": "function_call_output",
         "output": [{"type": "input_image", "image_url": image_url}],
     }]
 
     messages = messages_for_resume(trace)
 
-    assert messages[0]["output"] == "Historical chart output is unavailable in this exported trace."
+    assert messages[1]["output"] == "Historical chart output is unavailable in this exported trace."
 
 
 def test_load_analysis_trace_rejects_legacy_traces_without_resume_manifest():

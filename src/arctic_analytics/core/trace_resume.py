@@ -117,7 +117,26 @@ def messages_for_resume(trace: dict[str, Any]) -> list[Any]:
         messages = resume["messages"]
     else:
         messages = trace.get("messages", [])
+    if not _has_resumable_system_message(messages):
+        return []
     return [_sanitize_resumed_message(message) for message in messages]
+
+
+def _has_resumable_system_message(messages: Any) -> bool:
+    if not isinstance(messages, list) or not messages:
+        return False
+    system_message = messages[0]
+    if not isinstance(system_message, dict):
+        return False
+    content = system_message.get("content")
+    return (
+        system_message.get("type") == "message"
+        and system_message.get("role") == "system"
+        and isinstance(content, list)
+        and bool(content)
+        and isinstance(content[0], dict)
+        and isinstance(content[0].get("text"), str)
+    )
 
 
 def _sanitize_resumed_message(message: Any) -> Any:

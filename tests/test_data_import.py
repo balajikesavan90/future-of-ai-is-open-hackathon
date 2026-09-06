@@ -7,6 +7,7 @@ import pytest
 from arctic_analytics.core import data_import
 from arctic_analytics.core.data_import import (
     check_datatypes,
+    build_vetted_files_from_uploads,
     dataframe_name_from_filename,
     gather_metadata,
     unique_dataframe_name,
@@ -58,6 +59,13 @@ def test_gather_metadata_sets_description_and_preserves_colliding_uploads(monkey
     assert list(vetted_files) == ["sales_2026", "sales_2026_2"]
     assert vetted_files["sales_2026"]["dataset_description"] == ""
     assert vetted_files["sales_2026_2"]["dataframe"]["value"].iloc[0] == 2
+
+
+def test_build_vetted_files_from_uploads_strips_path_from_source_filename():
+    vetted_files = build_vetted_files_from_uploads([Upload(b"value\n1\n", name="../../sales.csv")])
+
+    assert list(vetted_files) == ["sales"]
+    assert vetted_files["sales"]["source_filename"] == "sales.csv"
 
 
 def test_check_datatypes_uses_column_name_index_from_data_editor(monkeypatch):

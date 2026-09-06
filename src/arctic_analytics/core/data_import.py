@@ -146,7 +146,8 @@ def build_vetted_files_from_uploads(uploaded_files):
     """Read validated uploaded CSVs into the same structure used by normal ingestion."""
     vetted_files = {}
     for uploaded_file in uploaded_files:
-        filename = unique_dataframe_name(dataframe_name_from_filename(uploaded_file.name), vetted_files)
+        source_filename = os.path.basename(uploaded_file.name)
+        filename = unique_dataframe_name(dataframe_name_from_filename(source_filename), vetted_files)
         df = pd.read_csv(
             filepath_or_buffer=uploaded_file,
             parse_dates=True,
@@ -155,7 +156,7 @@ def build_vetted_files_from_uploads(uploaded_files):
             encoding_errors='replace',
         ).convert_dtypes()
         vetted_files[filename] = {
-            'source_filename': uploaded_file.name,
+            'source_filename': source_filename,
             'dataset_description': '',
             'columns_names': df.columns,
             'data_types': df.dtypes,
