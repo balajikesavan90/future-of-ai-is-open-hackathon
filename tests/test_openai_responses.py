@@ -13,6 +13,24 @@ def test_calculate_cost_returns_numeric_cost_for_known_model():
     assert client._calculate_cost(1_000_000, 1_000_000, "gpt-5.6-luna") == pytest.approx(1.4)
 
 
+def test_prepare_api_args_uses_reasoning_configuration_for_gpt_6_astra():
+    client = OpenAIResponsesUtility()
+
+    args = client._prepare_api_args(
+        messages=[{"content": [{"text": "Follow these instructions."}]}],
+        model="gpt-6-astra",
+        temperature=0.1,
+        response_format=None,
+        reasoning_effort="low",
+        tools=[],
+        tool_choice="auto",
+        include=[],
+    )
+
+    assert "temperature" not in args
+    assert args["reasoning"] == {"effort": "low", "summary": "auto"}
+
+
 def test_client_uses_session_api_key_without_mutating_environment(monkeypatch):
     captured = {}
 

@@ -22,7 +22,7 @@ DEFAULT_ENV_PATH = Path(".env")
 
 
 def validate_openai_model(model: str) -> str:
-    """Return the configured model or reject unsupported model overrides."""
+    """Return a supported model ID or reject an unsupported model override."""
     if model not in SUPPORTED_OPENAI_MODELS:
         raise ValueError(
             f"Model {model!r} is not supported. "

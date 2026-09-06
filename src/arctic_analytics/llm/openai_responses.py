@@ -54,7 +54,7 @@ class OpenAIResponsesUtility:
             input_price_per_million = 10 
             output_price_per_million = 50
         else:
-            raise ValueError(f"Pricing has not been configured for {model}.")
+            raise ValueError(f"Pricing has not been configured for {model!r}.")
 
         return (
             input_price_per_million * prompt_tokens / 1_000_000
@@ -71,7 +71,7 @@ class OpenAIResponsesUtility:
         elif model == 'gpt-6-astra':
             return tokens / 1_050_000
         else:
-            raise ValueError(f"Context window has not been configured for {model}.")
+            raise ValueError(f"Context window has not been configured for {model!r}.")
 
     def _responses_with_backoff(self, **kwargs):
         logging.info(f'responses_with_backoff - {st.session_state["session_id"]}')
@@ -112,7 +112,7 @@ class OpenAIResponsesUtility:
         if model.startswith('o4'):
             args['tool_choice'] = 'auto'  # Set tool choice to auto for o4 models
 
-        if model.startswith('o4') or model.startswith('o3') or model.startswith('gpt-5'):
+        if model.startswith('o4') or model.startswith('o3') or model.startswith(('gpt-5', 'gpt-6')):
             del args['temperature']  # Remove temperature for o4 and o3 models
 
             if reasoning_effort:

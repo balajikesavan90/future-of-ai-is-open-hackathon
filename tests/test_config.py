@@ -1,17 +1,29 @@
 import pytest
 
 from arctic_analytics.config import (
+    SUPPORTED_OPENAI_MODELS,
     get_config_value,
     get_openai_api_key,
     has_openai_api_key,
     load_runtime_config,
     save_openai_api_key_to_env,
+    validate_openai_model,
 )
 
 
 class BrokenSecrets:
     def get(self, key):
         raise FileNotFoundError("missing Streamlit secrets")
+
+
+@pytest.mark.parametrize("model", SUPPORTED_OPENAI_MODELS)
+def test_validate_openai_model_accepts_supported_models(model):
+    assert validate_openai_model(model) == model
+
+
+def test_validate_openai_model_rejects_unsupported_model():
+    with pytest.raises(ValueError, match="not supported"):
+        validate_openai_model("unknown-model")
 
 
 def test_config_prefers_environment_values():
