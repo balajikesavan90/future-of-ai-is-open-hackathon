@@ -19,7 +19,6 @@ def test_prepare_api_args_uses_reasoning_configuration_for_gpt_6_astra():
     args = client._prepare_api_args(
         messages=[{"content": [{"text": "Follow these instructions."}]}],
         model="gpt-6-astra",
-        temperature=0.1,
         response_format=None,
         reasoning_effort="low",
         tools=[],

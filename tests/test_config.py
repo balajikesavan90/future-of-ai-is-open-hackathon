@@ -16,7 +16,7 @@ class BrokenSecrets:
         raise FileNotFoundError("missing Streamlit secrets")
 
 
-@pytest.mark.parametrize("model", SUPPORTED_OPENAI_MODELS)
+@pytest.mark.parametrize("model", sorted(SUPPORTED_OPENAI_MODELS))
 def test_validate_openai_model_accepts_supported_models(model):
     assert validate_openai_model(model) == model
 

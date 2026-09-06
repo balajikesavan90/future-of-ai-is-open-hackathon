@@ -98,12 +98,11 @@ class OpenAIResponsesUtility:
                     
         return tools, tool_handlers
 
-    def _prepare_api_args(self, messages, model, temperature, response_format, reasoning_effort, tools, tool_choice, include):
+    def _prepare_api_args(self, messages, model, response_format, reasoning_effort, tools, tool_choice, include):
         args = {
             'input': messages,
             'instructions': messages[0]['content'][0]['text'],
             'model': model,
-            'temperature': temperature,
             'include': include
         }
 
@@ -115,8 +114,6 @@ class OpenAIResponsesUtility:
             args['parallel_tool_calls'] = False
 
         if model in SUPPORTED_OPENAI_MODELS:
-            del args['temperature']
-
             if reasoning_effort:
                 args['reasoning'] = {'effort': reasoning_effort, 'summary': 'auto'}
 
@@ -250,7 +247,6 @@ class OpenAIResponsesUtility:
     def responses_APIcall(
             self, 
             messages, 
-            temperature = 0.8, 
             model=DEFAULT_OPENAI_MODEL,
             response_format = None, 
             reasoning_effort = 'low', 
@@ -264,7 +260,7 @@ class OpenAIResponsesUtility:
 
         tools, tool_handlers = self._extract_tools_and_handlers(tool_config)
 
-        args = self._prepare_api_args(messages, model, temperature, response_format, reasoning_effort, tools, tool_choice, include)
+        args = self._prepare_api_args(messages, model, response_format, reasoning_effort, tools, tool_choice, include)
 
         response = self._responses_with_backoff(**args)
 
@@ -519,7 +515,7 @@ class OpenAIResponsesUtility:
                 )
             }
         ]
-        response, cost, context_window_usage = self.responses_APIcall(st.session_state['messages'], model=model, temperature=0.1, tool_config=tool_config)
+        response, cost, context_window_usage = self.responses_APIcall(st.session_state['messages'], model=model, tool_config=tool_config)
 
         st.session_state['prompt_str'] = ""
         st.session_state['cost'] += cost
