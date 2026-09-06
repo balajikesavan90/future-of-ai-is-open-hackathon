@@ -126,10 +126,10 @@ def render_uploader():
         try:
             trace = load_analysis_trace(trace_file.getvalue())
             for file in resume_files:
-                file.name = sanitize_filename(file.name)
+                sanitized_name = sanitize_filename(file.name)
                 valid, error = is_valid_csv(file)
                 if not valid:
-                    raise TraceResumeError(f"Error in file {file.name}: {error}")
+                    raise TraceResumeError(f"Error in file {sanitized_name}: {error}")
             uploaded_vetted_files = build_vetted_files_from_uploads(resume_files)
             preparation = prepare_resume(trace, uploaded_vetted_files)
         except (TraceResumeError, pd.errors.ParserError, UnicodeDecodeError) as exc:

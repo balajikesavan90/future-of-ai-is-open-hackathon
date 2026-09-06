@@ -1,5 +1,7 @@
 import json
 import re
+import zipfile
+from io import BytesIO
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
@@ -24,6 +26,7 @@ from arctic_analytics.streamlit.helpers import (
 )
 from arctic_analytics.config import MAX_MODEL_CONTEXT_TOKENS
 from arctic_analytics.core.trace_resume import MAX_TRACE_BYTES, ResumePreparation, load_analysis_trace
+from arctic_analytics.artifacts import build_research_bundle_zip
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -296,6 +299,26 @@ def test_research_session_from_streamlit_includes_researcher_notes():
     assert build_analysis_trace()["researcher_notes"] == "Assume measurements were reviewed for obvious data entry errors."
 
 
+def test_streamlit_research_bundle_records_model_without_exporting_it_in_trace():
+    st.session_state.clear()
+    st.session_state.update({
+        "session_id": "model-provenance-test-session",
+        "model": "gpt-5.6-luna",
+        "messages": [],
+        "vetted_files": {},
+    })
+
+    trace = build_analysis_trace()
+    session = build_research_session_from_streamlit(trace)
+    with zipfile.ZipFile(BytesIO(build_research_bundle_zip(session))) as archive:
+        manifest = json.loads(archive.read("research_bundle/run_manifest.json"))
+
+    assert "model" not in trace
+    assert session.model == "gpt-5.6-luna"
+    assert manifest["model"] == "gpt-5.6-luna"
+    assert manifest["provider"] == "openai"
+
+
 def test_research_session_from_streamlit_preserves_raw_image_outputs_for_bundle():
     st.session_state.clear()
     image_payload = "data:image/png;base64,iVBORw0KGgo="
@@ -404,6 +427,22 @@ def test_research_bundle_cache_invalidates_when_messages_change():
             "content": [{"type": "input_text", "text": "New analysis request."}],
         }
     ]
+
+    assert _research_bundle_cache_is_current() is False
+
+
+def test_research_bundle_cache_invalidates_when_model_changes():
+    st.session_state.clear()
+    st.session_state.update({
+        "session_id": "bundle-model-cache-test-session",
+        "model": "gpt-5.6-luna",
+        "researcher_notes": "",
+        "messages": [],
+        "vetted_files": {},
+    })
+    st.session_state["research_bundle_fingerprint"] = _research_bundle_fingerprint()
+
+    st.session_state["model"] = "gpt-5.6-terra"
 
     assert _research_bundle_cache_is_current() is False
 

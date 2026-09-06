@@ -33,6 +33,7 @@ class ResearchSession:
     """Provider-independent inputs needed to generate a research artifact bundle."""
 
     prompt: str | None = None
+    model: str | None = None
     analysis_trace: AnalysisTrace = field(default_factory=AnalysisTrace)
     context_bundle: ContextBundle = field(default_factory=lambda: ContextBundle({}))
     source_files: JsonDict = field(default_factory=dict)

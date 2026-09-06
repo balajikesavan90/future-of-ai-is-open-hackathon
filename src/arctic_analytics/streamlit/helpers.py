@@ -584,6 +584,7 @@ def _research_bundle_fingerprint(trace=None):
     trace_for_hash.pop("timestamp", None)
     payload = {
         "trace": trace_for_hash,
+        "model": st.session_state.get("model"),
         "researcher_notes": st.session_state.get("researcher_notes", ""),
         "uploaded_context": {
             "source": st.session_state.get("source"),
@@ -622,6 +623,7 @@ def build_research_session_from_streamlit(trace=None):
     }
     return ResearchSession(
         prompt=st.session_state.get("prompt_str") or trace.get("prompt_str"),
+        model=st.session_state.get("model"),
         analysis_trace=AnalysisTrace(trace),
         context_bundle=ContextBundle(context_bundle),
         source_files=context_bundle["uploaded_context"],

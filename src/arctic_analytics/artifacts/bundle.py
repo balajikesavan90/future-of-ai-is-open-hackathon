@@ -134,7 +134,10 @@ def _run_manifest_payload(session: ResearchSession) -> dict[str, Any]:
     trace = session.analysis_trace.data or {}
     source_data_filename = _source_data_filename(session.source_files)
     metadata_filename = _metadata_filename(session.source_files)
-    model = trace.get("model")
+    # Streamlit deliberately omits the active model from its portable trace.
+    # Keep bundle provenance on the session, while preserving trace-based
+    # provenance for non-Streamlit callers and older sessions.
+    model = session.model or trace.get("model")
     return {
         "run_id": trace.get("session_id") or str(uuid4()),
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
