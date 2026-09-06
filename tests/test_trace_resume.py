@@ -11,6 +11,11 @@ from arctic_analytics.core.trace_resume import (
     replace_resumed_system_message,
 )
 
+VALID_PNG_DATA_URL = (
+    "data:image/png;base64,"
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNgYGAAAAAEAAH2FzhVAAAAAElFTkSuQmCC"
+)
+
 
 def uploaded_file(name, columns):
     return {
@@ -68,6 +73,14 @@ def test_load_analysis_trace_rejects_invalid_json_and_unknown_versions():
         load_analysis_trace(json.dumps({"trace_schema_version": "9.0.0"}).encode())
 
     assert load_analysis_trace(json.dumps(resumable_trace()).encode())["session_id"] == "original-session"
+
+
+@pytest.mark.parametrize("nonfinite", ["NaN", "Infinity", "-Infinity", "1e400"])
+def test_load_analysis_trace_rejects_nonfinite_numbers(nonfinite):
+    payload = json.dumps(resumable_trace()).replace('"cost": 0', f'"cost": {nonfinite}').encode()
+
+    with pytest.raises(TraceResumeError, match="non-finite|valid UTF-8"):
+        load_analysis_trace(payload)
 
 
 @pytest.mark.parametrize(
@@ -224,9 +237,9 @@ def test_messages_for_resume_uses_full_fidelity_messages_and_sanitizes_old_chart
     }, {
         "type": "function_call_output",
         "call_id": "call_1",
-        "output": [{"type": "input_image", "image_url": "data:image/png;base64,abc"}],
+        "output": [{"type": "input_image", "image_url": VALID_PNG_DATA_URL}],
     }]
-    assert messages_for_resume(trace)[2]["output"][0]["image_url"] == "data:image/png;base64,abc"
+    assert messages_for_resume(trace)[2]["output"][0]["image_url"] == VALID_PNG_DATA_URL
 
 
 def test_messages_for_resume_discards_non_dict_history_items():
@@ -238,6 +251,40 @@ def test_messages_for_resume_discards_non_dict_history_items():
     }
     tool_call = {"type": "function_call", "name": "run_python_expression"}
     trace["resume"]["messages"] = [system_message, "unexpected", 42, tool_call]
+
+    assert messages_for_resume(trace) == []
+
+
+def test_messages_for_resume_discards_history_with_invalid_later_content_item():
+    trace = resumable_trace()
+    trace["resume"]["messages"] = [{
+        "type": "message",
+        "role": "system",
+        "content": [{"type": "input_text", "text": "System prompt"}],
+    }, {
+        "type": "message",
+        "role": "user",
+        "content": [{"type": "input_text", "text": "Continue"}, "invalid"],
+    }]
+
+    assert messages_for_resume(trace) == []
+
+
+@pytest.mark.parametrize(
+    ("role", "content_type"),
+    [("system", "output_text"), ("user", "output_text"), ("assistant", "input_text")],
+)
+def test_messages_for_resume_discards_role_incompatible_content(role, content_type):
+    trace = resumable_trace()
+    trace["resume"]["messages"] = [{
+        "type": "message",
+        "role": "system",
+        "content": [{"type": "input_text", "text": "System prompt"}],
+    }, {
+        "type": "message",
+        "role": role,
+        "content": [{"type": content_type, "text": "Wrong role"}],
+    }]
 
     assert messages_for_resume(trace) == []
 
@@ -369,7 +416,9 @@ def test_messages_for_resume_discards_histories_without_a_valid_system_message(m
     assert messages_for_resume(trace) == []
 
 
-@pytest.mark.parametrize("image_url", ["https://example.com/chart.png", "data:text/plain;base64,abc"])
+@pytest.mark.parametrize(
+    "image_url", ["https://example.com/chart.png", "data:text/plain;base64,abc", "data:image/png;base64,abc"],
+)
 def test_messages_for_resume_rejects_non_data_image_urls(image_url):
     trace = resumable_trace()
     trace["resume"]["messages"] = [{

@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import base64
+import binascii
+import io
 import json
+import math
 from typing import Any
 
 import pandas as pd
 from jsonschema import Draft202012Validator
+from PIL import Image, UnidentifiedImageError
 
 
 MAX_TRACE_BYTES = 10 * 1024 * 1024
@@ -68,16 +73,34 @@ def load_analysis_trace(raw_bytes: bytes) -> dict[str, Any]:
     if len(raw_bytes) > MAX_TRACE_BYTES:
         raise TraceResumeError("Trace files must be 10 MiB or smaller.")
     try:
-        trace = json.loads(raw_bytes.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        trace = json.loads(raw_bytes.decode("utf-8"), parse_constant=_reject_json_constant)
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
         raise TraceResumeError("Upload a valid UTF-8 Arctic Analytics trace JSON file.") from exc
 
     if not isinstance(trace, dict):
         raise TraceResumeError("The trace JSON must contain an object.")
+    if _contains_nonfinite_number(trace):
+        raise TraceResumeError("The trace JSON must not contain non-finite numbers.")
     errors = sorted(Draft202012Validator(IMPORT_TRACE_SCHEMA).iter_errors(trace), key=lambda error: list(error.path))
     if errors:
         raise TraceResumeError(f"The trace does not match the supported import format: {errors[0].message}")
     return trace
+
+
+def _reject_json_constant(value: str) -> None:
+    """Reject JSON extensions such as NaN and Infinity."""
+    raise ValueError(f"Non-finite JSON constant: {value}")
+
+
+def _contains_nonfinite_number(value: Any) -> bool:
+    """Catch non-finite floats produced by numeric overflow during decoding."""
+    if isinstance(value, float):
+        return not math.isfinite(value)
+    if isinstance(value, dict):
+        return any(_contains_nonfinite_number(item) for item in value.values())
+    if isinstance(value, list):
+        return any(_contains_nonfinite_number(item) for item in value)
+    return False
 
 
 def prepare_resume(trace: dict[str, Any], uploaded_vetted_files: dict[str, dict[str, Any]]) -> ResumePreparation:
@@ -153,15 +176,7 @@ def _has_resumable_system_message(messages: Any) -> bool:
     system_message = messages[0]
     if not isinstance(system_message, dict):
         return False
-    content = system_message.get("content")
-    return (
-        system_message.get("type") == "message"
-        and system_message.get("role") == "system"
-        and isinstance(content, list)
-        and bool(content)
-        and isinstance(content[0], dict)
-        and isinstance(content[0].get("text"), str)
-    )
+    return _is_supported_resumed_message(system_message) and system_message.get("role") == "system"
 
 
 def _is_supported_resumed_message(message: Any) -> bool:
@@ -172,10 +187,7 @@ def _is_supported_resumed_message(message: Any) -> bool:
         content = message.get("content")
         return (
             message.get("role") in {"system", "user", "assistant"}
-            and isinstance(content, list)
-            and bool(content)
-            and isinstance(content[0], dict)
-            and isinstance(content[0].get("text"), str)
+            and _has_valid_message_content(message["role"], content)
         )
     if message_type == "reasoning":
         summary = message.get("summary")
@@ -192,6 +204,21 @@ def _is_supported_resumed_message(message: Any) -> bool:
     if message_type == "function_call_output":
         return _valid_call_id(message.get("call_id")) and isinstance(message.get("output"), (str, list, dict))
     return False
+
+
+def _has_valid_message_content(role: str, content: Any) -> bool:
+    """Accept only the role-specific text content emitted by this application."""
+    expected_type = "output_text" if role == "assistant" else "input_text"
+    return (
+        isinstance(content, list)
+        and bool(content)
+        and all(
+            isinstance(item, dict)
+            and item.get("type") == expected_type
+            and isinstance(item.get("text"), str)
+            for item in content
+        )
+    )
 
 
 def _valid_call_id(value: Any) -> bool:
@@ -236,14 +263,35 @@ def _sanitize_resumed_message(message: Any) -> Any:
         if not isinstance(output_item, dict):
             continue
         image_url = output_item.get("image_url")
-        if image_url is not None and not _is_base64_image_data_url(image_url):
+        if image_url is not None and not _is_valid_base64_image_data_url(image_url):
             restored["output"] = "Historical chart output is unavailable in this exported trace."
             break
     return restored
 
 
-def _is_base64_image_data_url(value: Any) -> bool:
-    return isinstance(value, str) and value.startswith("data:image/") and ";base64," in value
+def _is_valid_base64_image_data_url(value: Any) -> bool:
+    """Validate a supported image data URL before it is sent to Responses."""
+    if not isinstance(value, str) or not value.startswith("data:"):
+        return False
+    header, separator, payload = value.partition(",")
+    if separator != "," or not header.endswith(";base64"):
+        return False
+    mime_type = header.removeprefix("data:").removesuffix(";base64")
+    expected_format = {
+        "image/png": "PNG",
+        "image/jpeg": "JPEG",
+        "image/gif": "GIF",
+        "image/webp": "WEBP",
+    }.get(mime_type)
+    if expected_format is None:
+        return False
+    try:
+        image_bytes = base64.b64decode(payload, validate=True)
+        with Image.open(io.BytesIO(image_bytes)) as image:
+            image.verify()
+            return image.format == expected_format
+    except (binascii.Error, UnidentifiedImageError, OSError, SyntaxError, ValueError):
+        return False
 
 
 def _match_manifest_datasets(datasets: list[Any], uploaded: dict[str, dict[str, Any]]) -> dict[str, str]:
