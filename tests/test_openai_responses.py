@@ -10,7 +10,24 @@ from arctic_analytics.llm.openai_responses import OpenAIResponsesUtility
 def test_calculate_cost_returns_numeric_cost_for_known_model():
     client = OpenAIResponsesUtility()
 
-    assert client._calculate_cost(1_000_000, 1_000_000, "gpt-5.4-nano-2026-03-17") == pytest.approx(1.45)
+    assert client._calculate_cost(1_000_000, 1_000_000, "gpt-5.6-luna") == pytest.approx(1.4)
+
+
+def test_prepare_api_args_uses_reasoning_configuration_for_gpt_6_astra():
+    client = OpenAIResponsesUtility()
+
+    args = client._prepare_api_args(
+        messages=[{"content": [{"text": "Follow these instructions."}]}],
+        model="gpt-6-astra",
+        response_format=None,
+        reasoning_effort="low",
+        tools=[],
+        tool_choice="auto",
+        include=[],
+    )
+
+    assert "temperature" not in args
+    assert args["reasoning"] == {"effort": "low", "summary": "auto"}
 
 
 def test_client_uses_session_api_key_without_mutating_environment(monkeypatch):
@@ -65,17 +82,17 @@ def test_client_is_reused_until_api_key_changes(monkeypatch):
 def test_calculate_cost_rejects_unknown_model():
     client = OpenAIResponsesUtility()
 
-    with pytest.raises(ValueError, match="not recognized for cost calculation"):
+    with pytest.raises(ValueError, match="Pricing has not been configured"):
         client._calculate_cost(100, 100, "unknown-model")
 
 
 @pytest.mark.parametrize(
     ("model", "context_window_tokens"),
     [
-        ("gpt-5.4-mini-2026-03-17", 400_000),
-        ("gpt-5.4-nano-2026-03-17", 400_000),
-        ("gpt-5.4-2026-03-05", 1_050_000),
-        ("gpt-5.5-2026-04-23", 1_050_000),
+        ("gpt-5.6-luna", 1_050_000),
+        ("gpt-5.6-terra", 1_050_000),
+        ("gpt-5.6-sol", 1_050_000),
+        ("gpt-6-astra", 1_050_000),
     ],
 )
 def test_calculate_context_window_usage_for_supported_models(model, context_window_tokens):
@@ -87,5 +104,5 @@ def test_calculate_context_window_usage_for_supported_models(model, context_wind
 def test_calculate_context_window_usage_rejects_unknown_model():
     client = OpenAIResponsesUtility()
 
-    with pytest.raises(ValueError, match="not recognized for context window usage calculation"):
+    with pytest.raises(ValueError, match="Context window has not been configured"):
         client._calculate_context_window_usage(100, "unknown-model")

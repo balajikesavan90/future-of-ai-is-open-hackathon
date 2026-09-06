@@ -9,7 +9,12 @@ import pandas as pd
 import numpy as np
 import io
 
-from arctic_analytics.config import get_openai_api_key
+from arctic_analytics.config import (
+    DEFAULT_OPENAI_MODEL,
+    SUPPORTED_OPENAI_MODELS,
+    get_openai_api_key,
+    validate_openai_model,
+)
 from arctic_analytics.streamlit.helpers import safely_escape_dollars, render_tool_call, render_tool_response
 from arctic_analytics.core.security import safely_execute_code
 from arctic_analytics.llm.tokenization import safe_encoding_for_model
@@ -41,25 +46,37 @@ class OpenAIResponsesUtility:
         Returns:
             cost_USD: Cost in USD
         """
-        # Standard rates for common models (these can be updated as pricing changes)
-        if model == 'gpt-5.5-2026-04-23':
-            return 5*prompt_tokens/1000000 + 30*completion_tokens/1000000
-        elif model == 'gpt-5.4-2026-03-05':
-            return 2.5*prompt_tokens/1000000 + 15*completion_tokens/1000000
-        elif model == 'gpt-5.4-mini-2026-03-17':
-            return 0.75*prompt_tokens/1000000 + 4.5*completion_tokens/1000000
-        elif model == 'gpt-5.4-nano-2026-03-17':
-            return 0.2*prompt_tokens/1000000 + 1.25*completion_tokens/1000000
+        if model == 'gpt-5.6-luna':
+            input_price_per_million = 0.2
+            output_price_per_million = 1.2  
+        elif model == 'gpt-5.6-terra':
+            input_price_per_million = 2
+            output_price_per_million = 12
+        elif model == 'gpt-5.6-sol':
+            input_price_per_million = 4
+            output_price_per_million = 20
+        elif model == 'gpt-6-astra':
+            input_price_per_million = 10 
+            output_price_per_million = 50
         else:
-            raise ValueError(f"Model {model} not recognized for cost calculation.")
+            raise ValueError(f"Pricing has not been configured for {model!r}.")
+
+        return (
+            input_price_per_million * prompt_tokens / 1_000_000
+            + output_price_per_million * completion_tokens / 1_000_000
+        )
 
     def _calculate_context_window_usage(self, tokens, model):
-        if model in ['gpt-5.4-mini-2026-03-17', 'gpt-5.4-nano-2026-03-17']:
-            return tokens/400000
-        elif model in ['gpt-5.4-2026-03-05', 'gpt-5.5-2026-04-23']:
-            return tokens/1050000
+        if model == 'gpt-5.6-luna':
+            return tokens / 1_050_000
+        elif model == 'gpt-5.6-terra':
+            return tokens / 1_050_000
+        elif model == 'gpt-5.6-sol':
+            return tokens / 1_050_000
+        elif model == 'gpt-6-astra':
+            return tokens / 1_050_000
         else:
-            raise ValueError(f"Model {model} not recognized for context window usage calculation.")
+            raise ValueError(f"Context window has not been configured for {model!r}.")
 
     def _responses_with_backoff(self, **kwargs):
         logging.info(f'responses_with_backoff - {st.session_state["session_id"]}')
@@ -81,12 +98,11 @@ class OpenAIResponsesUtility:
                     
         return tools, tool_handlers
 
-    def _prepare_api_args(self, messages, model, temperature, response_format, reasoning_effort, tools, tool_choice, include):
+    def _prepare_api_args(self, messages, model, response_format, reasoning_effort, tools, tool_choice, include):
         args = {
             'input': messages,
             'instructions': messages[0]['content'][0]['text'],
             'model': model,
-            'temperature': temperature,
             'include': include
         }
 
@@ -97,12 +113,7 @@ class OpenAIResponsesUtility:
             # soon as the model emits it, instead of batching multiple calls.
             args['parallel_tool_calls'] = False
 
-        if model.startswith('o4'):
-            args['tool_choice'] = 'auto'  # Set tool choice to auto for o4 models
-
-        if model.startswith('o4') or model.startswith('o3') or model.startswith('gpt-5'):
-            del args['temperature']  # Remove temperature for o4 and o3 models
-
+        if model in SUPPORTED_OPENAI_MODELS:
             if reasoning_effort:
                 args['reasoning'] = {'effort': reasoning_effort, 'summary': 'auto'}
 
@@ -236,8 +247,7 @@ class OpenAIResponsesUtility:
     def responses_APIcall(
             self, 
             messages, 
-            temperature = 0.8, 
-            model='gpt-5.4-nano-2026-03-17', 
+            model=DEFAULT_OPENAI_MODEL,
             response_format = None, 
             reasoning_effort = 'low', 
             tool_config = None, 
@@ -246,9 +256,11 @@ class OpenAIResponsesUtility:
         ):
         logging.info(f'responses_APIcall - {st.session_state["session_id"]}')
 
+        validate_openai_model(model)
+
         tools, tool_handlers = self._extract_tools_and_handlers(tool_config)
 
-        args = self._prepare_api_args(messages, model, temperature, response_format, reasoning_effort, tools, tool_choice, include)
+        args = self._prepare_api_args(messages, model, response_format, reasoning_effort, tools, tool_choice, include)
 
         response = self._responses_with_backoff(**args)
 
@@ -503,7 +515,7 @@ class OpenAIResponsesUtility:
                 )
             }
         ]
-        response, cost, context_window_usage = self.responses_APIcall(st.session_state['messages'], model=model, temperature=0.1, tool_config=tool_config)
+        response, cost, context_window_usage = self.responses_APIcall(st.session_state['messages'], model=model, tool_config=tool_config)
 
         st.session_state['prompt_str'] = ""
         st.session_state['cost'] += cost
