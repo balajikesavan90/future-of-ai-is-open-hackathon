@@ -54,9 +54,6 @@ class OpenAIResponsesUtility:
             input_price_per_million = 10 
             output_price_per_million = 50
         else:
-            validate_openai_model(model)
-
-        if input_price_per_million is None or output_price_per_million is None:
             raise ValueError(f"Pricing has not been configured for {model}.")
 
         return (
@@ -74,7 +71,7 @@ class OpenAIResponsesUtility:
         elif model == 'gpt-6-astra':
             return tokens / 1_050_000
         else:
-            validate_openai_model(model)
+            raise ValueError(f"Context window has not been configured for {model}.")
 
     def _responses_with_backoff(self, **kwargs):
         logging.info(f'responses_with_backoff - {st.session_state["session_id"]}')

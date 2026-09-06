@@ -7,11 +7,10 @@ import arctic_analytics.llm.openai_responses as openai_responses
 from arctic_analytics.llm.openai_responses import OpenAIResponsesUtility
 
 
-def test_calculate_cost_requires_configured_pricing_for_known_model():
+def test_calculate_cost_returns_numeric_cost_for_known_model():
     client = OpenAIResponsesUtility()
 
-    with pytest.raises(ValueError, match="Pricing has not been configured for gpt-5.6-luna"):
-        client._calculate_cost(1_000_000, 1_000_000, "gpt-5.6-luna")
+    assert client._calculate_cost(1_000_000, 1_000_000, "gpt-5.6-luna") == pytest.approx(1.4)
 
 
 def test_client_uses_session_api_key_without_mutating_environment(monkeypatch):
@@ -66,7 +65,7 @@ def test_client_is_reused_until_api_key_changes(monkeypatch):
 def test_calculate_cost_rejects_unknown_model():
     client = OpenAIResponsesUtility()
 
-    with pytest.raises(ValueError, match="only supports GPT-5.6 Luna"):
+    with pytest.raises(ValueError, match="Pricing has not been configured"):
         client._calculate_cost(100, 100, "unknown-model")
 
 
@@ -88,5 +87,5 @@ def test_calculate_context_window_usage_for_supported_models(model, context_wind
 def test_calculate_context_window_usage_rejects_unknown_model():
     client = OpenAIResponsesUtility()
 
-    with pytest.raises(ValueError, match="only supports GPT-5.6 Luna"):
+    with pytest.raises(ValueError, match="Context window has not been configured"):
         client._calculate_context_window_usage(100, "unknown-model")
