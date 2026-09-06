@@ -203,7 +203,10 @@ class OpenAIResponsesUtility:
 
     def _prepare_api_args(self, messages, model, response_format, reasoning_effort, tools, tool_choice, include):
         args = {
-            'input': messages,
+            # The initial system message is represented by the Responses API's
+            # dedicated ``instructions`` field.  Keeping it in ``input`` as
+            # well duplicates it in both the request and local context check.
+            'input': messages[1:],
             'instructions': messages[0]['content'][0]['text'],
             'model': model,
             'include': include

@@ -207,23 +207,26 @@ def check_datatypes(vetted_files):
     for filename in vetted_files:
         vetted_files[filename]['data_dictionary'] = pd.DataFrame(vetted_files[filename]['data_dictionary'])
         for column in vetted_files[filename]['data_dictionary']['Column Name']:
+            selected_dtype = str(
+                vetted_files[filename]['data_dictionary'].loc[column]['Data Type']
+            ).lower()
 
-            if vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'object':
+            if selected_dtype in {'object', 'string'}:
                 vetted_files[filename]['dataframe'][column] = vetted_files[filename]['dataframe'][column].astype('string')
 
-            elif vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'float64':
+            elif selected_dtype == 'float64':
                 vetted_files[filename]['dataframe'][column] = vetted_files[filename]['dataframe'][column].astype('Float64')
 
-            elif vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'int64':
+            elif selected_dtype == 'int64':
                 vetted_files[filename]['dataframe'][column] = vetted_files[filename]['dataframe'][column].astype('Int64')
 
-            elif vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'datetime64[ns]':
+            elif selected_dtype == 'datetime64[ns]':
                 vetted_files[filename]['dataframe'][column] = pd.to_datetime(vetted_files[filename]['dataframe'][column])
 
-            elif vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'bool':
+            elif selected_dtype == 'bool':
                 vetted_files[filename]['dataframe'][column] = vetted_files[filename]['dataframe'][column].astype('bool')
 
-            elif vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'category':
+            elif selected_dtype == 'category':
                 vetted_files[filename]['dataframe'][column] = vetted_files[filename]['dataframe'][column].astype('category')
     return vetted_files
 

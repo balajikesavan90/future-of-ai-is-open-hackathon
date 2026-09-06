@@ -34,6 +34,25 @@ def test_prepare_api_args_uses_reasoning_configuration_for_gpt_6_astra():
     assert args["reasoning"] == {"effort": "low", "summary": "auto"}
 
 
+def test_prepare_api_args_uses_system_message_only_as_instructions():
+    client = OpenAIResponsesUtility()
+    system_message = {"role": "system", "content": [{"text": "System instructions."}]}
+    user_message = {"role": "user", "content": [{"text": "Analyze the data."}]}
+
+    args = client._prepare_api_args(
+        messages=[system_message, user_message],
+        model="gpt-5.6-luna",
+        response_format=None,
+        reasoning_effort=None,
+        tools=[],
+        tool_choice="auto",
+        include=[],
+    )
+
+    assert args["instructions"] == "System instructions."
+    assert args["input"] == [user_message]
+
+
 def test_client_uses_session_api_key_without_mutating_environment(monkeypatch):
     captured = {}
 

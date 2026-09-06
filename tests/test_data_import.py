@@ -2,6 +2,7 @@ import io
 from types import SimpleNamespace
 
 import pandas as pd
+import pytest
 
 from arctic_analytics.core import data_import
 from arctic_analytics.core.data_import import (
@@ -81,6 +82,39 @@ def test_check_datatypes_uses_column_name_index_from_data_editor(monkeypatch):
 
     assert result["customers"]["data_dictionary"].index.tolist() == ["name"]
     assert str(result["customers"]["dataframe"]["name"].dtype) == "string"
+
+
+@pytest.mark.parametrize(
+    ("selected_dtype", "values", "expected_dtype"),
+    [
+        ("Int64", ["1", "2"], "Int64"),
+        ("Float64", ["1.5", "2.5"], "Float64"),
+        ("string", [1, 2], "string"),
+    ],
+)
+def test_check_datatypes_applies_data_editor_dtype_labels(
+    monkeypatch, selected_dtype, values, expected_dtype
+):
+    session_state = {"session_id": "test-session"}
+    monkeypatch.setattr(data_import, "st", SimpleNamespace(session_state=session_state))
+    data_dictionary = pd.DataFrame(
+        {
+            "Primary Key": [False],
+            "Column Name": ["value"],
+            "Data Type": [selected_dtype],
+            "Description": ["A value"],
+        }
+    ).set_index("Column Name", drop=False)
+    vetted_files = {
+        "values": {
+            "data_dictionary": data_dictionary,
+            "dataframe": pd.DataFrame({"value": values}),
+        }
+    }
+
+    result = check_datatypes(vetted_files)
+
+    assert str(result["values"]["dataframe"]["value"].dtype) == expected_dtype
 
 
 def test_is_valid_csv_accepts_plain_csv():
