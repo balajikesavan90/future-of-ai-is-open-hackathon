@@ -22,6 +22,7 @@ from arctic_analytics.streamlit.helpers import (
     serialize_analysis_trace,
     TraceExportError,
 )
+from arctic_analytics.config import MAX_MODEL_CONTEXT_TOKENS
 from arctic_analytics.core.trace_resume import MAX_TRACE_BYTES, ResumePreparation, load_analysis_trace
 
 
@@ -182,6 +183,7 @@ def test_upload_trace_includes_resume_manifest_for_uploaded_csvs():
     st.session_state["source"] = "uploader"
     st.session_state["researcher_notes"] = "Recheck the outliers."
     st.session_state["context_window_usage"] = 0.125
+    st.session_state["context_window_tokens"] = 34_000
     st.session_state["messages"] = []
     st.session_state["vetted_files"] = {
         "sales": {
@@ -197,6 +199,7 @@ def test_upload_trace_includes_resume_manifest_for_uploaded_csvs():
         "resume_schema_version": "1.0",
         "source": "uploader",
         "context_window_usage": 0.125,
+        "context_window_tokens": 34_000,
         "datasets": [{
             "dataset_key": "sales",
             "source_filename": "Sales 2026.csv",
@@ -452,6 +455,7 @@ def test_restore_trace_session_preserves_api_key_but_not_imported_session_state(
     assert st.session_state["session_id"] != "old-session"
     assert st.session_state["model"] == "gpt-5.6-luna"
     assert st.session_state["context_window_usage"] == 0.1
+    assert st.session_state["context_window_tokens"] == round(0.1 * MAX_MODEL_CONTEXT_TOKENS)
     assert st.session_state["researcher_notes"] == "Review the July outliers before publishing."
     assert st.session_state["researcher_notes_widget"] == "Review the July outliers before publishing."
 

@@ -10,7 +10,11 @@ import matplotlib.figure as mfigure
 import os
 
 from arctic_analytics import __version__
-from arctic_analytics.config import DEFAULT_OPENAI_MODEL, SUPPORTED_OPENAI_MODELS
+from arctic_analytics.config import (
+    DEFAULT_OPENAI_MODEL,
+    MAX_MODEL_CONTEXT_TOKENS,
+    SUPPORTED_OPENAI_MODELS,
+)
 from arctic_analytics.artifacts import (
     AnalysisTrace,
     ContextBundle,
@@ -394,6 +398,13 @@ def _build_resume_manifest():
             and not isinstance(st.session_state.get("context_window_usage"), bool)
             else 0
         ),
+        "context_window_tokens": (
+            st.session_state.get("context_window_tokens")
+            if isinstance(st.session_state.get("context_window_tokens"), int)
+            and not isinstance(st.session_state.get("context_window_tokens"), bool)
+            and st.session_state.get("context_window_tokens") >= 0
+            else 0
+        ),
         "researcher_notes": st.session_state.get("researcher_notes", "")
         if isinstance(st.session_state.get("researcher_notes", ""), str) else "",
         "resumed_from_session_id": st.session_state.get("resumed_from_session_id"),
@@ -441,6 +452,15 @@ def restore_trace_session(trace, preparation):
         or not 0 <= context_window_usage <= 1
     ):
         context_window_usage = 0
+    context_window_tokens = resume.get("context_window_tokens")
+    if (
+        not isinstance(context_window_tokens, int)
+        or isinstance(context_window_tokens, bool)
+        or context_window_tokens < 0
+    ):
+        # Traces produced before context token counts were persisted retain the
+        # percentage, which was calculated using this configured limit.
+        context_window_tokens = round(context_window_usage * MAX_MODEL_CONTEXT_TOKENS)
     trace_model = trace.get("model")
     if trace_model in SUPPORTED_OPENAI_MODELS:
         resumed_model = trace_model
@@ -468,7 +488,7 @@ def restore_trace_session(trace, preparation):
             "model": resumed_model,
             "cost": trace.get("cost") if isinstance(trace.get("cost"), (int, float)) else 0,
             "context_window_usage": context_window_usage,
-            "context_window_tokens": 0,
+            "context_window_tokens": context_window_tokens,
             "count": sum(1 for message in trace.get("messages", []) if isinstance(message, dict) and message.get("role") == "user"),
             "show_sample": False,
             "disable_sample_button": False,

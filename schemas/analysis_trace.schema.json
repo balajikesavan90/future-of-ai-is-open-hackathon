@@ -161,6 +161,7 @@
         "resume_schema_version": {"const": "1.0"},
         "source": {"const": "uploader"},
         "context_window_usage": {"type": ["number", "integer"]},
+        "context_window_tokens": {"type": "integer", "minimum": 0},
         "researcher_notes": {"type": "string"},
         "resumed_from_session_id": {"type": ["string", "null"]},
         "messages": {

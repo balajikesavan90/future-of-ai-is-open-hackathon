@@ -42,6 +42,7 @@ IMPORT_TRACE_SCHEMA = {
                 "source": {"const": "uploader"},
                 "datasets": {"type": "array"},
                 "context_window_usage": {"type": "number"},
+                "context_window_tokens": {"type": "integer", "minimum": 0},
                 "researcher_notes": {"type": "string"},
             },
         },
