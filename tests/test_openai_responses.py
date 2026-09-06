@@ -1,4 +1,5 @@
 import base64
+from contextlib import nullcontext
 import io
 import os
 from types import SimpleNamespace
@@ -51,6 +52,57 @@ def test_prepare_api_args_uses_system_message_only_as_instructions():
 
     assert args["instructions"] == "System instructions."
     assert args["input"] == [user_message]
+
+
+def test_tool_call_follow_up_keeps_system_message_out_of_input(monkeypatch):
+    system_message = {"role": "system", "content": [{"text": "System instructions."}]}
+    user_message = {"role": "user", "content": [{"text": "Analyze the data."}]}
+    messages = [system_message, user_message]
+    captured_requests = []
+    client = OpenAIResponsesUtility()
+
+    monkeypatch.setattr(
+        openai_responses,
+        "st",
+        SimpleNamespace(
+            session_state={"messages_container": nullcontext()},
+            chat_message=lambda _role: nullcontext(),
+        ),
+    )
+    monkeypatch.setattr(openai_responses, "render_tool_response", lambda _response: None)
+    monkeypatch.setattr(
+        client,
+        "_responses_with_backoff",
+        lambda **kwargs: captured_requests.append(kwargs) or object(),
+    )
+    monkeypatch.setattr(
+        client,
+        "_process_api_response",
+        lambda _response, updated_messages, _model: ([], 0, updated_messages, 0, 0),
+    )
+
+    client._process_tool_call_loop(
+        tool_calls=[{"name": "lookup", "arguments": "{}", "call_id": "call_1"}],
+        messages=messages,
+        tool_handlers={"lookup": lambda _arguments: "tool result"},
+        args={"instructions": "System instructions.", "input": [user_message]},
+        model="gpt-5.6-luna",
+    )
+
+    assert captured_requests[0]["input"] == messages[1:]
+    assert system_message not in captured_requests[0]["input"]
+
+
+def test_image_dimensions_skips_oversized_base64_before_decoding(monkeypatch):
+    client = OpenAIResponsesUtility()
+    client._MAX_IMAGE_BASE64_CHARACTERS = 4
+    monkeypatch.setattr(
+        openai_responses.base64,
+        "b64decode",
+        lambda *_args, **_kwargs: pytest.fail("oversized payload must not be decoded"),
+    )
+
+    assert client._image_dimensions("data:image/png;base64,AAAAA") is None
 
 
 def test_client_uses_session_api_key_without_mutating_environment(monkeypatch):

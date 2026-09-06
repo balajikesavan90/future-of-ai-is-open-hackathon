@@ -28,6 +28,9 @@ class OpenAIResponsesUtility:
     _IMAGE_PATCH_SIZE = 32
     _GPT_56_IMAGE_TOKEN_MULTIPLIER = 1.2
     _MAX_IMAGE_PATCHES = 30_000
+    # Reading dimensions should not require allocating an unbounded image payload
+    # while estimating request context. Larger inputs use the conservative maximum.
+    _MAX_IMAGE_BASE64_CHARACTERS = 20 * 1024 * 1024
 
     def __init__(self):
         self.enc_gpt4 = safe_encoding_for_model("gpt-4")
@@ -157,6 +160,8 @@ class OpenAIResponsesUtility:
             return None
         try:
             encoded_image = image_url.split(',', 1)[1]
+            if len(encoded_image) > self._MAX_IMAGE_BASE64_CHARACTERS:
+                return None
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', Image.DecompressionBombWarning)
                 with Image.open(io.BytesIO(base64.b64decode(encoded_image, validate=True))) as image:
@@ -339,8 +344,9 @@ class OpenAIResponsesUtility:
                             render_tool_response(error_message)
         
 
-            # Update messages in args and set tool_choice to auto for follow-up call
-            args['input'] = messages
+            # Keep the system message solely in ``instructions``, as on the
+            # initial request. It must not be duplicated in follow-up input.
+            args['input'] = messages[1:]
             args['tool_choice'] = 'auto'
             response = self._responses_with_backoff(**args)
 
