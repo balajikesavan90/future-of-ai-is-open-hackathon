@@ -18,3 +18,5 @@ def test_construct_system_message_includes_dataframe_metadata():
 
     assert "Sales by region." in message
     assert "The dataset has already been loaded as a pandas DataFrame named sales" in message
+    assert "pd.DataFrame({'missing_values': [df['col_name'].isna().sum()]})" in message
+    assert "isna().sum().to_frame" not in message

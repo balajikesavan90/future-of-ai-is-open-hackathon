@@ -16,7 +16,7 @@ All successful Python analysis calls except generate_plot must return a pandas D
 Use the run_python_expression tool to run small single-line code snippets like
  - df.groupby(['col1', 'col2', 'col3', ...])['col4'].mean().reset_index(name='mean_col4')
  - df['col_name'].value_counts().rename_axis('col_name').reset_index(name='count')
- - df['col_name'].isna().sum().to_frame(name='missing_values')
+ - pd.DataFrame({'missing_values': [df['col_name'].isna().sum()]})
  - pd.DataFrame({'median': [df['col_name'].median()]})
  - df.sort_values('col_name').head(5)
  - pd.DataFrame({'matching_rows': [df['col_name'].str.contains("pattern", case=False, na=False).sum()]})

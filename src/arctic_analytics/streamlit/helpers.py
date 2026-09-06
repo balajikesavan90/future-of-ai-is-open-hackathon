@@ -16,12 +16,16 @@ from arctic_analytics.artifacts import (
     ResearchSession,
     build_research_bundle_zip,
 )
-from arctic_analytics.core.trace_resume import messages_for_resume
+from arctic_analytics.core.trace_resume import MAX_TRACE_BYTES, messages_for_resume
 
 MAX_TRACE_STRING_CHARS = 10000
 TRACE_STRING_PREVIEW_CHARS = 1000
 REDACTED_SECRET_VALUE = "[redacted]"
 SENSITIVE_SESSION_KEY_MARKERS = ("api_key", "token", "password", "secret")
+
+
+class TraceExportError(ValueError):
+    """Raised when an exported trace cannot be imported by the resume flow."""
 
 def setup_session_state():
     logging.info(f'###############################')
@@ -333,6 +337,17 @@ def build_analysis_trace():
     return trace
 
 
+def serialize_analysis_trace(trace):
+    """Serialize a trace only when it meets the resume import size limit."""
+    payload = json.dumps(trace, indent=2, default=str).encode("utf-8")
+    if len(payload) > MAX_TRACE_BYTES:
+        raise TraceExportError(
+            "This trace is larger than 10 MiB and cannot be resumed. "
+            "Reduce the analysis history or chart outputs, then export again."
+        )
+    return payload.decode("utf-8")
+
+
 def _build_resume_manifest():
     datasets = []
     for dataset_key, file_info in st.session_state.get("vetted_files", {}).items():
@@ -457,8 +472,14 @@ def render_trace_export():
     st.sidebar.caption("Prepare a JSON snapshot of the current analysis session when you need to export it.")
     if st.sidebar.button("Prepare Trace Export", key="prepare_trace_export"):
         trace = build_analysis_trace()
-        st.session_state["trace_export_json"] = json.dumps(trace, indent=2, default=str)
-        st.session_state["trace_export_session_id"] = trace.get("session_id", "session")
+        try:
+            st.session_state["trace_export_json"] = serialize_analysis_trace(trace)
+        except TraceExportError as exc:
+            st.session_state.pop("trace_export_json", None)
+            st.session_state.pop("trace_export_session_id", None)
+            st.sidebar.error(str(exc))
+        else:
+            st.session_state["trace_export_session_id"] = trace.get("session_id", "session")
 
     if "trace_export_json" in st.session_state:
         st.sidebar.download_button(

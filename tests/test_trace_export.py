@@ -18,6 +18,8 @@ from arctic_analytics.streamlit.helpers import (
     goto_data_analysis_widget,
     redact_sensitive_session_state,
     restore_trace_session,
+    serialize_analysis_trace,
+    TraceExportError,
 )
 from arctic_analytics.core.trace_resume import ResumePreparation
 
@@ -220,6 +222,27 @@ def test_resume_manifest_preserves_chart_data_urls():
 
     assert trace["messages"][0]["output"][0]["image_url"]["type"] == "image_base64"
     assert trace["resume"]["messages"][0]["output"][0]["image_url"] == chart_url
+
+
+def test_resume_trace_export_rejects_payloads_larger_than_import_limit():
+    st.session_state.clear()
+    st.session_state.update({
+        "session_id": "oversized-chart-export-session",
+        "source": "uploader",
+        "messages": [{
+            "type": "function_call_output",
+            "output": [{
+                "type": "input_image",
+                "image_url": "data:image/png;base64," + ("a" * (10 * 1024 * 1024)),
+            }],
+        }],
+        "vetted_files": {"sales": {"source_filename": "sales.csv", "columns_names": pd.Index(["amount"])}},
+    })
+
+    trace = build_analysis_trace()
+
+    with pytest.raises(TraceExportError, match="larger than 10 MiB and cannot be resumed"):
+        serialize_analysis_trace(trace)
 
 
 def test_trace_schema_accepts_dataset_metadata_without_legacy_columns_names():
