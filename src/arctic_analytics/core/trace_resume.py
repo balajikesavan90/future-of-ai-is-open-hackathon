@@ -122,11 +122,12 @@ def messages_for_resume(trace: dict[str, Any]) -> list[Any]:
         messages = trace.get("messages", [])
     if not _has_resumable_system_message(messages):
         return []
-    return [
-        _sanitize_resumed_message(message)
-        for message in messages
-        if isinstance(message, dict)
-    ]
+    # A resumed history is passed both to the UI renderer and the Responses
+    # API. Keeping only valid entries can orphan tool outputs or calls, so
+    # discard the complete history when any item is not a supported shape.
+    if not all(_is_supported_resumed_message(message) for message in messages):
+        return []
+    return [_sanitize_resumed_message(message) for message in messages]
 
 
 def _has_resumable_system_message(messages: Any) -> bool:
@@ -144,6 +145,32 @@ def _has_resumable_system_message(messages: Any) -> bool:
         and isinstance(content[0], dict)
         and isinstance(content[0].get("text"), str)
     )
+
+
+def _is_supported_resumed_message(message: Any) -> bool:
+    if not isinstance(message, dict):
+        return False
+    message_type = message.get("type")
+    if message_type == "message":
+        content = message.get("content")
+        return (
+            message.get("role") in {"system", "user", "assistant"}
+            and isinstance(content, list)
+            and bool(content)
+            and isinstance(content[0], dict)
+            and isinstance(content[0].get("text"), str)
+        )
+    if message_type == "reasoning":
+        summary = message.get("summary")
+        return isinstance(summary, list) and all(
+            isinstance(item, dict) and isinstance(item.get("text"), str)
+            for item in summary
+        )
+    if message_type == "function_call":
+        return isinstance(message.get("name"), str) and isinstance(message.get("arguments"), str)
+    if message_type == "function_call_output":
+        return isinstance(message.get("output"), (str, list, dict))
+    return False
 
 
 def _sanitize_resumed_message(message: Any) -> Any:
@@ -185,6 +212,9 @@ def _match_manifest_datasets(datasets: list[Any], uploaded: dict[str, dict[str, 
         columns = item.get("column_names")
         if not isinstance(trace_key, str) or not isinstance(filename, str) or not _valid_columns(columns):
             raise TraceResumeError("The trace resume manifest is incomplete.")
+        # Intentionally match by source filename and ordered columns rather than
+        # content hash: a user may resume with a refreshed version of the same
+        # dataset while retaining the trace's reviewable context.
         candidates = [
             key for key, info in uploaded.items()
             if info.get("source_filename") == filename and _columns_match(info, columns) and key not in used
@@ -219,5 +249,22 @@ def _restore_metadata(file_info: dict[str, Any], saved: dict[str, Any]) -> None:
             {column: data_types.get(column, str(dtype)) for column, dtype in file_info["data_types"].items()}
         )
     data_dictionary = saved.get("data_dictionary")
-    if isinstance(data_dictionary, (dict, list)):
+    if _data_dictionary_matches_columns(data_dictionary, file_info.get("columns_names", [])):
         file_info["data_dictionary_json"] = json.dumps(data_dictionary)
+
+
+def _data_dictionary_matches_columns(data_dictionary: Any, columns: Any) -> bool:
+    if not isinstance(data_dictionary, (dict, list)):
+        return False
+    try:
+        frame = (
+            pd.DataFrame.from_dict(data_dictionary, orient="index")
+            if isinstance(data_dictionary, dict)
+            else pd.DataFrame(data_dictionary)
+        )
+    except (TypeError, ValueError):
+        return False
+    return (
+        "Column Name" in frame
+        and list(frame["Column Name"]) == [str(column) for column in columns]
+    )

@@ -122,6 +122,25 @@ def test_prepare_resume_sanitizes_untrusted_widget_metadata(dataset_description,
     assert restored["primary_key"] == (primary_key if isinstance(primary_key, list) and all(isinstance(key, str) for key in primary_key) else [])
 
 
+def test_prepare_resume_restores_data_dictionary_only_when_columns_match():
+    trace = resumable_trace()
+    uploaded = {"other": uploaded_file("Sales 2026.csv", ["id", "amount"])}
+    trace["dataset_metadata"]["sales"]["data_dictionary"] = {
+        "id": {"Column Name": "id", "Data Type": "Int64"},
+        "amount": {"Column Name": "amount", "Data Type": "Float64"},
+    }
+
+    restored = prepare_resume(trace, uploaded).vetted_files["sales"]
+    assert json.loads(restored["data_dictionary_json"]) == trace["dataset_metadata"]["sales"]["data_dictionary"]
+
+    trace["dataset_metadata"]["sales"]["data_dictionary"] = {
+        "id": {"Column Name": "id", "Data Type": "Int64"},
+        "stale": {"Column Name": "removed", "Data Type": "Int64"},
+    }
+    restored = prepare_resume(trace, uploaded).vetted_files["sales"]
+    assert "data_dictionary_json" not in restored
+
+
 @pytest.mark.parametrize("source", [None, "sample"])
 def test_prepare_resume_rejects_manifest_without_uploader_source(source):
     trace = resumable_trace()
@@ -177,7 +196,29 @@ def test_messages_for_resume_discards_non_dict_history_items():
     tool_call = {"type": "function_call", "name": "run_python_expression"}
     trace["resume"]["messages"] = [system_message, "unexpected", 42, tool_call]
 
-    assert messages_for_resume(trace) == [system_message, tool_call]
+    assert messages_for_resume(trace) == []
+
+
+@pytest.mark.parametrize(
+    "invalid_message",
+    [
+        {},
+        {"type": "message", "role": "assistant", "content": []},
+        {"type": "function_call", "name": "run_python_expression"},
+    ],
+)
+def test_messages_for_resume_discards_entire_history_when_any_message_is_invalid(invalid_message):
+    trace = resumable_trace()
+    trace["resume"]["messages"] = [
+        {
+            "type": "message",
+            "role": "system",
+            "content": [{"type": "input_text", "text": "System prompt"}],
+        },
+        invalid_message,
+    ]
+
+    assert messages_for_resume(trace) == []
 
 
 @pytest.mark.parametrize(

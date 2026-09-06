@@ -100,13 +100,14 @@ def build_context_bundle(dataset_path, metadata_path, trace_path, trace, prompt)
     }
 
 
-def build_research_session(trace, prompt, dataset_path, metadata_path, trace_path):
+def build_research_session(trace, model, prompt, dataset_path, metadata_path, trace_path):
     from arctic_analytics.artifacts import AnalysisTrace, ContextBundle, ResearchSession
 
     from arctic_analytics.streamlit.helpers import _extract_raw_outputs
 
     return ResearchSession(
         prompt=prompt,
+        model=model,
         analysis_trace=AnalysisTrace(trace),
         context_bundle=ContextBundle(build_context_bundle(dataset_path, metadata_path, trace_path, trace, prompt)),
         source_files={
@@ -281,7 +282,7 @@ def main():
 
     if not args.trace_only:
         args.bundle_output = prepare_bundle_output(args.bundle_output)
-        session = build_research_session(trace, args.prompt, args.dataset, args.metadata, args.output)
+        session = build_research_session(trace, args.model, args.prompt, args.dataset, args.metadata, args.output)
         write_research_bundle(session, args.bundle_output)
         figures_dir = args.bundle_output / "figures"
         if figures_dir.exists() and not any(figures_dir.iterdir()):

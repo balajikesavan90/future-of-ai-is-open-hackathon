@@ -181,6 +181,18 @@ def test_trace_schema_rejects_invalid_event_records():
         validate_trace_schema(trace)
 
 
+def test_trace_schema_preserves_the_legacy_model_requirement_for_version_0_2_0():
+    trace = json.loads((ROOT / "examples" / "sample_trace_export.json").read_text())
+    trace["trace_schema_version"] = "0.2.0"
+    trace.pop("model", None)
+
+    with pytest.raises(ValidationError):
+        validate_trace_schema(trace)
+
+    trace["model"] = "gpt-test"
+    validate_trace_schema(trace)
+
+
 def test_upload_trace_includes_resume_manifest_for_uploaded_csvs():
     st.session_state.clear()
     st.session_state["session_id"] = "resume-export-session"

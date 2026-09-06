@@ -180,6 +180,22 @@
       }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "trace_schema_version": {"const": "0.2.0"}
+        },
+        "required": ["trace_schema_version"]
+      },
+      "then": {
+        "required": ["model"],
+        "properties": {
+          "model": {"type": ["string", "null"]}
+        }
+      }
+    }
+  ],
   "$defs": {
     "event": {
       "type": "object",
