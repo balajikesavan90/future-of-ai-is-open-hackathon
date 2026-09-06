@@ -1,5 +1,4 @@
 import io
-import hashlib
 from types import SimpleNamespace
 
 import pandas as pd
@@ -63,12 +62,10 @@ def test_gather_metadata_sets_description_and_preserves_colliding_uploads(monkey
 
 
 def test_build_vetted_files_from_uploads_strips_path_from_source_filename():
-    content = b"value\n1\n"
-    vetted_files = build_vetted_files_from_uploads([Upload(content, name="../../sales.csv")])
+    vetted_files = build_vetted_files_from_uploads([Upload(b"value\n1\n", name="../../sales.csv")])
 
     assert list(vetted_files) == ["sales"]
     assert vetted_files["sales"]["source_filename"] == "sales.csv"
-    assert vetted_files["sales"]["content_sha256"] == hashlib.sha256(content).hexdigest()
 
 
 def test_check_datatypes_uses_column_name_index_from_data_editor(monkeypatch):

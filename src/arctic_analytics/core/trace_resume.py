@@ -42,21 +42,9 @@ IMPORT_TRACE_SCHEMA = {
             "type": "object",
             "required": ["resume_schema_version", "source", "datasets"],
             "properties": {
-                "resume_schema_version": {"const": "1.1"},
+                "resume_schema_version": {"const": "1.0"},
                 "source": {"const": "uploader"},
-                "datasets": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "required": ["dataset_key", "source_filename", "column_names", "content_sha256"],
-                        "properties": {
-                            "dataset_key": {"type": "string"},
-                            "source_filename": {"type": "string"},
-                            "column_names": {"type": "array", "items": {"type": "string"}},
-                            "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-                        },
-                    },
-                },
+                "datasets": {"type": "array"},
                 "context_window_usage": {"type": "number"},
                 "context_window_tokens": {"type": "integer", "minimum": 0},
                 "researcher_notes": {"type": "string"},
@@ -93,17 +81,21 @@ def load_analysis_trace(raw_bytes: bytes) -> dict[str, Any]:
 
 
 def prepare_resume(trace: dict[str, Any], uploaded_vetted_files: dict[str, dict[str, Any]]) -> ResumePreparation:
-    """Match fresh CSV data to a trace and restore only reviewable metadata."""
+    """Match compatible CSVs to a trace and restore its reviewable metadata.
+
+    Resume deliberately accepts refreshed data: datasets are identified by their
+    source filename and ordered columns, not by a content hash. Historical
+    conversation and outputs remain available as context, but callers must warn
+    users to re-run findings that may have changed with the refreshed rows.
+    """
     if not uploaded_vetted_files:
         raise TraceResumeError("Upload the CSV files used by this analysis.")
 
     resume = trace.get("resume")
     if not isinstance(resume, dict):
         raise TraceResumeError("The trace requires a resume manifest.")
-    if resume.get("resume_schema_version") != "1.1":
-        raise TraceResumeError(
-            "The trace resume manifest must use schema version 1.1. Export a new trace to resume it."
-        )
+    if resume.get("resume_schema_version") != "1.0":
+        raise TraceResumeError("The trace resume manifest must use schema version 1.0.")
     if resume.get("source") != "uploader":
         raise TraceResumeError("The trace resume manifest must declare uploader as its source.")
     datasets = resume.get("datasets")
@@ -265,29 +257,23 @@ def _match_manifest_datasets(datasets: list[Any], uploaded: dict[str, dict[str, 
         trace_key = item.get("dataset_key")
         filename = item.get("source_filename")
         columns = item.get("column_names")
-        content_sha256 = item.get("content_sha256")
-        if (
-            not isinstance(trace_key, str)
-            or not isinstance(filename, str)
-            or not _valid_columns(columns)
-            or not _valid_sha256(content_sha256)
-        ):
+        if not isinstance(trace_key, str) or not isinstance(filename, str) or not _valid_columns(columns):
             raise TraceResumeError("The trace resume manifest is incomplete.")
         candidates = [
             key for key, info in uploaded.items()
             if (
                 info.get("source_filename") == filename
                 and _columns_match(info, columns)
-                and info.get("content_sha256") == content_sha256
                 and key not in used
             )
         ]
         if not candidates:
             raise TraceResumeError(
-                f"Upload the original file '{filename}' unchanged to resume this trace."
+                f"Upload a file named '{filename}' with the same ordered columns to resume this trace."
             )
-        # Byte-identical duplicates are interchangeable; consume them in the
-        # deterministic manifest/upload order rather than treating them as an error.
+        # Intentional refreshed-data behavior: filename plus ordered columns is
+        # sufficient; row values may have changed. Multiple same-named uploads
+        # are consumed deterministically in manifest/upload order.
         mapping[trace_key] = candidates[0]
         used.add(candidates[0])
     if len(mapping) != len(uploaded):
@@ -297,10 +283,6 @@ def _match_manifest_datasets(datasets: list[Any], uploaded: dict[str, dict[str, 
 
 def _valid_columns(columns: Any) -> bool:
     return isinstance(columns, list) and all(isinstance(column, str) for column in columns)
-
-
-def _valid_sha256(value: Any) -> bool:
-    return isinstance(value, str) and len(value) == 64 and all(char in "0123456789abcdef" for char in value)
 
 
 def _columns_match(file_info: dict[str, Any], columns: list[str]) -> bool:

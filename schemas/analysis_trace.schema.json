@@ -151,10 +151,10 @@
     },
     "resume": {
       "type": "object",
-      "description": "Optional manifest used to continue an analysis with freshly uploaded CSV files.",
+      "description": "Optional manifest used to continue an analysis with CSVs matched by source filename and ordered columns. Row data may be refreshed and is not content-verified.",
       "required": ["resume_schema_version", "source", "datasets"],
       "properties": {
-        "resume_schema_version": {"const": "1.1"},
+        "resume_schema_version": {"const": "1.0"},
         "source": {"const": "uploader"},
         "context_window_usage": {"type": ["number", "integer"]},
         "context_window_tokens": {"type": "integer", "minimum": 0},
@@ -169,12 +169,11 @@
           "minItems": 1,
           "items": {
             "type": "object",
-            "required": ["dataset_key", "source_filename", "column_names", "content_sha256"],
+            "required": ["dataset_key", "source_filename", "column_names"],
             "properties": {
               "dataset_key": {"type": "string"},
               "source_filename": {"type": "string"},
-              "column_names": {"type": "array", "items": {"type": "string"}},
-              "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+              "column_names": {"type": "array", "items": {"type": "string"}}
             }
           }
         }

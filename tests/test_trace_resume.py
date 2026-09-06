@@ -1,5 +1,4 @@
 import json
-import hashlib
 
 import pandas as pd
 import pytest
@@ -14,10 +13,8 @@ from arctic_analytics.core.trace_resume import (
 
 
 def uploaded_file(name, columns):
-    content_sha256 = hashlib.sha256(",".join(columns).encode()).hexdigest()
     return {
         "source_filename": name,
-        "content_sha256": content_sha256,
         "columns_names": pd.Index(columns),
         "data_types": pd.Series({column: "Int64" for column in columns}),
         "dataset_description": "",
@@ -52,13 +49,12 @@ def resumable_trace():
         "errors": [],
         "limitations": ["Not a deterministic replay."],
         "resume": {
-            "resume_schema_version": "1.1",
+            "resume_schema_version": "1.0",
             "source": "uploader",
             "datasets": [{
                 "dataset_key": "sales",
                 "source_filename": "Sales 2026.csv",
                 "column_names": ["id", "amount"],
-                "content_sha256": hashlib.sha256(b"id,amount").hexdigest(),
             }],
         },
     }
@@ -105,19 +101,20 @@ def test_prepare_resume_requires_original_filename_and_columns():
     assert preparation.vetted_files["sales"]["dataset_description"] == "Monthly sales."
     assert preparation.vetted_files["sales"]["primary_key"] == ["id"]
 
-    with pytest.raises(TraceResumeError, match="original file"):
+    with pytest.raises(TraceResumeError, match="file named"):
         prepare_resume(trace, {"other": uploaded_file("renamed.csv", ["id", "amount"])})
-    with pytest.raises(TraceResumeError, match="original file"):
+    with pytest.raises(TraceResumeError, match="file named"):
         prepare_resume(trace, {"other": uploaded_file("Sales 2026.csv", ["amount", "id"])})
 
 
-def test_prepare_resume_requires_original_content():
+def test_prepare_resume_accepts_refreshed_content_with_matching_structure():
     trace = resumable_trace()
     uploaded = uploaded_file("Sales 2026.csv", ["id", "amount"])
-    uploaded["content_sha256"] = hashlib.sha256(b"id,amount\n999,0\n").hexdigest()
+    uploaded["dataframe"] = pd.DataFrame({"id": [999], "amount": [0]})
 
-    with pytest.raises(TraceResumeError, match="unchanged"):
-        prepare_resume(trace, {"sales": uploaded})
+    resumed = prepare_resume(trace, {"sales": uploaded})
+
+    assert resumed.vetted_files["sales"]["dataframe"].iloc[0].to_dict() == {"id": 999, "amount": 0}
 
 
 def test_prepare_resume_matches_duplicate_identical_filenames_in_order():

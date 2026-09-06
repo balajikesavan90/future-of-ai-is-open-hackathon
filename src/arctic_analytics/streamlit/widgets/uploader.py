@@ -110,18 +110,21 @@ def render_uploader():
 
     with st.form(key='resume_analysis'):
         st.write(':blue[Resume saved analysis]')
-        st.caption('Upload an Arctic Analytics trace and the CSV files used for that analysis.')
+        st.caption(
+            'Upload an Arctic Analytics trace and CSVs with the original filenames and ordered columns. '
+            'Refreshed rows are supported; prior findings should be re-run.'
+        )
         trace_file = st.file_uploader(
             'Analysis trace (.json)', type=['json'], key='resume_trace_file'
         )
         resume_files = st.file_uploader(
-            'Original CSV files', type=['csv'], accept_multiple_files=True, key='resume_csv_files'
+            'CSV files to continue analysis', type=['csv'], accept_multiple_files=True, key='resume_csv_files'
         )
         resume_submitted = st.form_submit_button(':green[Resume analysis]', width='stretch')
 
     if resume_submitted:
         if trace_file is None or not resume_files:
-            st.error('Upload one trace JSON file and the CSV files used by that analysis.')
+            st.error('Upload one trace JSON file and compatible CSV files to continue the analysis.')
             return
         try:
             trace = load_analysis_trace(trace_file.getvalue())
