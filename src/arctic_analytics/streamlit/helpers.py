@@ -483,7 +483,7 @@ def render_trace_export():
 
     if "trace_export_json" in st.session_state:
         st.sidebar.download_button(
-            label="Export Analysis Trace",
+            label=":green[Download Analysis Trace]",
             data=st.session_state["trace_export_json"],
             file_name=f"arctic_analytics_trace_{st.session_state.get('trace_export_session_id', 'session')}.json",
             mime="application/json",
@@ -500,7 +500,7 @@ def render_trace_export():
     if "research_bundle_zip" in st.session_state:
         if _research_bundle_cache_is_current():
             st.sidebar.download_button(
-                label="Export Research Bundle",
+                label=":green[Download Research Bundle]",
                 data=st.session_state["research_bundle_zip"],
                 file_name=f"arctic_analytics_research_bundle_{st.session_state.get('research_bundle_session_id', 'session')}.zip",
                 mime="application/zip",
