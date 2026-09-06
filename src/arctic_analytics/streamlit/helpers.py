@@ -3,6 +3,7 @@ import uuid
 import logging
 import json
 import hashlib
+import math
 from collections.abc import Mapping
 from datetime import datetime, timezone
 import pandas as pd
@@ -459,7 +460,12 @@ def restore_trace_session(trace, preparation):
         # percentage, which was calculated using this configured limit.
         context_window_tokens = round(context_window_usage * MAX_MODEL_CONTEXT_TOKENS)
     cost = trace.get("cost")
-    if not isinstance(cost, (int, float)) or isinstance(cost, bool):
+    if (
+        not isinstance(cost, (int, float))
+        or isinstance(cost, bool)
+        or (isinstance(cost, float) and not math.isfinite(cost))
+        or cost < 0
+    ):
         cost = 0
     resumed_messages = messages_for_resume(trace)
     original_session_id = trace.get("session_id")

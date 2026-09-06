@@ -520,6 +520,15 @@ def test_restore_trace_session_rejects_boolean_cost():
     assert st.session_state["cost"] == 0
 
 
+@pytest.mark.parametrize("cost", [-0.01, float("nan"), float("inf")])
+def test_restore_trace_session_rejects_negative_or_nonfinite_cost(cost):
+    st.session_state.clear()
+
+    restore_trace_session({"messages": [], "cost": cost}, ResumePreparation(vetted_files={}))
+
+    assert st.session_state["cost"] == 0
+
+
 def test_researcher_notes_textarea_displays_restored_value_and_saves_edits():
     def script():
         import streamlit as st

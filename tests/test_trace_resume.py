@@ -75,6 +75,11 @@ def test_load_analysis_trace_rejects_invalid_json_and_unknown_versions():
     assert load_analysis_trace(json.dumps(resumable_trace()).encode())["session_id"] == "original-session"
 
 
+def test_load_analysis_trace_converts_excessive_nesting_to_trace_resume_error():
+    with pytest.raises(TraceResumeError, match="valid UTF-8"):
+        load_analysis_trace(b'{"nested":' * 2_000 + b"0" + b"}" * 2_000)
+
+
 @pytest.mark.parametrize("nonfinite", ["NaN", "Infinity", "-Infinity", "1e400"])
 def test_load_analysis_trace_rejects_nonfinite_numbers(nonfinite):
     payload = json.dumps(resumable_trace()).replace('"cost": 0', f'"cost": {nonfinite}').encode()
@@ -118,6 +123,15 @@ def test_prepare_resume_requires_original_filename_and_columns():
         prepare_resume(trace, {"other": uploaded_file("renamed.csv", ["id", "amount"])})
     with pytest.raises(TraceResumeError, match="file named"):
         prepare_resume(trace, {"other": uploaded_file("Sales 2026.csv", ["amount", "id"])})
+
+
+@pytest.mark.parametrize("dataset_key", ["pd", "st", "get_dataframe_names", "invalid-key", "class"])
+def test_prepare_resume_rejects_unsafe_dataset_keys(dataset_key):
+    trace = resumable_trace()
+    trace["resume"]["datasets"][0]["dataset_key"] = dataset_key
+
+    with pytest.raises(TraceResumeError, match="incomplete"):
+        prepare_resume(trace, {"other": uploaded_file("Sales 2026.csv", ["id", "amount"])})
 
 
 def test_prepare_resume_accepts_refreshed_content_with_matching_structure():
@@ -325,6 +339,25 @@ def test_messages_for_resume_keeps_history_with_tool_call_ids():
     ]
 
     assert messages_for_resume(trace) == trace["resume"]["messages"]
+
+
+@pytest.mark.parametrize(
+    "output",
+    [{}, [42], [], [{"type": "input_image", "image_url": VALID_PNG_DATA_URL, "extra": True}]],
+)
+def test_messages_for_resume_discards_unsupported_tool_output_shapes(output):
+    trace = resumable_trace()
+    trace["resume"]["messages"] = [
+        {
+            "type": "message",
+            "role": "system",
+            "content": [{"type": "input_text", "text": "System prompt"}],
+        },
+        {"type": "function_call", "call_id": "call_1", "name": "render_chart", "arguments": "{}"},
+        {"type": "function_call_output", "call_id": "call_1", "output": output},
+    ]
+
+    assert messages_for_resume(trace) == []
 
 
 @pytest.mark.parametrize(
