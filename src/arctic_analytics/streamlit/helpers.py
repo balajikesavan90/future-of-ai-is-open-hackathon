@@ -458,6 +458,9 @@ def restore_trace_session(trace, preparation):
         # Traces produced before context token counts were persisted retain the
         # percentage, which was calculated using this configured limit.
         context_window_tokens = round(context_window_usage * MAX_MODEL_CONTEXT_TOKENS)
+    cost = trace.get("cost")
+    if not isinstance(cost, (int, float)) or isinstance(cost, bool):
+        cost = 0
     resumed_messages = messages_for_resume(trace)
     original_session_id = trace.get("session_id")
     st.session_state.update(
@@ -471,7 +474,7 @@ def restore_trace_session(trace, preparation):
             ],
             "vetted_files": preparation.vetted_files,
             "messages": resumed_messages,
-            "cost": trace.get("cost") if isinstance(trace.get("cost"), (int, float)) else 0,
+            "cost": cost,
             "context_window_usage": context_window_usage,
             "context_window_tokens": context_window_tokens,
             "count": sum(

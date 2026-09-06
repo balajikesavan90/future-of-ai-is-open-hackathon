@@ -13,6 +13,24 @@ def preserve_or_derive_primary_keys(df, primary_keys):
     return df
 
 
+def _restored_data_dictionary_frame(serialized_dictionary):
+    """Return a frame from either supported exported dictionary representation."""
+    if not serialized_dictionary:
+        return pd.DataFrame()
+    try:
+        decoded_dictionary = json.loads(serialized_dictionary)
+    except (TypeError, json.JSONDecodeError):
+        return pd.DataFrame()
+    try:
+        if isinstance(decoded_dictionary, dict):
+            return pd.DataFrame.from_dict(decoded_dictionary, orient='index')
+        if isinstance(decoded_dictionary, list):
+            return pd.DataFrame(decoded_dictionary)
+    except (AttributeError, TypeError, ValueError):
+        return pd.DataFrame()
+    return pd.DataFrame()
+
+
 def render_data_dictionary_widget():
     logging.info(f'render_data_dictionary_widget - {st.session_state["session_id"]}')
     st.divider()
@@ -30,13 +48,7 @@ def render_data_dictionary_widget():
     for filename in st.session_state['vetted_files']:
 
         restored_dictionary = st.session_state['vetted_files'][filename].get('data_dictionary_json')
-        if restored_dictionary:
-            try:
-                df = pd.DataFrame.from_dict(json.loads(restored_dictionary), orient='index')
-            except (TypeError, ValueError, json.JSONDecodeError):
-                df = pd.DataFrame()
-        else:
-            df = pd.DataFrame()
+        df = _restored_data_dictionary_frame(restored_dictionary)
         if df.empty or 'Column Name' not in df or 'Data Type' not in df:
             df = pd.DataFrame({
                 'Column Name': st.session_state['vetted_files'][filename]['columns_names'],

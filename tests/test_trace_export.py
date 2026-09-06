@@ -499,6 +499,14 @@ def test_restore_trace_session_preserves_api_key_but_not_imported_session_state(
     assert st.session_state["researcher_notes_widget"] == "Review the July outliers before publishing."
 
 
+def test_restore_trace_session_rejects_boolean_cost():
+    st.session_state.clear()
+
+    restore_trace_session({"messages": [], "cost": True}, ResumePreparation(vetted_files={}))
+
+    assert st.session_state["cost"] == 0
+
+
 def test_researcher_notes_textarea_displays_restored_value_and_saves_edits():
     def script():
         import streamlit as st
