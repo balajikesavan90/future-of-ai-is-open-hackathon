@@ -43,7 +43,7 @@ def render_data_dictionary_widget():
         elif 'Description' not in df and st.session_state['source'] in ['tips', 'planets', 'penguins', 'car_crashes', 'diamonds', 'mpg']:
             df['Description'] = df['Column Name'].apply(lambda x: datasets[st.session_state['source']]['column_descriptions'][x])
 
-        df = df[['Primary Key', 'Column Name', 'Data Type', 'Description']]
+        df = df[['Primary Key', 'Column Name', 'Data Type', 'Description']].set_index('Column Name', drop=False)
 
         st.subheader(f':blue[{filename}]')
         with st.expander('See uploaded Dataset'):

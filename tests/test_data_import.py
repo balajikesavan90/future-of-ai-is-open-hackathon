@@ -1,8 +1,11 @@
 import io
 from types import SimpleNamespace
 
+import pandas as pd
+
 from arctic_analytics.core import data_import
 from arctic_analytics.core.data_import import (
+    check_datatypes,
     dataframe_name_from_filename,
     gather_metadata,
     unique_dataframe_name,
@@ -54,6 +57,30 @@ def test_gather_metadata_sets_description_and_preserves_colliding_uploads(monkey
     assert list(vetted_files) == ["sales_2026", "sales_2026_2"]
     assert vetted_files["sales_2026"]["dataset_description"] == ""
     assert vetted_files["sales_2026_2"]["dataframe"]["value"].iloc[0] == 2
+
+
+def test_check_datatypes_uses_column_name_index_from_data_editor(monkeypatch):
+    session_state = {"session_id": "test-session"}
+    monkeypatch.setattr(data_import, "st", SimpleNamespace(session_state=session_state))
+    data_dictionary = pd.DataFrame(
+        {
+            "Primary Key": [False],
+            "Column Name": ["name"],
+            "Data Type": ["object"],
+            "Description": ["Customer name"],
+        }
+    ).set_index("Column Name", drop=False)
+    vetted_files = {
+        "customers": {
+            "data_dictionary": data_dictionary,
+            "dataframe": pd.DataFrame({"name": ["Ada"]}),
+        }
+    }
+
+    result = check_datatypes(vetted_files)
+
+    assert result["customers"]["data_dictionary"].index.tolist() == ["name"]
+    assert str(result["customers"]["dataframe"]["name"].dtype) == "string"
 
 
 def test_is_valid_csv_accepts_plain_csv():
