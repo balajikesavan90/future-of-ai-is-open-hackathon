@@ -11,7 +11,7 @@ from jsonschema import Draft202012Validator
 
 
 MAX_TRACE_BYTES = 10 * 1024 * 1024
-SUPPORTED_TRACE_VERSIONS = {"0.2.0", "0.3.0"}
+SUPPORTED_TRACE_VERSIONS = {"0.3.0"}
 IMPORT_TRACE_SCHEMA = {
     "type": "object",
     "required": [
@@ -37,6 +37,7 @@ IMPORT_TRACE_SCHEMA = {
         "limitations": {"type": "array"},
         "resume": {
             "type": "object",
+            "required": ["resume_schema_version", "source", "datasets"],
             "properties": {
                 "resume_schema_version": {"const": "1.0"},
                 "source": {"const": "uploader"},
@@ -57,7 +58,6 @@ class TraceResumeError(ValueError):
 @dataclass
 class ResumePreparation:
     vetted_files: dict[str, dict[str, Any]]
-    legacy_warning: str | None = None
 
 
 def load_analysis_trace(raw_bytes: bytes) -> dict[str, Any]:
@@ -83,20 +83,16 @@ def prepare_resume(trace: dict[str, Any], uploaded_vetted_files: dict[str, dict[
         raise TraceResumeError("Upload the CSV files used by this analysis.")
 
     resume = trace.get("resume")
-    if isinstance(resume, dict) and resume.get("resume_schema_version") == "1.0":
-        if resume.get("source") != "uploader":
-            raise TraceResumeError("The trace resume manifest must declare uploader as its source.")
-        datasets = resume.get("datasets")
-        if not isinstance(datasets, list) or not datasets:
-            raise TraceResumeError("The trace resume manifest has no datasets.")
-        mapping = _match_manifest_datasets(datasets, uploaded_vetted_files)
-        warning = None
-    else:
-        mapping = _match_legacy_datasets(trace.get("dataset_metadata", {}), uploaded_vetted_files)
-        warning = (
-            "This older trace did not record original filenames. It was matched using "
-            "the number and ordered columns of the uploaded CSV files."
-        )
+    if not isinstance(resume, dict):
+        raise TraceResumeError("The trace requires a resume manifest.")
+    if resume.get("resume_schema_version") != "1.0":
+        raise TraceResumeError("The trace resume manifest must use schema version 1.0.")
+    if resume.get("source") != "uploader":
+        raise TraceResumeError("The trace resume manifest must declare uploader as its source.")
+    datasets = resume.get("datasets")
+    if not isinstance(datasets, list) or not datasets:
+        raise TraceResumeError("The trace resume manifest has no datasets.")
+    mapping = _match_manifest_datasets(datasets, uploaded_vetted_files)
 
     metadata = trace.get("dataset_metadata", {})
     restored: dict[str, dict[str, Any]] = {}
@@ -106,7 +102,7 @@ def prepare_resume(trace: dict[str, Any], uploaded_vetted_files: dict[str, dict[
         if isinstance(saved, dict):
             _restore_metadata(file_info, saved)
         restored[trace_key] = file_info
-    return ResumePreparation(vetted_files=restored, legacy_warning=warning)
+    return ResumePreparation(vetted_files=restored)
 
 
 def messages_for_resume(trace: dict[str, Any]) -> list[Any]:
@@ -175,25 +171,6 @@ def _match_manifest_datasets(datasets: list[Any], uploaded: dict[str, dict[str, 
         used.add(candidates[0])
     if len(mapping) != len(uploaded):
         raise TraceResumeError("The uploaded CSV files do not match this trace.")
-    return mapping
-
-
-def _match_legacy_datasets(metadata: dict[str, Any], uploaded: dict[str, dict[str, Any]]) -> dict[str, str]:
-    if len(metadata) != len(uploaded):
-        raise TraceResumeError("Upload the same number of CSV files recorded in this legacy trace.")
-    mapping: dict[str, str] = {}
-    used: set[str] = set()
-    for trace_key, saved in metadata.items():
-        columns = saved.get("column_names") if isinstance(saved, dict) else None
-        if not isinstance(trace_key, str) or not _valid_columns(columns):
-            raise TraceResumeError("The legacy trace has incomplete dataset metadata.")
-        candidates = [key for key, info in uploaded.items() if _columns_match(info, columns) and key not in used]
-        if len(candidates) != 1:
-            raise TraceResumeError(
-                "The legacy trace cannot uniquely match its datasets to the uploaded CSV files."
-            )
-        mapping[trace_key] = candidates[0]
-        used.add(candidates[0])
     return mapping
 
 

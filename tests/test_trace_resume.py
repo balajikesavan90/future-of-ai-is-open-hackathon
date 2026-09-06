@@ -74,7 +74,6 @@ def test_prepare_resume_requires_original_filename_and_columns():
     assert list(preparation.vetted_files) == ["sales"]
     assert preparation.vetted_files["sales"]["dataset_description"] == "Monthly sales."
     assert preparation.vetted_files["sales"]["primary_key"] == ["id"]
-    assert preparation.legacy_warning is None
 
     with pytest.raises(TraceResumeError, match="original file"):
         prepare_resume(trace, {"other": uploaded_file("renamed.csv", ["id", "amount"])})
@@ -94,23 +93,16 @@ def test_prepare_resume_rejects_manifest_without_uploader_source(source):
         prepare_resume(trace, {"other": uploaded_file("Sales 2026.csv", ["id", "amount"])})
 
 
-def test_legacy_trace_uses_columns_with_warning_and_rejects_ambiguous_matches():
+@pytest.mark.parametrize("manifest", [None, {}, {"resume_schema_version": "0.9"}])
+def test_prepare_resume_rejects_missing_or_malformed_manifest(manifest):
     trace = resumable_trace()
-    del trace["resume"]
-    trace["trace_schema_version"] = "0.2.0"
+    if manifest is None:
+        del trace["resume"]
+    else:
+        trace["resume"] = manifest
 
-    preparation = prepare_resume(trace, {"fresh_name": uploaded_file("renamed.csv", ["id", "amount"])})
-
-    assert preparation.legacy_warning
-    assert list(preparation.vetted_files) == ["sales"]
-
-    ambiguous = {
-        "one": uploaded_file("one.csv", ["id", "amount"]),
-        "two": uploaded_file("two.csv", ["id", "amount"]),
-    }
-    trace["dataset_metadata"]["other"] = dict(trace["dataset_metadata"]["sales"])
-    with pytest.raises(TraceResumeError, match="uniquely"):
-        prepare_resume(trace, ambiguous)
+    with pytest.raises(TraceResumeError, match="resume manifest"):
+        prepare_resume(trace, {"fresh_name": uploaded_file("renamed.csv", ["id", "amount"])})
 
 
 def test_messages_for_resume_uses_full_fidelity_messages_and_sanitizes_old_chart_descriptors():
@@ -142,15 +134,10 @@ def test_messages_for_resume_rejects_non_data_image_urls(image_url):
     assert messages[0]["output"] == "Historical chart output is unavailable in this exported trace."
 
 
-def test_messages_for_resume_sanitizes_direct_legacy_chart_descriptor():
+def test_load_analysis_trace_rejects_legacy_traces_without_resume_manifest():
     trace = resumable_trace()
     del trace["resume"]
     trace["trace_schema_version"] = "0.2.0"
-    trace["messages"] = [{
-        "type": "function_call_output",
-        "output": {"type": "image_base64", "media_type": "image/png", "truncated": True},
-    }]
 
-    messages = messages_for_resume(trace)
-
-    assert messages[0]["output"] == "Historical chart output is unavailable in this exported trace."
+    with pytest.raises(TraceResumeError, match="supported import format"):
+        load_analysis_trace(json.dumps(trace).encode())

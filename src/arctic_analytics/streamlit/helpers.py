@@ -498,7 +498,7 @@ def restore_trace_session(trace, preparation):
             "datasets_vetted": False,
         }
     )
-    resume_warnings = [warning for warning in (preparation.legacy_warning, model_warning) if warning]
+    resume_warnings = [warning for warning in (model_warning,) if warning]
     if resume_warnings:
         st.session_state["resume_warning"] = " ".join(resume_warnings)
 
