@@ -6,7 +6,6 @@ import logging
 import matplotlib.pyplot as plt
 import matplotlib.figure as mfigure
 import pandas as pd
-import numpy as np
 import io
 
 from arctic_analytics.config import (
@@ -303,7 +302,7 @@ class OpenAIResponsesUtility:
                 return "Use of generate_plot function detected in the generate_report tool. Please use the generate_plot tool to create plots."
             elif not python_code.strip().startswith('def generate_report():'):
                 logging.error(f'Invalid function definition: {python_code}')
-                return "The function definition should start with 'def generate_report():'. The python function must be named generate_report and intake 0 arguments. The function must return a single pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
+                return "The function definition should start with 'def generate_report():'. The python function must be named generate_report and take 0 arguments. The function must return a single pandas DataFrame. You can only use the pandas, numpy, datetime and math libraries."
         elif report_function == 'generate_plot':
             if python_code.strip().startswith('def generate_report():'):
                 logging.error(f'Use of generate_report function detected in generate_plot tool: {python_code}')
@@ -344,33 +343,11 @@ class OpenAIResponsesUtility:
             return result
 
         if report_function == 'generate_report' or report_function is None:
-            # parse result to check if it is a DataFrame or Plotly figure
+            # Successful analysis results have one table-shaped contract so the UI
+            # can always render them with st.dataframe.
             if isinstance(result, pd.DataFrame):
                 logging.info('Result is a DataFrame')
-                # Only do one conversion to JSON, not two
                 result = result.to_json(orient='index')
-
-            elif isinstance(result, pd.Series):
-                logging.info('Result is a pandas Series')
-                result = result.to_json(orient='index')
-
-            elif isinstance(result, dict):
-                logging.info('Result is a dict')
-                # Convert dict to DataFrame
-                result = pd.DataFrame.from_dict(result, orient='index').to_json(orient='index')
-
-            elif isinstance(result, (int, float)) or (hasattr(result, 'dtype') and np.issubdtype(result.dtype, np.number)):
-                # Handle both Python and NumPy numeric types
-                logging.info(f'Result is a number: {result}')
-                # Convert NumPy types to native Python types if needed
-                if hasattr(result, 'item'):
-                    result = result.item()
-                result = pd.DataFrame({'result': [result]}).to_json(orient='index')
-
-            elif isinstance(result, list):
-                logging.info(f'Result is a list: {result}')
-                # Convert list to DataFrame
-                result = pd.DataFrame(result).to_json(orient='index')
 
             elif isinstance(result, mfigure.Figure):
                 logging.info('Result is a Matplotlib Figure, but it was created using the wrong tool')
@@ -379,13 +356,13 @@ class OpenAIResponsesUtility:
             elif result is None:
                 logging.info('Result is None')
                 if report_function == 'generate_report':
-                    result = "Code execution returned None. The code execution must return a pandas DataFrame or a pandas Series or a Python dictionary. You can only use the pandas, numpy, datetime and math libraries."
+                    result = "Code execution returned None. The code execution must return a pandas DataFrame so it can be rendered as a table. You can only use the pandas, numpy, datetime and math libraries."
                 elif report_function is None:
-                    result = "Code execution returned None. This could happen if the Python expression is multiple lines long. The Python expression must be a small single line code snippet. Use the run_python_function tool for complex multi-line code."
+                    result = "Code execution returned None. The Python expression must be a small single-line expression that returns a pandas DataFrame. Use the run_python_function tool for complex multi-line code."
 
             else:
-                logging.info(f'Result is not a pandas df or a pandas series or a python dictionary: {type(result)}')
-                result = f"Code execution returned an object of type {type(result)}. The code execution must return a pandas DataFrame or a pandas Series or a Python dictionary. You can only use the pandas, numpy, datetime and math libraries."
+                logging.info(f'Result is not a pandas DataFrame: {type(result)}')
+                result = f"Code execution returned an object of type {type(result)}. The code execution must return a pandas DataFrame so it can be rendered as a table. You can only use the pandas, numpy, datetime and math libraries."
 
         elif report_function == 'generate_plot':
             if isinstance(result, mfigure.Figure):
@@ -422,14 +399,14 @@ class OpenAIResponsesUtility:
         run_python_expression_toolspec = {
             "type": "function",
             "name": "run_python_expression",
-            "description": "Run a python expression and return the result. The python expression must be a single expression that returns a pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries.",
+            "description": "Run a Python expression and return a table. The expression must be a single expression that returns a pandas DataFrame, which will be rendered with st.dataframe. You can only use the pandas, numpy, datetime and math libraries.",
             "strict": True,
             "parameters": {
                 "type": "object",
                 "properties": {
                     "python_expression": {
                         "type": "string",
-                        "description": "The python expression to run. The python expression must be a single expression that returns a pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries."
+                        "description": "The Python expression to run. It must be a single expression that returns a pandas DataFrame. Convert Series results with .to_frame() or .reset_index(), and scalar results with pd.DataFrame({'result': [value]}). You can only use the pandas, numpy, datetime and math libraries."
                     },
                     "reason": {
                         "type": "string",
@@ -444,14 +421,14 @@ class OpenAIResponsesUtility:
         run_python_function_toolspec = {
             "type": "function",
             "name": "run_python_function",
-            "description": "Run a python function called generate_report. The function must intake 0 arguments and return a single pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries.",
+            "description": "Run a Python function called generate_report. The function must take 0 arguments and return a single pandas DataFrame, which will be rendered with st.dataframe. You can only use the pandas, numpy, datetime and math libraries.",
             "strict": True,
             "parameters": {
                 "type": "object",
                 "properties": {
                     "function_definition": {
                         "type": "string",
-                        "description": "The python function definition to run. The function must be named generate_report and intake 0 arguments. The function must return a single pandas DataFrame or a pandas Series or a python dictionary. You can only use the pandas, numpy, datetime and math libraries. ONLY provide the function definition, do not include the function call. The function will be invoked by the tool."
+                        "description": "The Python function definition to run. The function must be named generate_report, take 0 arguments, and return a single pandas DataFrame. Convert Series results with .to_frame() or .reset_index(), and scalar results with pd.DataFrame({'result': [value]}). You can only use the pandas, numpy, datetime and math libraries. ONLY provide the function definition, do not include the function call. The function will be invoked by the tool."
                     },
                     "reason": {
                         "type": "string",
