@@ -511,7 +511,7 @@ def render_tool_call(tool_call):
             arguments = {}
 
     if 'reason' in arguments:
-        st.caption(f"Reason: {safely_escape_dollars(str(arguments['reason']))}")
+        st.write(f"Reason: {safely_escape_dollars(str(arguments['reason']))}")
     with st.expander(f"🛠️ See Tool Call - Tool Name: {tool_name}", expanded=False):
         if 'python_expression' in arguments:
             st.code(arguments['python_expression'], language='python')
@@ -528,33 +528,38 @@ def render_tool_response(tool_response):
         tool_response: The tool response to render
     """
     if tool_response.startswith('data:image/png;base64,'):
-        with st.expander('🛠️ See Tool Response - Plot', expanded=True):
-            st.image(tool_response)
-    
-    else:
+        st.image(tool_response)
+        return
+
+    if tool_response.startswith('Error'):
+        st.error('Tool execution failed. Expand the response below for details.')
+        # Keep error details collapsed by design so successful results remain the primary focus.
         with st.expander('🛠️ See Tool Response', expanded=False):
+            st.write(tool_response)
+        return
+
+    try:
+        # Try parsing the response
+        data = json.loads(tool_response)
+
+        # Handle double-encoded JSON
+        if isinstance(data, str):
             try:
-                # Try parsing the response
-                data = json.loads(tool_response)
-                
-                # Handle double-encoded JSON
-                if isinstance(data, str):
-                    try:
-                        data = json.loads(data)
-                    except json.JSONDecodeError:
-                        pass
-                
-                # Try converting to DataFrame
-                df = try_convert_to_dataframe(data)
-                
-                if df is not None:
-                    st.dataframe(df, width='stretch')
-                else:
-                    st.write(data)
-                    
+                data = json.loads(data)
             except json.JSONDecodeError:
-                # Not JSON, display as plain text
-                st.write(tool_response)
+                pass
+
+        # Try converting to DataFrame
+        df = try_convert_to_dataframe(data)
+
+        if df is not None:
+            st.dataframe(df, width='stretch')
+        else:
+            st.write(data)
+
+    except json.JSONDecodeError:
+        # Not JSON, display as plain text
+        st.write(tool_response)
 
 def is_dev_environment():
     try:
