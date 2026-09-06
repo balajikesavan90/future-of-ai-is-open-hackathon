@@ -124,26 +124,7 @@ def gather_metadata(params=None):
             getattr(uploaded_file, "name", str(uploaded_file))
             for uploaded_file in st.session_state['uploaded_files']
         ]
-        for uploaded_file in st.session_state['uploaded_files']:
-            filename = unique_dataframe_name(
-                dataframe_name_from_filename(uploaded_file.name), vetted_files
-            )
-            vetted_files[filename] = {}
-            vetted_files[filename]['source_filename'] = uploaded_file.name
-            vetted_files[filename]['dataset_description'] = ''
-            df = pd.read_csv(
-                filepath_or_buffer=uploaded_file, 
-                parse_dates=True,
-                low_memory=False,
-                encoding='utf-8',
-                encoding_errors='replace'
-            )
-            df = df.convert_dtypes()
-            vetted_files[filename]['columns_names'] = df.columns
-            vetted_files[filename]['data_types'] = df.dtypes
-            vetted_files[filename]['pandas_describe'] = df.describe(include='all')
-            vetted_files[filename]['primary_key'] = []
-            vetted_files[filename]['dataframe'] = df
+        vetted_files = build_vetted_files_from_uploads(st.session_state['uploaded_files'])
 
     if st.session_state['source'] in ['tips', 'planets', 'penguins', 'car_crashes', 'diamonds', 'mpg']:
         filename = st.session_state['source']
@@ -159,6 +140,30 @@ def gather_metadata(params=None):
         vetted_files[filename]['dataframe'] = df
     
     st.session_state['vetted_files'] = vetted_files
+
+
+def build_vetted_files_from_uploads(uploaded_files):
+    """Read validated uploaded CSVs into the same structure used by normal ingestion."""
+    vetted_files = {}
+    for uploaded_file in uploaded_files:
+        filename = unique_dataframe_name(dataframe_name_from_filename(uploaded_file.name), vetted_files)
+        df = pd.read_csv(
+            filepath_or_buffer=uploaded_file,
+            parse_dates=True,
+            low_memory=False,
+            encoding='utf-8',
+            encoding_errors='replace',
+        ).convert_dtypes()
+        vetted_files[filename] = {
+            'source_filename': uploaded_file.name,
+            'dataset_description': '',
+            'columns_names': df.columns,
+            'data_types': df.dtypes,
+            'pandas_describe': df.describe(include='all'),
+            'primary_key': [],
+            'dataframe': df,
+        }
+    return vetted_files
 
 # Function is too slow for larger datasets. Need to optimize. Not being used currently.
 def detect_primary_keys(df):

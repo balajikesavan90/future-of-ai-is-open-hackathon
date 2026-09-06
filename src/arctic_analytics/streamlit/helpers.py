@@ -16,6 +16,7 @@ from arctic_analytics.artifacts import (
     ResearchSession,
     build_research_bundle_zip,
 )
+from arctic_analytics.core.trace_resume import messages_for_resume
 
 MAX_TRACE_STRING_CHARS = 10000
 TRACE_STRING_PREVIEW_CHARS = 1000
@@ -305,8 +306,8 @@ def _latest_user_prompt(messages):
 
 def build_analysis_trace():
     messages = st.session_state.get("messages", [])
-    return {
-        "trace_schema_version": "0.2.0",
+    trace = {
+        "trace_schema_version": "0.3.0",
         "package_version": __version__,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "session_id": st.session_state.get("session_id"),
@@ -327,6 +328,84 @@ def build_analysis_trace():
             "The trace is not replayable and does not include full dataset provenance records.",
         ],
     }
+    if st.session_state.get("source") == "uploader":
+        trace["resume"] = _build_resume_manifest()
+    return trace
+
+
+def _build_resume_manifest():
+    datasets = []
+    for dataset_key, file_info in st.session_state.get("vetted_files", {}).items():
+        datasets.append(
+            {
+                "dataset_key": str(dataset_key),
+                "source_filename": str(file_info.get("source_filename") or dataset_key),
+                "column_names": [str(column) for column in file_info.get("columns_names", [])],
+            }
+        )
+    return {
+        "resume_schema_version": "1.0",
+        "source": "uploader",
+        "datasets": datasets,
+        "researcher_notes": st.session_state.get("researcher_notes", "")
+        if isinstance(st.session_state.get("researcher_notes", ""), str) else "",
+        "resumed_from_session_id": st.session_state.get("resumed_from_session_id"),
+        "messages": _resume_json_safe(st.session_state.get("messages", [])),
+    }
+
+
+def _resume_json_safe(value):
+    """JSON-safe resume data that intentionally preserves chart data URLs."""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        return {str(key): _resume_json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_resume_json_safe(item) for item in value]
+    if isinstance(value, (pd.DataFrame, pd.Series, mfigure.Figure)):
+        return _json_safe(value)
+    try:
+        json.dumps(value)
+        return value
+    except TypeError:
+        return str(value)
+
+
+def restore_trace_session(trace, preparation):
+    """Replace analysis state with an explicitly selected subset of an imported trace."""
+    api_key = st.session_state.get("OPENAI_API_KEY")
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    if api_key:
+        st.session_state["OPENAI_API_KEY"] = api_key
+
+    resume = trace.get("resume") if isinstance(trace.get("resume"), dict) else {}
+    original_session_id = trace.get("session_id")
+    st.session_state.update(
+        {
+            "session_id": str(uuid.uuid4()),
+            "resumed_from_session_id": original_session_id,
+            "source": "uploader",
+            "uploaded_file_names": [
+                info.get("source_filename") or dataset_key
+                for dataset_key, info in preparation.vetted_files.items()
+            ],
+            "vetted_files": preparation.vetted_files,
+            "messages": messages_for_resume(trace),
+            "model": trace.get("model") if isinstance(trace.get("model"), str) else None,
+            "cost": trace.get("cost") if isinstance(trace.get("cost"), (int, float)) else 0,
+            "context_window_usage": trace.get("context_window_usage")
+            if isinstance(trace.get("context_window_usage"), (int, float)) else 0,
+            "count": sum(1 for message in trace.get("messages", []) if isinstance(message, dict) and message.get("role") == "user"),
+            "show_sample": False,
+            "disable_sample_button": False,
+            "researcher_notes": resume.get("researcher_notes", "") if isinstance(resume.get("researcher_notes", ""), str) else "",
+            "data_dictionaries_loaded": False,
+            "datasets_vetted": False,
+        }
+    )
+    if preparation.legacy_warning:
+        st.session_state["resume_warning"] = preparation.legacy_warning
 
 
 def _readable_events(messages):

@@ -1,0 +1,117 @@
+import json
+
+import pandas as pd
+import pytest
+
+from arctic_analytics.core.trace_resume import TraceResumeError, load_analysis_trace, messages_for_resume, prepare_resume
+
+
+def uploaded_file(name, columns):
+    return {
+        "source_filename": name,
+        "columns_names": pd.Index(columns),
+        "data_types": pd.Series({column: "Int64" for column in columns}),
+        "dataset_description": "",
+        "primary_key": [],
+        "dataframe": pd.DataFrame({column: [1] for column in columns}),
+    }
+
+
+def resumable_trace():
+    return {
+        "trace_schema_version": "0.3.0",
+        "package_version": "0.1.0",
+        "timestamp": "2026-09-05T00:00:00+00:00",
+        "session_id": "original-session",
+        "model": "gpt-5.6-luna",
+        "cost": 0,
+        "context_window_usage": 0,
+        "system_message": "System prompt",
+        "prompt_str": "Question",
+        "messages": [],
+        "events": [],
+        "tool_calls": [],
+        "outputs": [],
+        "dataset_metadata": {
+            "sales": {
+                "dataset_description": "Monthly sales.",
+                "primary_key": ["id"],
+                "data_types": {"id": "Int64", "amount": "Float64"},
+                "data_dictionary": {"id": {"Column Name": "id", "Data Type": "Int64"}},
+                "column_names": ["id", "amount"],
+            }
+        },
+        "errors": [],
+        "limitations": ["Not a deterministic replay."],
+        "resume": {
+            "resume_schema_version": "1.0",
+            "source": "uploader",
+            "datasets": [{
+                "dataset_key": "sales",
+                "source_filename": "Sales 2026.csv",
+                "column_names": ["id", "amount"],
+            }],
+        },
+    }
+
+
+def test_load_analysis_trace_rejects_invalid_json_and_unknown_versions():
+    with pytest.raises(TraceResumeError):
+        load_analysis_trace(b"not json")
+
+    with pytest.raises(TraceResumeError):
+        load_analysis_trace(json.dumps({"trace_schema_version": "9.0.0"}).encode())
+
+    assert load_analysis_trace(json.dumps(resumable_trace()).encode())["session_id"] == "original-session"
+
+
+def test_prepare_resume_requires_original_filename_and_columns():
+    trace = resumable_trace()
+    uploaded = {"other": uploaded_file("Sales 2026.csv", ["id", "amount"])}
+
+    preparation = prepare_resume(trace, uploaded)
+
+    assert list(preparation.vetted_files) == ["sales"]
+    assert preparation.vetted_files["sales"]["dataset_description"] == "Monthly sales."
+    assert preparation.vetted_files["sales"]["primary_key"] == ["id"]
+    assert preparation.legacy_warning is None
+
+    with pytest.raises(TraceResumeError, match="original file"):
+        prepare_resume(trace, {"other": uploaded_file("renamed.csv", ["id", "amount"])})
+    with pytest.raises(TraceResumeError, match="original file"):
+        prepare_resume(trace, {"other": uploaded_file("Sales 2026.csv", ["amount", "id"])})
+
+
+def test_legacy_trace_uses_columns_with_warning_and_rejects_ambiguous_matches():
+    trace = resumable_trace()
+    del trace["resume"]
+    trace["trace_schema_version"] = "0.2.0"
+
+    preparation = prepare_resume(trace, {"fresh_name": uploaded_file("renamed.csv", ["id", "amount"])})
+
+    assert preparation.legacy_warning
+    assert list(preparation.vetted_files) == ["sales"]
+
+    ambiguous = {
+        "one": uploaded_file("one.csv", ["id", "amount"]),
+        "two": uploaded_file("two.csv", ["id", "amount"]),
+    }
+    trace["dataset_metadata"]["other"] = dict(trace["dataset_metadata"]["sales"])
+    with pytest.raises(TraceResumeError, match="uniquely"):
+        prepare_resume(trace, ambiguous)
+
+
+def test_messages_for_resume_uses_full_fidelity_messages_and_sanitizes_old_chart_descriptors():
+    trace = resumable_trace()
+    trace["messages"] = [{
+        "type": "function_call_output",
+        "output": [{"type": "input_image", "image_url": {"type": "image_base64"}}],
+    }]
+
+    assert messages_for_resume(trace)[0]["output"] == "Historical chart output is unavailable in this exported trace."
+
+    trace["resume"]["messages"] = [{
+        "type": "function_call_output",
+        "output": [{"type": "input_image", "image_url": "data:image/png;base64,abc"}],
+    }]
+    assert messages_for_resume(trace)[0]["output"][0]["image_url"] == "data:image/png;base64,abc"

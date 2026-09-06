@@ -17,7 +17,9 @@ from arctic_analytics.streamlit.helpers import (
     build_research_session_from_streamlit,
     goto_data_analysis_widget,
     redact_sensitive_session_state,
+    restore_trace_session,
 )
+from arctic_analytics.core.trace_resume import ResumePreparation
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -103,7 +105,7 @@ def test_build_analysis_trace_is_json_safe_and_truncates_large_payloads():
     validate_trace_schema(trace)
 
     assert dumped
-    assert trace["trace_schema_version"] == "0.2.0"
+    assert trace["trace_schema_version"] == "0.3.0"
     assert trace["package_version"]
     assert trace["timestamp"]
     assert trace["system_message"]["truncated"] is True
@@ -169,6 +171,55 @@ def test_trace_schema_rejects_invalid_event_records():
 
     with pytest.raises(ValidationError):
         validate_trace_schema(trace)
+
+
+def test_upload_trace_includes_resume_manifest_for_uploaded_csvs():
+    st.session_state.clear()
+    st.session_state["session_id"] = "resume-export-session"
+    st.session_state["source"] = "uploader"
+    st.session_state["researcher_notes"] = "Recheck the outliers."
+    st.session_state["messages"] = []
+    st.session_state["vetted_files"] = {
+        "sales": {
+            "source_filename": "Sales 2026.csv",
+            "columns_names": pd.Index(["amount", "region"]),
+        }
+    }
+
+    trace = build_analysis_trace()
+
+    assert trace["resume"] == {
+        "resume_schema_version": "1.0",
+        "source": "uploader",
+        "datasets": [{
+            "dataset_key": "sales",
+            "source_filename": "Sales 2026.csv",
+            "column_names": ["amount", "region"],
+        }],
+        "researcher_notes": "Recheck the outliers.",
+        "resumed_from_session_id": None,
+        "messages": [],
+    }
+    validate_trace_schema(trace)
+
+
+def test_resume_manifest_preserves_chart_data_urls():
+    st.session_state.clear()
+    chart_url = "data:image/png;base64,iVBORw0KGgo="
+    st.session_state.update({
+        "session_id": "chart-export-session",
+        "source": "uploader",
+        "messages": [{
+            "type": "function_call_output",
+            "output": [{"type": "input_image", "image_url": chart_url}],
+        }],
+        "vetted_files": {"sales": {"source_filename": "sales.csv", "columns_names": pd.Index(["amount"])}},
+    })
+
+    trace = build_analysis_trace()
+
+    assert trace["messages"][0]["output"][0]["image_url"]["type"] == "image_base64"
+    assert trace["resume"]["messages"][0]["output"][0]["image_url"] == chart_url
 
 
 def test_trace_schema_accepts_dataset_metadata_without_legacy_columns_names():
@@ -333,3 +384,25 @@ def test_redact_sensitive_session_state_hides_credentials_without_mutating_origi
     assert redacted["items"][0]["password"] == "[redacted]"
     assert redacted["items"][1]["label"] == "safe-label"
     assert session_state["OPENAI_API_KEY"] == "sk-test"
+
+
+def test_restore_trace_session_preserves_api_key_but_not_imported_session_state():
+    st.session_state.clear()
+    st.session_state["OPENAI_API_KEY"] = "local-key"
+    st.session_state["unrelated_state"] = "discard-me"
+    trace = {
+        "session_id": "old-session",
+        "messages": [],
+        "model": "gpt-5.6-luna",
+        "cost": 1.5,
+        "context_window_usage": 0.1,
+        "OPENAI_API_KEY": "untrusted-trace-key",
+    }
+    preparation = ResumePreparation(vetted_files={"sales": {"source_filename": "sales.csv"}})
+
+    restore_trace_session(trace, preparation)
+
+    assert st.session_state["OPENAI_API_KEY"] == "local-key"
+    assert "unrelated_state" not in st.session_state
+    assert st.session_state["resumed_from_session_id"] == "old-session"
+    assert st.session_state["session_id"] != "old-session"

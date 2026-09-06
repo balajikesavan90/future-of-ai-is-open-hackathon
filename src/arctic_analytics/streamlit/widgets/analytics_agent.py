@@ -115,7 +115,11 @@ def render_analytics_agent():
                     render_tool_response(msg['output'])
                 elif isinstance(msg['output'], list):
                     for output_item in msg['output']:
-                        render_tool_response(output_item['image_url'])
+                        image_url = output_item.get('image_url') if isinstance(output_item, dict) else None
+                        if isinstance(image_url, str):
+                            render_tool_response(image_url)
+                        else:
+                            st.caption('Historical media output was omitted from the exported trace.')
 
     st.session_state['spinner_container'] = st.container()
 
