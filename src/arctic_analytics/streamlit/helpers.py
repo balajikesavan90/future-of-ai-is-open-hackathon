@@ -511,7 +511,7 @@ def render_tool_call(tool_call):
             arguments = {}
 
     if 'reason' in arguments:
-        st.caption(f"Reason: {safely_escape_dollars(str(arguments['reason']))}")
+        st.write(f"Reason: {safely_escape_dollars(str(arguments['reason']))}")
     with st.expander(f"🛠️ See Tool Call - Tool Name: {tool_name}", expanded=False):
         if 'python_expression' in arguments:
             st.code(arguments['python_expression'], language='python')
@@ -532,7 +532,7 @@ def render_tool_response(tool_response):
             st.image(tool_response)
     
     else:
-        with st.expander('🛠️ See Tool Response', expanded=False):
+        with st.expander('🛠️ See Tool Response', expanded=not tool_response.startswith('Error')):
             try:
                 # Try parsing the response
                 data = json.loads(tool_response)
