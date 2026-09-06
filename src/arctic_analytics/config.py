@@ -10,6 +10,9 @@ from typing import Any
 APP_DISPLAY_NAME = "Arctic Analytics"
 DEFAULT_STREAMLIT_ENTRYPOINT = "arctic_analytics.streamlit_app"
 DEFAULT_OPENAI_MODEL = "gpt-5.6-luna"
+# Arctic Analytics keeps each request well below the provider model windows so
+# long-lived analyses remain responsive and predictable.
+MAX_MODEL_CONTEXT_TOKENS = 128_000
 SUPPORTED_OPENAI_MODELS = frozenset(
     {
         "gpt-5.6-luna",

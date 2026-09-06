@@ -4,6 +4,7 @@ from types import SimpleNamespace
 import pytest
 
 import arctic_analytics.llm.openai_responses as openai_responses
+from arctic_analytics.config import MAX_MODEL_CONTEXT_TOKENS
 from arctic_analytics.llm.openai_responses import OpenAIResponsesUtility
 
 
@@ -87,22 +88,51 @@ def test_calculate_cost_rejects_unknown_model():
 
 
 @pytest.mark.parametrize(
-    ("model", "context_window_tokens"),
+    "model",
     [
-        ("gpt-5.6-luna", 1_050_000),
-        ("gpt-5.6-terra", 1_050_000),
-        ("gpt-5.6-sol", 1_050_000),
-        ("gpt-6-astra", 1_050_000),
+        "gpt-5.6-luna",
+        "gpt-5.6-terra",
+        "gpt-5.6-sol",
+        "gpt-6-astra",
     ],
 )
-def test_calculate_context_window_usage_for_supported_models(model, context_window_tokens):
+def test_calculate_context_window_usage_uses_application_limit(model):
     client = OpenAIResponsesUtility()
 
-    assert client._calculate_context_window_usage(context_window_tokens, model) == pytest.approx(1.0)
+    assert client._calculate_context_window_usage(MAX_MODEL_CONTEXT_TOKENS, model) == pytest.approx(1.0)
+    assert client._calculate_context_window_usage(MAX_MODEL_CONTEXT_TOKENS // 2, model) == pytest.approx(0.5)
 
 
 def test_calculate_context_window_usage_rejects_unknown_model():
     client = OpenAIResponsesUtility()
 
-    with pytest.raises(ValueError, match="Context window has not been configured"):
+    with pytest.raises(ValueError, match="is not supported"):
         client._calculate_context_window_usage(100, "unknown-model")
+
+
+def test_request_context_limit_rejects_oversized_requests():
+    class FixedTokenEncoding:
+        def encode(self, _value):
+            return [0] * (MAX_MODEL_CONTEXT_TOKENS + 1)
+
+    client = OpenAIResponsesUtility()
+    client.enc_gpt4 = FixedTokenEncoding()
+
+    with pytest.raises(ValueError, match="128,000-token limit"):
+        client._enforce_request_context_limit({"input": []})
+
+
+def test_response_context_usage_excludes_generated_tokens():
+    response = SimpleNamespace(
+        output=[],
+        usage=SimpleNamespace(
+            input_tokens=MAX_MODEL_CONTEXT_TOKENS // 2,
+            output_tokens=MAX_MODEL_CONTEXT_TOKENS // 2,
+        ),
+    )
+
+    _tool_calls, _cost, _messages, context_usage = OpenAIResponsesUtility()._process_api_response(
+        response, [], "gpt-5.6-luna"
+    )
+
+    assert context_usage == pytest.approx(0.5)

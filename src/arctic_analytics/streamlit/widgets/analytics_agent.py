@@ -3,7 +3,7 @@ import logging
 import time
 import os
 
-from arctic_analytics.config import DEFAULT_OPENAI_MODEL, has_openai_api_key
+from arctic_analytics.config import DEFAULT_OPENAI_MODEL, MAX_MODEL_CONTEXT_TOKENS, has_openai_api_key
 from arctic_analytics.llm.ai import construct_welcome_message, generate_ai_response
 from arctic_analytics.core.system_messages import construct_system_message
 
@@ -126,14 +126,18 @@ def render_analytics_agent():
 
     st.session_state['spinner_container'] = st.container()
 
-    if st.session_state['context_window_usage'] > 0:
+    context_window_usage = min(max(st.session_state['context_window_usage'], 0), 1)
+    if context_window_usage > 0:
         st.progress(
-            value=st.session_state['context_window_usage'],
-            text=f'Model Context Usage: {st.session_state["context_window_usage"]*100:.2f}%'
+            value=context_window_usage,
+            text=(
+                f'Model context usage: {context_window_usage * 100:.2f}% '
+                f'of the {MAX_MODEL_CONTEXT_TOKENS // 1_000}K-token limit'
+            ),
         )
 
-    if st.session_state['context_window_usage'] > 0.5:
-        st.warning('LLMs are known to degrade in performance when context window usage gets higher than 50%. Consider starting a new session.')
+    if context_window_usage > 0.5:
+        st.warning('Context usage is above 50% of the 128K-token limit. Consider starting a new session.')
 
     if not is_dev_environment():
         MAX_CHARS = 1000

@@ -10,6 +10,7 @@ import io
 
 from arctic_analytics.config import (
     DEFAULT_OPENAI_MODEL,
+    MAX_MODEL_CONTEXT_TOKENS,
     SUPPORTED_OPENAI_MODELS,
     get_openai_api_key,
     validate_openai_model,
@@ -65,20 +66,38 @@ class OpenAIResponsesUtility:
             + output_price_per_million * completion_tokens / 1_000_000
         )
 
-    def _calculate_context_window_usage(self, tokens, model):
-        if model == 'gpt-5.6-luna':
-            return tokens / 1_050_000
-        elif model == 'gpt-5.6-terra':
-            return tokens / 1_050_000
-        elif model == 'gpt-5.6-sol':
-            return tokens / 1_050_000
-        elif model == 'gpt-6-astra':
-            return tokens / 1_050_000
-        else:
-            raise ValueError(f"Context window has not been configured for {model!r}.")
+    def _calculate_context_window_usage(self, input_tokens, model):
+        """Return request-context usage against Arctic Analytics' 128K limit."""
+        validate_openai_model(model)
+        return min(input_tokens / MAX_MODEL_CONTEXT_TOKENS, 1.0)
+
+    def _request_context_token_count(self, request_args):
+        """Estimate all request content that contributes to model context."""
+        context_payload = {
+            key: request_args[key]
+            for key in ('input', 'instructions', 'tools')
+            if key in request_args
+        }
+        serialized_payload = json.dumps(
+            context_payload,
+            default=str,
+            ensure_ascii=False,
+            separators=(',', ':'),
+        )
+        return len(self.enc_gpt4.encode(serialized_payload))
+
+    def _enforce_request_context_limit(self, request_args):
+        token_count = self._request_context_token_count(request_args)
+        if token_count > MAX_MODEL_CONTEXT_TOKENS:
+            raise ValueError(
+                f"Request context is {token_count:,} tokens, exceeding Arctic "
+                f"Analytics' {MAX_MODEL_CONTEXT_TOKENS:,}-token limit. Start a "
+                "new analysis session or reduce the conversation history."
+            )
 
     def _responses_with_backoff(self, **kwargs):
         logging.info(f'responses_with_backoff - {st.session_state["session_id"]}')
+        self._enforce_request_context_limit(kwargs)
         return self._client().responses.parse(**kwargs)
 
     def _extract_tools_and_handlers(self, tool_config):
@@ -127,14 +146,14 @@ class OpenAIResponsesUtility:
         outputs = response.output
         prompt_tokens = response.usage.input_tokens
         completion_tokens = response.usage.output_tokens
-        total_tokens = prompt_tokens + completion_tokens
         logging.info(f'Prompt tokens: {prompt_tokens}')
         logging.info(f'Completion tokens: {completion_tokens}')
 
         
         # Calculate cost using the new method
         cost_USD = self._calculate_cost(prompt_tokens, completion_tokens, model)
-        context_window_usage = self._calculate_context_window_usage(total_tokens, model)
+        # The UI describes context supplied to the model, not generated output.
+        context_window_usage = self._calculate_context_window_usage(prompt_tokens, model)
         # st.toast(f"Cost for this API call: ${cost_USD:.6f}")
         
         tool_calls = []

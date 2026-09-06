@@ -447,4 +447,5 @@ def test_restore_trace_session_preserves_api_key_but_not_imported_session_state(
     assert "unrelated_state" not in st.session_state
     assert st.session_state["resumed_from_session_id"] == "old-session"
     assert st.session_state["session_id"] != "old-session"
+    assert st.session_state["context_window_usage"] == 0
     assert st.session_state["researcher_notes"] == "Review the July outliers before publishing."

@@ -419,8 +419,10 @@ def restore_trace_session(trace, preparation):
             "messages": messages_for_resume(trace),
             "model": trace.get("model") if isinstance(trace.get("model"), str) else None,
             "cost": trace.get("cost") if isinstance(trace.get("cost"), (int, float)) else 0,
-            "context_window_usage": trace.get("context_window_usage")
-            if isinstance(trace.get("context_window_usage"), (int, float)) else 0,
+            # A saved percentage may have been calculated against a different
+            # application limit. The next API request repopulates this from its
+            # actual input-token usage.
+            "context_window_usage": 0,
             "count": sum(1 for message in trace.get("messages", []) if isinstance(message, dict) and message.get("role") == "user"),
             "show_sample": False,
             "disable_sample_button": False,
