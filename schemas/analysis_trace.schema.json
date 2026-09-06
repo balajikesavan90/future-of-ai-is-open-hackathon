@@ -10,7 +10,6 @@
     "package_version",
     "timestamp",
     "session_id",
-    "model",
     "cost",
     "context_window_usage",
     "system_message",
@@ -36,9 +35,6 @@
       "format": "date-time"
     },
     "session_id": {
-      "type": ["string", "null"]
-    },
-    "model": {
       "type": ["string", "null"]
     },
     "cost": {

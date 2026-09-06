@@ -112,6 +112,7 @@ def test_build_analysis_trace_is_json_safe_and_truncates_large_payloads():
     assert trace["trace_schema_version"] == "0.3.0"
     assert trace["package_version"]
     assert trace["timestamp"]
+    assert "model" not in trace
     assert trace["system_message"]["truncated"] is True
     assert trace["system_message"]["length_chars"] == 12000
     assert trace["prompt_str"]["truncated"] is True
@@ -439,7 +440,6 @@ def test_restore_trace_session_preserves_api_key_but_not_imported_session_state(
     trace = {
         "session_id": "old-session",
         "messages": [],
-        "model": "gpt-5.6-luna",
         "cost": 1.5,
         "context_window_usage": 0.1,
         "researcher_notes": "Review the July outliers before publishing.",
@@ -453,7 +453,7 @@ def test_restore_trace_session_preserves_api_key_but_not_imported_session_state(
     assert "unrelated_state" not in st.session_state
     assert st.session_state["resumed_from_session_id"] == "old-session"
     assert st.session_state["session_id"] != "old-session"
-    assert st.session_state["model"] == "gpt-5.6-luna"
+    assert "model" not in st.session_state
     assert st.session_state["context_window_usage"] == 0.1
     assert st.session_state["context_window_tokens"] == round(0.1 * MAX_MODEL_CONTEXT_TOKENS)
     assert st.session_state["researcher_notes"] == "Review the July outliers before publishing."
@@ -480,12 +480,47 @@ def test_researcher_notes_textarea_displays_restored_value_and_saves_edits():
     assert app.session_state["researcher_notes"] == "Edited research context."
 
 
-def test_restore_trace_session_falls_back_from_unsupported_model():
+def test_restore_trace_session_ignores_model_from_older_traces():
     st.session_state.clear()
     trace = {"messages": [], "model": "gpt-5.4-mini-2026-03-17"}
     preparation = ResumePreparation(vetted_files={})
 
     restore_trace_session(trace, preparation)
 
-    assert st.session_state["model"] == "gpt-5.6-luna"
-    assert "gpt-5.4-mini-2026-03-17" in st.session_state["resume_warning"]
+    assert "model" not in st.session_state
+    assert "resume_warning" not in st.session_state
+
+
+def test_restore_trace_session_counts_the_resumed_message_history():
+    st.session_state.clear()
+    system_message = {
+        "type": "message",
+        "role": "system",
+        "content": [{"type": "input_text", "text": "System prompt"}],
+    }
+    top_level_user_message = {
+        "type": "message",
+        "role": "user",
+        "content": [{"type": "input_text", "text": "Top-level question"}],
+    }
+    resumed_user_messages = [
+        {
+            "type": "message",
+            "role": "user",
+            "content": [{"type": "input_text", "text": "First resumed question"}],
+        },
+        {
+            "type": "message",
+            "role": "user",
+            "content": [{"type": "input_text", "text": "Second resumed question"}],
+        },
+    ]
+    trace = {
+        "messages": [system_message, top_level_user_message],
+        "resume": {"messages": [system_message, *resumed_user_messages]},
+    }
+
+    restore_trace_session(trace, ResumePreparation(vetted_files={}))
+
+    assert st.session_state["messages"] == [system_message, *resumed_user_messages]
+    assert st.session_state["count"] == 2

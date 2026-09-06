@@ -15,7 +15,7 @@ SUPPORTED_TRACE_VERSIONS = {"0.3.0"}
 IMPORT_TRACE_SCHEMA = {
     "type": "object",
     "required": [
-        "trace_schema_version", "package_version", "timestamp", "session_id", "model", "cost",
+        "trace_schema_version", "package_version", "timestamp", "session_id", "cost",
         "context_window_usage", "system_message", "prompt_str", "messages", "events", "tool_calls",
         "outputs", "dataset_metadata", "errors", "limitations",
     ],
@@ -24,7 +24,6 @@ IMPORT_TRACE_SCHEMA = {
         "package_version": {"type": "string"},
         "timestamp": {"type": "string"},
         "session_id": {"type": ["string", "null"]},
-        "model": {"type": ["string", "null"]},
         "cost": {"type": ["number", "null"]},
         "context_window_usage": {"type": ["number", "null"]},
         "researcher_notes": {"type": "string"},

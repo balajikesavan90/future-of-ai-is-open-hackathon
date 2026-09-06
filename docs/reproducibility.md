@@ -4,7 +4,7 @@ Arctic Analytics currently supports partial reproducibility through inspectable 
 
 ## Current State
 
-- Trace exports capture a snapshot of Streamlit session state, messages, tool calls, outputs, metadata, errors, model name, cost, timestamp, trace schema version, and package version when available. Upload traces can resume an analysis only after the original CSV files are uploaded again and reviewed. Only trace-schema version 0.3.0 exports with a resume manifest are resumable; those traces retain chart payloads. The app does not prepare trace exports larger than 10 MiB, matching the resume import limit.
+- Trace exports capture a snapshot of Streamlit session state, messages, tool calls, outputs, metadata, errors, cost, timestamp, trace schema version, and package version when available. Upload traces can resume an analysis only after the original CSV files are uploaded again and reviewed. Only trace-schema version 0.3.0 exports with a resume manifest are resumable; those traces retain chart payloads. The app does not prepare trace exports larger than 10 MiB, matching the resume import limit.
 - Research bundle exports package run manifests, traces, context bundles, prompts, generated code snippets, tool outputs, environment metadata, methods drafts, limitations, and citation files for review.
 - Run manifests include selected SHA-256 hashes for source dataset content, context metadata, and the analysis trace when that content is available.
 - A JSON Schema for the lightweight trace shape is available at `schemas/analysis_trace.schema.json` and is validated in tests.

@@ -11,9 +11,7 @@ import os
 
 from arctic_analytics import __version__
 from arctic_analytics.config import (
-    DEFAULT_OPENAI_MODEL,
     MAX_MODEL_CONTEXT_TOKENS,
-    SUPPORTED_OPENAI_MODELS,
 )
 from arctic_analytics.artifacts import (
     AnalysisTrace,
@@ -343,7 +341,6 @@ def build_analysis_trace():
         "package_version": __version__,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "session_id": st.session_state.get("session_id"),
-        "model": st.session_state.get("model"),
         "cost": st.session_state.get("cost"),
         "context_window_usage": st.session_state.get("context_window_usage"),
         "researcher_notes": st.session_state.get("researcher_notes", "")
@@ -461,18 +458,7 @@ def restore_trace_session(trace, preparation):
         # Traces produced before context token counts were persisted retain the
         # percentage, which was calculated using this configured limit.
         context_window_tokens = round(context_window_usage * MAX_MODEL_CONTEXT_TOKENS)
-    trace_model = trace.get("model")
-    if trace_model in SUPPORTED_OPENAI_MODELS:
-        resumed_model = trace_model
-        model_warning = None
-    else:
-        resumed_model = DEFAULT_OPENAI_MODEL
-        model_warning = (
-            f"The saved model {trace_model!r} is no longer supported. "
-            f"Using {DEFAULT_OPENAI_MODEL!r} instead."
-            if isinstance(trace_model, str) and trace_model
-            else None
-        )
+    resumed_messages = messages_for_resume(trace)
     original_session_id = trace.get("session_id")
     st.session_state.update(
         {
@@ -484,12 +470,14 @@ def restore_trace_session(trace, preparation):
                 for dataset_key, info in preparation.vetted_files.items()
             ],
             "vetted_files": preparation.vetted_files,
-            "messages": messages_for_resume(trace),
-            "model": resumed_model,
+            "messages": resumed_messages,
             "cost": trace.get("cost") if isinstance(trace.get("cost"), (int, float)) else 0,
             "context_window_usage": context_window_usage,
             "context_window_tokens": context_window_tokens,
-            "count": sum(1 for message in trace.get("messages", []) if isinstance(message, dict) and message.get("role") == "user"),
+            "count": sum(
+                1 for message in resumed_messages
+                if isinstance(message, dict) and message.get("role") == "user"
+            ),
             "show_sample": False,
             "disable_sample_button": False,
             "researcher_notes": researcher_notes,
@@ -498,9 +486,6 @@ def restore_trace_session(trace, preparation):
             "datasets_vetted": False,
         }
     )
-    resume_warnings = [warning for warning in (model_warning,) if warning]
-    if resume_warnings:
-        st.session_state["resume_warning"] = " ".join(resume_warnings)
 
 
 def _readable_events(messages):

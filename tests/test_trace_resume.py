@@ -23,7 +23,6 @@ def resumable_trace():
         "package_version": "0.1.0",
         "timestamp": "2026-09-05T00:00:00+00:00",
         "session_id": "original-session",
-        "model": "gpt-5.6-luna",
         "cost": 0,
         "context_window_usage": 0,
         "system_message": "System prompt",

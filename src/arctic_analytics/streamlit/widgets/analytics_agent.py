@@ -24,7 +24,7 @@ def render_analytics_agent():
     logging.info(f'render_analytics_agent - {st.session_state["session_id"]}')
     st.divider()
 
-    st.session_state['model'] = DEFAULT_OPENAI_MODEL
+    st.session_state.setdefault('model', DEFAULT_OPENAI_MODEL)
 
     st.caption(f"Uploaded data is analyzed through visible tool calls and constrained generated code. Review tool calls, generated code, and outputs before relying on the analysis. This analysis uses the {st.session_state['model']} model.")
 
