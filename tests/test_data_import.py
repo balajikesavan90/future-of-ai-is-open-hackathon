@@ -1,6 +1,12 @@
 import io
+from types import SimpleNamespace
 
-from arctic_analytics.core.data_import import dataframe_name_from_filename
+from arctic_analytics.core import data_import
+from arctic_analytics.core.data_import import (
+    dataframe_name_from_filename,
+    gather_metadata,
+    unique_dataframe_name,
+)
 from arctic_analytics.streamlit.widgets.uploader import is_valid_csv, sanitize_filename
 
 
@@ -22,6 +28,32 @@ def test_dataframe_name_from_filename_normalizes_for_python():
 
 def test_dataframe_name_from_filename_handles_python_keywords():
     assert dataframe_name_from_filename("class.csv") == "df_class"
+
+
+def test_unique_dataframe_name_adds_numeric_suffix_for_collisions():
+    existing_names = {"sales_2026", "sales_2026_2"}
+
+    assert unique_dataframe_name("sales_2026", existing_names) == "sales_2026_3"
+
+
+def test_gather_metadata_sets_description_and_preserves_colliding_uploads(monkeypatch):
+    uploads = [
+        Upload(b"value\n1\n", name="Sales 2026.csv"),
+        Upload(b"value\n2\n", name="sales-2026.csv"),
+    ]
+    session_state = {
+        "session_id": "test-session",
+        "source": "uploader",
+        "uploaded_files": uploads,
+    }
+    monkeypatch.setattr(data_import, "st", SimpleNamespace(session_state=session_state))
+
+    gather_metadata()
+
+    vetted_files = session_state["vetted_files"]
+    assert list(vetted_files) == ["sales_2026", "sales_2026_2"]
+    assert vetted_files["sales_2026"]["dataset_description"] == ""
+    assert vetted_files["sales_2026_2"]["dataframe"]["value"].iloc[0] == 2
 
 
 def test_is_valid_csv_accepts_plain_csv():

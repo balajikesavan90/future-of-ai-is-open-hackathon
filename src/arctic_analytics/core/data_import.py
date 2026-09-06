@@ -101,6 +101,18 @@ def dataframe_name_from_filename(filename):
 
     return dataframe_name
 
+
+def unique_dataframe_name(dataframe_name, existing_names):
+    """Return a dataframe name that does not collide with an existing name."""
+    if dataframe_name not in existing_names:
+        return dataframe_name
+
+    suffix = 2
+    while f'{dataframe_name}_{suffix}' in existing_names:
+        suffix += 1
+    return f'{dataframe_name}_{suffix}'
+
+
 def gather_metadata(params=None):
     logging.info(f'gather_metadata - {st.session_state["session_id"]}')
     """
@@ -113,9 +125,12 @@ def gather_metadata(params=None):
             for uploaded_file in st.session_state['uploaded_files']
         ]
         for uploaded_file in st.session_state['uploaded_files']:
-            filename = dataframe_name_from_filename(uploaded_file.name)
+            filename = unique_dataframe_name(
+                dataframe_name_from_filename(uploaded_file.name), vetted_files
+            )
             vetted_files[filename] = {}
             vetted_files[filename]['source_filename'] = uploaded_file.name
+            vetted_files[filename]['dataset_description'] = ''
             df = pd.read_csv(
                 filepath_or_buffer=uploaded_file, 
                 parse_dates=True,
