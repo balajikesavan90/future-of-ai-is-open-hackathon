@@ -183,9 +183,10 @@ def _columns_match(file_info: dict[str, Any], columns: list[str]) -> bool:
 
 
 def _restore_metadata(file_info: dict[str, Any], saved: dict[str, Any]) -> None:
-    file_info["dataset_description"] = saved.get("dataset_description") or ""
+    dataset_description = saved.get("dataset_description")
+    file_info["dataset_description"] = dataset_description if isinstance(dataset_description, str) else ""
     primary_key = saved.get("primary_key")
-    file_info["primary_key"] = primary_key if isinstance(primary_key, list) else []
+    file_info["primary_key"] = primary_key if _valid_columns(primary_key) else []
     data_types = saved.get("data_types")
     if isinstance(data_types, dict):
         file_info["data_types"] = pd.Series(

@@ -178,7 +178,7 @@ This project does not provide:
 
 Current implementation limits:
 
-- Traces are snapshots of Streamlit session state. They can restore conversation and metadata for continuation with re-uploaded CSVs, but are not deterministic execution replays. New resume-capable traces retain chart payloads; older exports can continue without their historical charts. Trace exports larger than 10 MiB are not prepared because they cannot be imported for resume.
+- Traces are snapshots of Streamlit session state. They can restore conversation and metadata for continuation with re-uploaded CSVs, but are not deterministic execution replays. Only trace-schema version 0.3.0 exports with a resume manifest are resumable; those traces retain chart payloads. Trace exports larger than 10 MiB are not prepared because they cannot be imported for resume.
 - Research bundles package artifacts for review; they are not replayable runs.
 - Execution restrictions are not isolation.
 - Examples may require external APIs when regenerating traces.

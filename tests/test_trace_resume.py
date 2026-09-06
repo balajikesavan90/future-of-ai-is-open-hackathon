@@ -81,6 +81,27 @@ def test_prepare_resume_requires_original_filename_and_columns():
         prepare_resume(trace, {"other": uploaded_file("Sales 2026.csv", ["amount", "id"])})
 
 
+@pytest.mark.parametrize(
+    ("dataset_description", "primary_key"),
+    [
+        (None, ["id"]),
+        ({"unexpected": "metadata"}, ["id"]),
+        ("Monthly sales.", "id"),
+        ("Monthly sales.", ["id", 1]),
+    ],
+)
+def test_prepare_resume_sanitizes_untrusted_widget_metadata(dataset_description, primary_key):
+    trace = resumable_trace()
+    trace["dataset_metadata"]["sales"]["dataset_description"] = dataset_description
+    trace["dataset_metadata"]["sales"]["primary_key"] = primary_key
+
+    preparation = prepare_resume(trace, {"other": uploaded_file("Sales 2026.csv", ["id", "amount"])})
+
+    restored = preparation.vetted_files["sales"]
+    assert restored["dataset_description"] == (dataset_description if isinstance(dataset_description, str) else "")
+    assert restored["primary_key"] == (primary_key if isinstance(primary_key, list) and all(isinstance(key, str) for key in primary_key) else [])
+
+
 @pytest.mark.parametrize("source", [None, "sample"])
 def test_prepare_resume_rejects_manifest_without_uploader_source(source):
     trace = resumable_trace()
