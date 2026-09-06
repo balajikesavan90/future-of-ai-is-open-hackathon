@@ -298,6 +298,24 @@ def test_trace_schema_rejects_invalid_timestamp_format():
         validate_trace_schema(trace)
 
 
+def test_trace_schema_rejects_resume_manifest_for_legacy_trace_version():
+    trace = build_analysis_trace()
+    trace["trace_schema_version"] = "0.2.0"
+    trace["model"] = None
+    trace["resume"] = {
+        "resume_schema_version": "1.0",
+        "source": "uploader",
+        "datasets": [{
+            "dataset_key": "sales",
+            "source_filename": "sales.csv",
+            "column_names": ["amount"],
+        }],
+    }
+
+    with pytest.raises(ValidationError):
+        validate_trace_schema(trace)
+
+
 def test_research_session_from_streamlit_includes_researcher_notes():
     st.session_state.clear()
     st.session_state["session_id"] = "notes-test-session"
@@ -527,6 +545,19 @@ def test_restore_trace_session_rejects_negative_or_nonfinite_cost(cost):
     restore_trace_session({"messages": [], "cost": cost}, ResumePreparation(vetted_files={}))
 
     assert st.session_state["cost"] == 0
+
+
+def test_restore_trace_session_rejects_context_tokens_above_application_cap():
+    st.session_state.clear()
+    trace = {
+        "messages": [],
+        "context_window_usage": 0.1,
+        "resume": {"context_window_tokens": MAX_MODEL_CONTEXT_TOKENS + 1},
+    }
+
+    restore_trace_session(trace, ResumePreparation(vetted_files={}))
+
+    assert st.session_state["context_window_tokens"] == round(0.1 * MAX_MODEL_CONTEXT_TOKENS)
 
 
 def test_researcher_notes_textarea_displays_restored_value_and_saves_edits():

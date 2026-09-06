@@ -455,6 +455,7 @@ def restore_trace_session(trace, preparation):
         not isinstance(context_window_tokens, int)
         or isinstance(context_window_tokens, bool)
         or context_window_tokens < 0
+        or context_window_tokens > MAX_MODEL_CONTEXT_TOKENS
     ):
         # Traces produced before context token counts were persisted retain the
         # percentage, which was calculated using this configured limit.

@@ -35,6 +35,11 @@ def test_dataframe_name_from_filename_handles_python_keywords():
     assert dataframe_name_from_filename("class.csv") == "df_class"
 
 
+@pytest.mark.parametrize("filename", ["pd.csv", "st.csv", "get_dataframe_names.csv"])
+def test_dataframe_name_from_filename_avoids_reserved_execution_globals(filename):
+    assert dataframe_name_from_filename(filename).startswith("df_")
+
+
 def test_unique_dataframe_name_adds_numeric_suffix_for_collisions():
     existing_names = {"sales_2026", "sales_2026_2"}
 

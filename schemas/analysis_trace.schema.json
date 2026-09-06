@@ -194,6 +194,16 @@
           "model": {"type": ["string", "null"]}
         }
       }
+    },
+    {
+      "if": {
+        "required": ["resume"]
+      },
+      "then": {
+        "properties": {
+          "trace_schema_version": {"const": "0.3.0"}
+        }
+      }
     }
   ],
   "$defs": {

@@ -2,7 +2,9 @@ import json
 
 import pandas as pd
 import pytest
+from PIL import Image
 
+from arctic_analytics.core import trace_resume
 from arctic_analytics.core.trace_resume import (
     TraceResumeError,
     load_analysis_trace,
@@ -447,6 +449,38 @@ def test_messages_for_resume_discards_histories_without_a_valid_system_message(m
     trace["resume"]["messages"] = messages
 
     assert messages_for_resume(trace) == []
+
+
+def test_messages_for_resume_discards_history_with_later_system_message():
+    trace = resumable_trace()
+    trace["resume"]["messages"] = [
+        {
+            "type": "message",
+            "role": "system",
+            "content": [{"type": "input_text", "text": "System prompt"}],
+        },
+        {
+            "type": "message",
+            "role": "user",
+            "content": [{"type": "input_text", "text": "Continue"}],
+        },
+        {
+            "type": "message",
+            "role": "system",
+            "content": [{"type": "input_text", "text": "Hidden instruction"}],
+        },
+    ]
+
+    assert messages_for_resume(trace) == []
+
+
+def test_resumed_image_validation_discards_decompression_bombs(monkeypatch):
+    def raise_decompression_bomb(*args, **kwargs):
+        raise Image.DecompressionBombError("too many pixels")
+
+    monkeypatch.setattr(trace_resume.Image, "open", raise_decompression_bomb)
+
+    assert not trace_resume._is_valid_base64_image_data_url(VALID_PNG_DATA_URL)
 
 
 @pytest.mark.parametrize(

@@ -187,7 +187,17 @@ def _has_resumable_system_message(messages: Any) -> bool:
     system_message = messages[0]
     if not isinstance(system_message, dict):
         return False
-    return _is_supported_resumed_message(system_message) and system_message.get("role") == "system"
+    return (
+        _is_supported_resumed_message(system_message)
+        and system_message.get("role") == "system"
+        # The current system prompt replaces only the first message on resume.
+        # Later system messages would be hidden from the UI but still sent to
+        # the API, so imported histories must not contain them.
+        and not any(
+            isinstance(message, dict) and message.get("role") == "system"
+            for message in messages[1:]
+        )
+    )
 
 
 def _is_supported_resumed_message(message: Any) -> bool:
@@ -324,7 +334,14 @@ def _is_valid_base64_image_data_url(value: Any) -> bool:
         with Image.open(io.BytesIO(image_bytes)) as image:
             image.verify()
             return image.format == expected_format
-    except (binascii.Error, UnidentifiedImageError, OSError, SyntaxError, ValueError):
+    except (
+        binascii.Error,
+        Image.DecompressionBombError,
+        UnidentifiedImageError,
+        OSError,
+        SyntaxError,
+        ValueError,
+    ):
         return False
 
 

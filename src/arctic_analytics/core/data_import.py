@@ -8,6 +8,8 @@ import re
 from seaborn import load_dataset
 import logging
 
+from arctic_analytics.core.trace_resume import RESERVED_EXECUTION_GLOBAL_NAMES
+
 datasets = {
     'tips': {
         'description': 'This dataset contains data on tips given to waitstaff at a restaurant.',
@@ -96,7 +98,11 @@ def dataframe_name_from_filename(filename):
 
     if not dataframe_name:
         dataframe_name = 'unnamed'
-    if dataframe_name[0].isdigit() or keyword.iskeyword(dataframe_name):
+    if (
+        dataframe_name[0].isdigit()
+        or keyword.iskeyword(dataframe_name)
+        or dataframe_name in RESERVED_EXECUTION_GLOBAL_NAMES
+    ):
         dataframe_name = f'df_{dataframe_name}'
 
     return dataframe_name
