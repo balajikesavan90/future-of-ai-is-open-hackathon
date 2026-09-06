@@ -107,7 +107,8 @@ def disable_sample_button():
 
 def render_ai_prompt():
     logging.info(f'render_ai_prompt - {st.session_state["session_id"]}')
-    with st.sidebar.expander('What does the AI see?', expanded=True):
+    render_trace_export()
+    with st.sidebar.expander('What does the AI see?', expanded=False):
         if 'system_message' in st.session_state.keys():
             st.subheader(':blue[System Message]')
             st.write(st.session_state['system_message'])
@@ -115,7 +116,6 @@ def render_ai_prompt():
             st.subheader(':blue[Messages]')
             messages_wo_system_message = st.session_state['messages'][1:]
             st.write(messages_wo_system_message)
-    render_trace_export()
 
 
 def render_researcher_notes():
@@ -453,41 +453,41 @@ def render_trace_export():
     if "messages" not in st.session_state and "vetted_files" not in st.session_state:
         return
 
-    with st.sidebar.expander("Analysis Trace", expanded=False):
-        st.caption("Prepare a JSON snapshot of the current analysis session when you need to export it.")
-        if st.button("Prepare Trace Export", key="prepare_trace_export"):
-            trace = build_analysis_trace()
-            st.session_state["trace_export_json"] = json.dumps(trace, indent=2, default=str)
-            st.session_state["trace_export_session_id"] = trace.get("session_id", "session")
+    st.sidebar.subheader("Analysis Trace")
+    st.sidebar.caption("Prepare a JSON snapshot of the current analysis session when you need to export it.")
+    if st.sidebar.button("Prepare Trace Export", key="prepare_trace_export"):
+        trace = build_analysis_trace()
+        st.session_state["trace_export_json"] = json.dumps(trace, indent=2, default=str)
+        st.session_state["trace_export_session_id"] = trace.get("session_id", "session")
 
-        if "trace_export_json" in st.session_state:
-            st.download_button(
-                label="Export Analysis Trace",
-                data=st.session_state["trace_export_json"],
-                file_name=f"arctic_analytics_trace_{st.session_state.get('trace_export_session_id', 'session')}.json",
-                mime="application/json",
-                key="download_trace_export",
+    if "trace_export_json" in st.session_state:
+        st.sidebar.download_button(
+            label="Export Analysis Trace",
+            data=st.session_state["trace_export_json"],
+            file_name=f"arctic_analytics_trace_{st.session_state.get('trace_export_session_id', 'session')}.json",
+            mime="application/json",
+            key="download_trace_export",
+        )
+
+    if st.sidebar.button("Prepare Research Bundle", key="prepare_research_bundle"):
+        trace = build_analysis_trace()
+        session = build_research_session_from_streamlit(trace)
+        st.session_state["research_bundle_zip"] = build_research_bundle_zip(session)
+        st.session_state["research_bundle_session_id"] = trace.get("session_id", "session")
+        st.session_state["research_bundle_fingerprint"] = _research_bundle_fingerprint(trace)
+
+    if "research_bundle_zip" in st.session_state:
+        if _research_bundle_cache_is_current():
+            st.sidebar.download_button(
+                label="Export Research Bundle",
+                data=st.session_state["research_bundle_zip"],
+                file_name=f"arctic_analytics_research_bundle_{st.session_state.get('research_bundle_session_id', 'session')}.zip",
+                mime="application/zip",
+                key="download_research_bundle",
             )
-
-        if st.button("Prepare Research Bundle", key="prepare_research_bundle"):
-            trace = build_analysis_trace()
-            session = build_research_session_from_streamlit(trace)
-            st.session_state["research_bundle_zip"] = build_research_bundle_zip(session)
-            st.session_state["research_bundle_session_id"] = trace.get("session_id", "session")
-            st.session_state["research_bundle_fingerprint"] = _research_bundle_fingerprint(trace)
-
-        if "research_bundle_zip" in st.session_state:
-            if _research_bundle_cache_is_current():
-                st.download_button(
-                    label="Export Research Bundle",
-                    data=st.session_state["research_bundle_zip"],
-                    file_name=f"arctic_analytics_research_bundle_{st.session_state.get('research_bundle_session_id', 'session')}.zip",
-                    mime="application/zip",
-                    key="download_research_bundle",
-                )
-            else:
-                _clear_research_bundle_cache()
-                st.info("Analysis inputs changed. Prepare the research bundle again before exporting.")
+        else:
+            _clear_research_bundle_cache()
+            st.sidebar.info("Analysis inputs changed. Prepare the research bundle again before exporting.")
 
 def _research_bundle_fingerprint(trace=None):
     if trace is None:
@@ -611,10 +611,9 @@ def render_tool_response(tool_response):
         return
 
     if tool_response.startswith('Error'):
-        st.error('Tool execution failed. Expand the response below for details.')
-        # Keep error details collapsed by design so successful results remain the primary focus.
-        with st.expander('🛠️ See Tool Response', expanded=False):
-            st.write(tool_response)
+        # Keep failed-tool details available without interrupting the analysis flow.
+        with st.expander('⚠️ Tool execution failed — see details', expanded=False):
+            st.error(tool_response)
         return
 
     try:

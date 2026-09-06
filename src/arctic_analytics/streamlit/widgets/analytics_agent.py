@@ -76,8 +76,8 @@ def render_analytics_agent():
         )
 
     render_researcher_notes()
-    render_tool_calling_analysis_prompt_guide()
     render_ai_prompt()
+    render_tool_calling_analysis_prompt_guide()
 
     with st.expander('See uploaded Datasets'):
         for filename in st.session_state['vetted_files']:

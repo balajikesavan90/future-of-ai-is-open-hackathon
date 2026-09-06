@@ -108,33 +108,33 @@ def render_uploader():
             else:
                 st.warning("Please upload at least one CSV file.")
 
-    with st.expander('Resume saved analysis', expanded=False):
-        st.caption('Upload an Arctic Analytics trace and the CSV files used for that analysis.')
-        with st.form(key='resume_analysis'):
-            trace_file = st.file_uploader(
-                'Analysis trace (.json)', type=['json'], key='resume_trace_file'
-            )
-            resume_files = st.file_uploader(
-                'Original CSV files', type=['csv'], accept_multiple_files=True, key='resume_csv_files'
-            )
-            resume_submitted = st.form_submit_button('Resume analysis', width='stretch')
+    st.subheader('Resume saved analysis')
+    st.caption('Upload an Arctic Analytics trace and the CSV files used for that analysis.')
+    with st.form(key='resume_analysis'):
+        trace_file = st.file_uploader(
+            'Analysis trace (.json)', type=['json'], key='resume_trace_file'
+        )
+        resume_files = st.file_uploader(
+            'Original CSV files', type=['csv'], accept_multiple_files=True, key='resume_csv_files'
+        )
+        resume_submitted = st.form_submit_button('Resume analysis', width='stretch')
 
-        if resume_submitted:
-            if trace_file is None or not resume_files:
-                st.error('Upload one trace JSON file and the CSV files used by that analysis.')
-                return
-            try:
-                trace = load_analysis_trace(trace_file.getvalue())
-                for file in resume_files:
-                    file.name = sanitize_filename(file.name)
-                    valid, error = is_valid_csv(file)
-                    if not valid:
-                        raise TraceResumeError(f"Error in file {file.name}: {error}")
-                uploaded_vetted_files = build_vetted_files_from_uploads(resume_files)
-                preparation = prepare_resume(trace, uploaded_vetted_files)
-            except (TraceResumeError, pd.errors.ParserError, UnicodeDecodeError) as exc:
-                st.error(str(exc))
-                return
+    if resume_submitted:
+        if trace_file is None or not resume_files:
+            st.error('Upload one trace JSON file and the CSV files used by that analysis.')
+            return
+        try:
+            trace = load_analysis_trace(trace_file.getvalue())
+            for file in resume_files:
+                file.name = sanitize_filename(file.name)
+                valid, error = is_valid_csv(file)
+                if not valid:
+                    raise TraceResumeError(f"Error in file {file.name}: {error}")
+            uploaded_vetted_files = build_vetted_files_from_uploads(resume_files)
+            preparation = prepare_resume(trace, uploaded_vetted_files)
+        except (TraceResumeError, pd.errors.ParserError, UnicodeDecodeError) as exc:
+            st.error(str(exc))
+            return
 
-            restore_trace_session(trace, preparation)
-            st.rerun()
+        restore_trace_session(trace, preparation)
+        st.rerun()
