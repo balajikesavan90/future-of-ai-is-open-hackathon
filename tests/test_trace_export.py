@@ -204,6 +204,7 @@ def test_upload_trace_includes_resume_manifest_for_uploaded_csvs():
     st.session_state["vetted_files"] = {
         "sales": {
             "source_filename": "Sales 2026.csv",
+            "content_sha256": "a" * 64,
             "columns_names": pd.Index(["amount", "region"]),
         }
     }
@@ -212,7 +213,7 @@ def test_upload_trace_includes_resume_manifest_for_uploaded_csvs():
 
     assert trace["researcher_notes"] == "Recheck the outliers."
     assert trace["resume"] == {
-        "resume_schema_version": "1.0",
+        "resume_schema_version": "1.1",
         "source": "uploader",
         "context_window_usage": 0.125,
         "context_window_tokens": 34_000,
@@ -220,6 +221,7 @@ def test_upload_trace_includes_resume_manifest_for_uploaded_csvs():
             "dataset_key": "sales",
             "source_filename": "Sales 2026.csv",
             "column_names": ["amount", "region"],
+            "content_sha256": "a" * 64,
         }],
         "researcher_notes": "Recheck the outliers.",
         "resumed_from_session_id": None,

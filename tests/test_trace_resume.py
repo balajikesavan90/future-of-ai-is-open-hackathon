@@ -1,4 +1,5 @@
 import json
+import hashlib
 
 import pandas as pd
 import pytest
@@ -13,8 +14,10 @@ from arctic_analytics.core.trace_resume import (
 
 
 def uploaded_file(name, columns):
+    content_sha256 = hashlib.sha256(",".join(columns).encode()).hexdigest()
     return {
         "source_filename": name,
+        "content_sha256": content_sha256,
         "columns_names": pd.Index(columns),
         "data_types": pd.Series({column: "Int64" for column in columns}),
         "dataset_description": "",
@@ -49,12 +52,13 @@ def resumable_trace():
         "errors": [],
         "limitations": ["Not a deterministic replay."],
         "resume": {
-            "resume_schema_version": "1.0",
+            "resume_schema_version": "1.1",
             "source": "uploader",
             "datasets": [{
                 "dataset_key": "sales",
                 "source_filename": "Sales 2026.csv",
                 "column_names": ["id", "amount"],
+                "content_sha256": hashlib.sha256(b"id,amount").hexdigest(),
             }],
         },
     }
@@ -105,6 +109,30 @@ def test_prepare_resume_requires_original_filename_and_columns():
         prepare_resume(trace, {"other": uploaded_file("renamed.csv", ["id", "amount"])})
     with pytest.raises(TraceResumeError, match="original file"):
         prepare_resume(trace, {"other": uploaded_file("Sales 2026.csv", ["amount", "id"])})
+
+
+def test_prepare_resume_requires_original_content():
+    trace = resumable_trace()
+    uploaded = uploaded_file("Sales 2026.csv", ["id", "amount"])
+    uploaded["content_sha256"] = hashlib.sha256(b"id,amount\n999,0\n").hexdigest()
+
+    with pytest.raises(TraceResumeError, match="unchanged"):
+        prepare_resume(trace, {"sales": uploaded})
+
+
+def test_prepare_resume_matches_duplicate_identical_filenames_in_order():
+    trace = resumable_trace()
+    duplicate = dict(trace["resume"]["datasets"][0])
+    duplicate["dataset_key"] = "sales_copy"
+    trace["resume"]["datasets"].append(duplicate)
+    trace["dataset_metadata"]["sales_copy"] = {}
+    first = uploaded_file("Sales 2026.csv", ["id", "amount"])
+    second = uploaded_file("Sales 2026.csv", ["id", "amount"])
+
+    restored = prepare_resume(trace, {"first": first, "second": second}).vetted_files
+
+    assert list(restored) == ["sales", "sales_copy"]
+    assert restored["sales"] is not restored["sales_copy"]
 
 
 @pytest.mark.parametrize(
@@ -179,19 +207,29 @@ def test_messages_for_resume_uses_full_fidelity_messages_and_sanitizes_old_chart
         "content": [{"type": "input_text", "text": "System prompt"}],
     }
     trace["messages"] = [system_message, {
+        "type": "function_call",
+        "call_id": "call_1",
+        "name": "render_chart",
+        "arguments": "{}",
+    }, {
         "type": "function_call_output",
         "call_id": "call_1",
         "output": [{"type": "input_image", "image_url": {"type": "image_base64"}}],
     }]
 
-    assert messages_for_resume(trace)[1]["output"] == "Historical chart output is unavailable in this exported trace."
+    assert messages_for_resume(trace)[2]["output"] == "Historical chart output is unavailable in this exported trace."
 
     trace["resume"]["messages"] = [system_message, {
+        "type": "function_call",
+        "call_id": "call_1",
+        "name": "render_chart",
+        "arguments": "{}",
+    }, {
         "type": "function_call_output",
         "call_id": "call_1",
         "output": [{"type": "input_image", "image_url": "data:image/png;base64,abc"}],
     }]
-    assert messages_for_resume(trace)[1]["output"][0]["image_url"] == "data:image/png;base64,abc"
+    assert messages_for_resume(trace)[2]["output"][0]["image_url"] == "data:image/png;base64,abc"
 
 
 def test_messages_for_resume_discards_non_dict_history_items():
@@ -243,6 +281,37 @@ def test_messages_for_resume_keeps_history_with_tool_call_ids():
     ]
 
     assert messages_for_resume(trace) == trace["resume"]["messages"]
+
+
+@pytest.mark.parametrize(
+    "history",
+    [
+        [
+            {"type": "function_call_output", "call_id": "call_1", "output": "result"},
+        ],
+        [
+            {"type": "function_call", "call_id": "call_1", "name": "tool", "arguments": "{}"},
+        ],
+        [
+            {"type": "function_call", "call_id": "call_1", "name": "tool", "arguments": "{}"},
+            {"type": "function_call", "call_id": "call_1", "name": "tool", "arguments": "{}"},
+        ],
+        [
+            {"type": "function_call", "call_id": "call_1", "name": "tool", "arguments": "{}"},
+            {"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "Oops"}]},
+            {"type": "function_call_output", "call_id": "call_1", "output": "result"},
+        ],
+    ],
+)
+def test_messages_for_resume_discards_invalid_tool_call_sequences(history):
+    trace = resumable_trace()
+    trace["resume"]["messages"] = [{
+        "type": "message",
+        "role": "system",
+        "content": [{"type": "input_text", "text": "System prompt"}],
+    }, *history]
+
+    assert messages_for_resume(trace) == []
 
 
 def test_replace_resumed_system_message_preserves_following_history():
@@ -311,6 +380,11 @@ def test_messages_for_resume_rejects_non_data_image_urls(image_url):
         "role": "system",
         "content": [{"type": "input_text", "text": "System prompt"}],
     }, {
+        "type": "function_call",
+        "call_id": "call_1",
+        "name": "render_chart",
+        "arguments": "{}",
+    }, {
         "type": "function_call_output",
         "call_id": "call_1",
         "output": [{"type": "input_image", "image_url": image_url}],
@@ -318,7 +392,7 @@ def test_messages_for_resume_rejects_non_data_image_urls(image_url):
 
     messages = messages_for_resume(trace)
 
-    assert messages[1]["output"] == "Historical chart output is unavailable in this exported trace."
+    assert messages[2]["output"] == "Historical chart output is unavailable in this exported trace."
 
 
 def test_load_analysis_trace_rejects_legacy_traces_without_resume_manifest():

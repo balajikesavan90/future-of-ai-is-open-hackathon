@@ -154,7 +154,7 @@
       "description": "Optional manifest used to continue an analysis with freshly uploaded CSV files.",
       "required": ["resume_schema_version", "source", "datasets"],
       "properties": {
-        "resume_schema_version": {"const": "1.0"},
+        "resume_schema_version": {"const": "1.1"},
         "source": {"const": "uploader"},
         "context_window_usage": {"type": ["number", "integer"]},
         "context_window_tokens": {"type": "integer", "minimum": 0},
@@ -169,11 +169,12 @@
           "minItems": 1,
           "items": {
             "type": "object",
-            "required": ["dataset_key", "source_filename", "column_names"],
+            "required": ["dataset_key", "source_filename", "column_names", "content_sha256"],
             "properties": {
               "dataset_key": {"type": "string"},
               "source_filename": {"type": "string"},
-              "column_names": {"type": "array", "items": {"type": "string"}}
+              "column_names": {"type": "array", "items": {"type": "string"}},
+              "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
             }
           }
         }

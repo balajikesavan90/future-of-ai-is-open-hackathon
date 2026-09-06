@@ -82,7 +82,7 @@ The sample bundle does not run a new analysis. It lets you inspect a completed a
 - Builds dataset metadata, including columns, data types, summary statistics, missing values, and row samples.
 - Lets researchers edit dataset descriptions, column descriptions, data types, and primary key flags before analysis.
 - Injects metadata into model context before agent inference.
-- Exports lightweight JSON analysis traces and can resume an analysis from a trace when the original CSV files are uploaded again.
+- Exports lightweight JSON analysis traces and can resume an analysis only when the original, content-verified CSV files are uploaded again.
 - Exports local research artifact bundles containing traces, context, prompts, generated code, outputs, environment metadata, methods drafts, limitations, and citation files.
 
 ## Intended Usage Model

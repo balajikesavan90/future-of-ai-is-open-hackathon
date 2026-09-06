@@ -7,6 +7,7 @@ import keyword
 import re
 from seaborn import load_dataset
 import logging
+import hashlib
 
 datasets = {
     'tips': {
@@ -148,6 +149,7 @@ def build_vetted_files_from_uploads(uploaded_files):
     for uploaded_file in uploaded_files:
         source_filename = os.path.basename(uploaded_file.name)
         filename = unique_dataframe_name(dataframe_name_from_filename(source_filename), vetted_files)
+        content_sha256 = _uploaded_file_sha256(uploaded_file)
         df = pd.read_csv(
             filepath_or_buffer=uploaded_file,
             parse_dates=True,
@@ -157,6 +159,7 @@ def build_vetted_files_from_uploads(uploaded_files):
         ).convert_dtypes()
         vetted_files[filename] = {
             'source_filename': source_filename,
+            'content_sha256': content_sha256,
             'dataset_description': '',
             'columns_names': df.columns,
             'data_types': df.dtypes,
@@ -165,6 +168,16 @@ def build_vetted_files_from_uploads(uploaded_files):
             'dataframe': df,
         }
     return vetted_files
+
+
+def _uploaded_file_sha256(uploaded_file):
+    """Fingerprint an upload without changing its current read position."""
+    position = uploaded_file.tell()
+    try:
+        uploaded_file.seek(0)
+        return hashlib.sha256(uploaded_file.read()).hexdigest()
+    finally:
+        uploaded_file.seek(position)
 
 # Function is too slow for larger datasets. Need to optimize. Not being used currently.
 def detect_primary_keys(df):

@@ -42,9 +42,21 @@ IMPORT_TRACE_SCHEMA = {
             "type": "object",
             "required": ["resume_schema_version", "source", "datasets"],
             "properties": {
-                "resume_schema_version": {"const": "1.0"},
+                "resume_schema_version": {"const": "1.1"},
                 "source": {"const": "uploader"},
-                "datasets": {"type": "array"},
+                "datasets": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["dataset_key", "source_filename", "column_names", "content_sha256"],
+                        "properties": {
+                            "dataset_key": {"type": "string"},
+                            "source_filename": {"type": "string"},
+                            "column_names": {"type": "array", "items": {"type": "string"}},
+                            "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                        },
+                    },
+                },
                 "context_window_usage": {"type": "number"},
                 "context_window_tokens": {"type": "integer", "minimum": 0},
                 "researcher_notes": {"type": "string"},
@@ -88,8 +100,10 @@ def prepare_resume(trace: dict[str, Any], uploaded_vetted_files: dict[str, dict[
     resume = trace.get("resume")
     if not isinstance(resume, dict):
         raise TraceResumeError("The trace requires a resume manifest.")
-    if resume.get("resume_schema_version") != "1.0":
-        raise TraceResumeError("The trace resume manifest must use schema version 1.0.")
+    if resume.get("resume_schema_version") != "1.1":
+        raise TraceResumeError(
+            "The trace resume manifest must use schema version 1.1. Export a new trace to resume it."
+        )
     if resume.get("source") != "uploader":
         raise TraceResumeError("The trace resume manifest must declare uploader as its source.")
     datasets = resume.get("datasets")
@@ -126,6 +140,8 @@ def messages_for_resume(trace: dict[str, Any]) -> list[Any]:
     # API. Keeping only valid entries can orphan tool outputs or calls, so
     # discard the complete history when any item is not a supported shape.
     if not all(_is_supported_resumed_message(message) for message in messages):
+        return []
+    if not _has_valid_tool_call_sequence(messages):
         return []
     return [_sanitize_resumed_message(message) for message in messages]
 
@@ -190,6 +206,28 @@ def _valid_call_id(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
+def _has_valid_tool_call_sequence(messages: list[Any]) -> bool:
+    """Ensure every tool output resolves an earlier, unique function call."""
+    pending_call_ids: set[str] = set()
+    seen_call_ids: set[str] = set()
+    for message in messages:
+        message_type = message.get("type")
+        if message_type == "function_call":
+            call_id = message["call_id"]
+            if call_id in seen_call_ids:
+                return False
+            seen_call_ids.add(call_id)
+            pending_call_ids.add(call_id)
+        elif message_type == "function_call_output":
+            call_id = message["call_id"]
+            if call_id not in pending_call_ids:
+                return False
+            pending_call_ids.remove(call_id)
+        elif pending_call_ids:
+            return False
+    return not pending_call_ids
+
+
 def _sanitize_resumed_message(message: Any) -> Any:
     if not isinstance(message, dict):
         return message
@@ -227,20 +265,29 @@ def _match_manifest_datasets(datasets: list[Any], uploaded: dict[str, dict[str, 
         trace_key = item.get("dataset_key")
         filename = item.get("source_filename")
         columns = item.get("column_names")
-        if not isinstance(trace_key, str) or not isinstance(filename, str) or not _valid_columns(columns):
+        content_sha256 = item.get("content_sha256")
+        if (
+            not isinstance(trace_key, str)
+            or not isinstance(filename, str)
+            or not _valid_columns(columns)
+            or not _valid_sha256(content_sha256)
+        ):
             raise TraceResumeError("The trace resume manifest is incomplete.")
-        # Intentional behavior: resume accepts a refreshed version of the same
-        # dataset when its source filename and ordered columns match. Content is
-        # not hashed, allowing the user to retain the trace's reviewable context
-        # while continuing with newly uploaded rows.
         candidates = [
             key for key, info in uploaded.items()
-            if info.get("source_filename") == filename and _columns_match(info, columns) and key not in used
-        ]
-        if len(candidates) != 1:
-            raise TraceResumeError(
-                f"Upload the original file '{filename}' with the same ordered columns to resume this trace."
+            if (
+                info.get("source_filename") == filename
+                and _columns_match(info, columns)
+                and info.get("content_sha256") == content_sha256
+                and key not in used
             )
+        ]
+        if not candidates:
+            raise TraceResumeError(
+                f"Upload the original file '{filename}' unchanged to resume this trace."
+            )
+        # Byte-identical duplicates are interchangeable; consume them in the
+        # deterministic manifest/upload order rather than treating them as an error.
         mapping[trace_key] = candidates[0]
         used.add(candidates[0])
     if len(mapping) != len(uploaded):
@@ -250,6 +297,10 @@ def _match_manifest_datasets(datasets: list[Any], uploaded: dict[str, dict[str, 
 
 def _valid_columns(columns: Any) -> bool:
     return isinstance(columns, list) and all(isinstance(column, str) for column in columns)
+
+
+def _valid_sha256(value: Any) -> bool:
+    return isinstance(value, str) and len(value) == 64 and all(char in "0123456789abcdef" for char in value)
 
 
 def _columns_match(file_info: dict[str, Any], columns: list[str]) -> bool:

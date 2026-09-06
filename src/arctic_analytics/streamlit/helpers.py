@@ -383,10 +383,11 @@ def _build_resume_manifest():
                 "dataset_key": str(dataset_key),
                 "source_filename": str(file_info.get("source_filename") or dataset_key),
                 "column_names": [str(column) for column in file_info.get("columns_names", [])],
+                "content_sha256": str(file_info.get("content_sha256") or ""),
             }
         )
     return {
-        "resume_schema_version": "1.0",
+        "resume_schema_version": "1.1",
         "source": "uploader",
         "datasets": datasets,
         "context_window_usage": (
