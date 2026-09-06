@@ -319,7 +319,7 @@ class OpenAIResponsesUtility:
                             'type': 'function_call_output',
                             'call_id': tool_call['call_id'],
                             'output': str(tool_response),
-                    })
+                        })
                     with st.session_state['messages_container']:
                         with st.chat_message('assistant'):
                             render_tool_response(tool_response)
