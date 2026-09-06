@@ -70,6 +70,27 @@ def test_openai_api_key_prefers_session_state():
     )
 
 
+@pytest.mark.parametrize("selected_source", ["session", "dotenv", "environment", "secrets", None])
+def test_openai_api_key_strips_values_and_skips_blank_sources(tmp_path, selected_source):
+    sources = ["session", "dotenv", "environment", "secrets"]
+    values = {source: " \t " for source in sources}
+    if selected_source is not None:
+        for source in sources[sources.index(selected_source):]:
+            values[source] = f"  key-from-{source}  "
+    env_path = tmp_path / ".env"
+    env_path.write_text(f'OPENAI_API_KEY="{values["dotenv"]}"\n')
+    kwargs = {
+        "session_state": {"OPENAI_API_KEY": values["session"]},
+        "environ": {"OPENAI_API_KEY": values["environment"]},
+        "secrets": {"OPENAI_API_KEY": values["secrets"]},
+        "env_path": env_path,
+    }
+
+    expected = f"key-from-{selected_source}" if selected_source else None
+    assert get_openai_api_key(**kwargs) == expected
+    assert has_openai_api_key(**kwargs) is (selected_source is not None)
+
+
 def test_save_openai_api_key_to_env(tmp_path):
     env_path = tmp_path / ".env"
 

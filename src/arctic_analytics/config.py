@@ -74,15 +74,22 @@ def get_openai_api_key(
 ) -> str | None:
     if session_state is not None:
         session_value = session_state.get("OPENAI_API_KEY")
-        if session_value:
-            return str(session_value)
+        if session_value and str(session_value).strip():
+            return str(session_value).strip()
 
-    return get_config_value(
-        "OPENAI_API_KEY",
-        secrets=secrets,
-        environ=environ,
-        env_path=env_path,
-    )
+    env = os.environ if environ is None else environ
+    for value in (load_runtime_config(env_path).get("OPENAI_API_KEY"), env.get("OPENAI_API_KEY")):
+        if value and str(value).strip():
+            return str(value).strip()
+
+    if secrets is not None:
+        try:
+            value = secrets.get("OPENAI_API_KEY")
+        except Exception:
+            value = None
+        if value and str(value).strip():
+            return str(value).strip()
+    return None
 
 
 def has_openai_api_key(

@@ -222,15 +222,41 @@ def parse_args():
         "--bundle-output",
         type=Path,
         default=ROOT / "examples" / "sample_research_bundle",
-        help="Directory for the regenerated research bundle.",
+        help="Directory inside the repository; custom destinations must be new or empty. Only the default bundle is replaced.",
     )
     parser.add_argument("--trace-only", action="store_true", help="Regenerate only the trace JSON.")
     parser.add_argument("--skip-schema-validation", action="store_true")
     return parser.parse_args()
 
 
+def validate_bundle_output(path):
+    """Allow replacement only of the dedicated example bundle, never arbitrary data."""
+    root = ROOT.resolve()
+    if any(part.is_symlink() for part in (path, *path.parents)):
+        raise SystemExit("Bundle output must not use symlinks.")
+    destination = path.resolve()
+    if destination == root or not destination.is_relative_to(root):
+        raise SystemExit("Bundle output must be inside the repository and cannot be its root.")
+    if destination.exists():
+        if not destination.is_dir():
+            raise SystemExit("Bundle output must be a directory.")
+        default = root / "examples" / "sample_research_bundle"
+        if destination != default and any(destination.iterdir()):
+            raise SystemExit("Custom bundle output must be new or empty; refusing to delete existing contents.")
+    return destination
+
+
+def prepare_bundle_output(path):
+    destination = validate_bundle_output(path)
+    if destination == ROOT.resolve() / "examples" / "sample_research_bundle" and destination.exists():
+        shutil.rmtree(destination)
+    return destination
+
+
 def main():
     args = parse_args()
+    if not args.trace_only:
+        args.bundle_output = validate_bundle_output(args.bundle_output)
     load_openai_api_key()
 
     from arctic_analytics.artifacts import write_research_bundle
@@ -254,8 +280,7 @@ def main():
     print(f"Wrote {args.output}")
 
     if not args.trace_only:
-        if args.bundle_output.exists():
-            shutil.rmtree(args.bundle_output)
+        args.bundle_output = prepare_bundle_output(args.bundle_output)
         session = build_research_session(trace, args.prompt, args.dataset, args.metadata, args.output)
         write_research_bundle(session, args.bundle_output)
         figures_dir = args.bundle_output / "figures"
