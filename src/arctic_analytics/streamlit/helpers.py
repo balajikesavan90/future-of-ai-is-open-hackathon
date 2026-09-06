@@ -528,33 +528,36 @@ def render_tool_response(tool_response):
         tool_response: The tool response to render
     """
     if tool_response.startswith('data:image/png;base64,'):
-        with st.expander('🛠️ See Tool Response - Plot', expanded=True):
-            st.image(tool_response)
-    
-    else:
-        with st.expander('🛠️ See Tool Response', expanded=not tool_response.startswith('Error')):
+        st.image(tool_response)
+        return
+
+    if tool_response.startswith('Error'):
+        with st.expander('🛠️ See Tool Response', expanded=False):
+            st.write(tool_response)
+        return
+
+    try:
+        # Try parsing the response
+        data = json.loads(tool_response)
+
+        # Handle double-encoded JSON
+        if isinstance(data, str):
             try:
-                # Try parsing the response
-                data = json.loads(tool_response)
-                
-                # Handle double-encoded JSON
-                if isinstance(data, str):
-                    try:
-                        data = json.loads(data)
-                    except json.JSONDecodeError:
-                        pass
-                
-                # Try converting to DataFrame
-                df = try_convert_to_dataframe(data)
-                
-                if df is not None:
-                    st.dataframe(df, width='stretch')
-                else:
-                    st.write(data)
-                    
+                data = json.loads(data)
             except json.JSONDecodeError:
-                # Not JSON, display as plain text
-                st.write(tool_response)
+                pass
+
+        # Try converting to DataFrame
+        df = try_convert_to_dataframe(data)
+
+        if df is not None:
+            st.dataframe(df, width='stretch')
+        else:
+            st.write(data)
+
+    except json.JSONDecodeError:
+        # Not JSON, display as plain text
+        st.write(tool_response)
 
 def is_dev_environment():
     try:
