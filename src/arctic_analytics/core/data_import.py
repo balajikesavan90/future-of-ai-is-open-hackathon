@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import itertools
 import os
+import keyword
+import re
 from seaborn import load_dataset
 import logging
 
@@ -86,6 +88,19 @@ datasets = {
     }
 }
 
+
+def dataframe_name_from_filename(filename):
+    """Return a filename-derived name that is safe to use in Python code."""
+    stem, _ = os.path.splitext(os.path.basename(filename))
+    dataframe_name = re.sub(r'[^a-z0-9]+', '_', stem.lower()).strip('_')
+
+    if not dataframe_name:
+        dataframe_name = 'unnamed'
+    if dataframe_name[0].isdigit() or keyword.iskeyword(dataframe_name):
+        dataframe_name = f'df_{dataframe_name}'
+
+    return dataframe_name
+
 def gather_metadata(params=None):
     logging.info(f'gather_metadata - {st.session_state["session_id"]}')
     """
@@ -98,8 +113,7 @@ def gather_metadata(params=None):
             for uploaded_file in st.session_state['uploaded_files']
         ]
         for uploaded_file in st.session_state['uploaded_files']:
-            filename, _ = os.path.splitext(uploaded_file.name)
-            filename = filename.replace(' ', '_').replace('-', '_').lower().replace('(', '_').replace(')', '_')
+            filename = dataframe_name_from_filename(uploaded_file.name)
             vetted_files[filename] = {}
             vetted_files[filename]['source_filename'] = uploaded_file.name
             df = pd.read_csv(
