@@ -532,6 +532,8 @@ def render_tool_response(tool_response):
         return
 
     if tool_response.startswith('Error'):
+        st.error('Tool execution failed. Expand the response below for details.')
+        # Keep error details collapsed by design so successful results remain the primary focus.
         with st.expander('🛠️ See Tool Response', expanded=False):
             st.write(tool_response)
         return
