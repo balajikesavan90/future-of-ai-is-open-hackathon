@@ -1,5 +1,6 @@
 import streamlit as st
 import base64
+import math
 from openai import OpenAI
 import json
 import logging
@@ -7,6 +8,8 @@ import matplotlib.pyplot as plt
 import matplotlib.figure as mfigure
 import pandas as pd
 import io
+import warnings
+from PIL import Image
 
 from arctic_analytics.config import (
     DEFAULT_OPENAI_MODEL,
@@ -22,6 +25,10 @@ from arctic_analytics.llm.tokenization import safe_encoding_for_model
 
 
 class OpenAIResponsesUtility:
+    _IMAGE_PATCH_SIZE = 32
+    _GPT_56_IMAGE_TOKEN_MULTIPLIER = 1.2
+    _MAX_IMAGE_PATCHES = 30_000
+
     def __init__(self):
         self.enc_gpt4 = safe_encoding_for_model("gpt-4")
         self._openai_api_key = None
@@ -78,19 +85,97 @@ class OpenAIResponsesUtility:
             for key in ('input', 'instructions', 'tools')
             if key in request_args
         }
+        text_payload, image_tokens = self._separate_image_inputs_for_token_count(
+            context_payload, request_args.get('model')
+        )
         serialized_payload = json.dumps(
-            context_payload,
+            text_payload,
             default=str,
             ensure_ascii=False,
             separators=(',', ':'),
         )
-        return len(self.enc_gpt4.encode(serialized_payload))
+        return len(self.enc_gpt4.encode(serialized_payload)) + image_tokens
+
+    def _separate_image_inputs_for_token_count(self, value, model):
+        """Exclude image transport data from text tokens and estimate vision tokens."""
+        image_tokens = 0
+
+        def transform(item):
+            nonlocal image_tokens
+            if isinstance(item, dict):
+                transformed = {key: transform(child) for key, child in item.items()}
+                if item.get('type') == 'input_image' and isinstance(item.get('image_url'), str):
+                    image_tokens += self._estimate_image_input_tokens(item, model)
+                    transformed['image_url'] = '[image input]'
+                return transformed
+            if isinstance(item, list):
+                return [transform(child) for child in item]
+            if isinstance(item, tuple):
+                return [transform(child) for child in item]
+            return item
+
+        return transform(value), image_tokens
+
+    def _estimate_image_input_tokens(self, image_input, model):
+        """Estimate image tokens using the documented GPT-5.6 patch rules.
+
+        Unknown models or unreadable images use the API's 30,000-patch maximum
+        as a conservative upper bound instead of treating base64 bytes as text.
+        """
+        maximum_tokens = math.ceil(
+            self._MAX_IMAGE_PATCHES * self._GPT_56_IMAGE_TOKEN_MULTIPLIER
+        )
+        if model not in {'gpt-5.6-luna', 'gpt-5.6-terra', 'gpt-5.6-sol'}:
+            return maximum_tokens
+
+        dimensions = self._image_dimensions(image_input['image_url'])
+        if dimensions is None:
+            return maximum_tokens
+        width, height = dimensions
+        detail = image_input.get('detail', 'auto')
+
+        if detail == 'low':
+            width, height = self._scale_to_max_dimension(width, height, 512)
+        elif detail == 'high':
+            width, height = self._scale_to_max_dimension(width, height, 2_048)
+            patch_count = self._image_patch_count(width, height)
+            if patch_count > 2_500:
+                return math.ceil(2_500 * self._GPT_56_IMAGE_TOKEN_MULTIPLIER)
+        elif detail in {'auto', 'original'}:
+            width, height = self._scale_to_max_dimension(width, height, 65_535)
+        else:
+            return maximum_tokens
+
+        patch_count = self._image_patch_count(width, height)
+        if patch_count > self._MAX_IMAGE_PATCHES:
+            return maximum_tokens
+        return math.ceil(patch_count * self._GPT_56_IMAGE_TOKEN_MULTIPLIER)
+
+    def _image_dimensions(self, image_url):
+        """Read data-URL image dimensions without adding image bytes to text context."""
+        if not image_url.startswith('data:image/') or ';base64,' not in image_url:
+            return None
+        try:
+            encoded_image = image_url.split(',', 1)[1]
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', Image.DecompressionBombWarning)
+                with Image.open(io.BytesIO(base64.b64decode(encoded_image, validate=True))) as image:
+                    return image.size
+        except (ValueError, OSError):
+            return None
+
+    def _scale_to_max_dimension(self, width, height, maximum_dimension):
+        scale = min(1, maximum_dimension / max(width, height))
+        return max(1, math.floor(width * scale)), max(1, math.floor(height * scale))
+
+    def _image_patch_count(self, width, height):
+        return math.ceil(width / self._IMAGE_PATCH_SIZE) * math.ceil(height / self._IMAGE_PATCH_SIZE)
 
     def _enforce_request_context_limit(self, request_args):
-        token_count = self._request_context_token_count(request_args)
-        if token_count > MAX_MODEL_CONTEXT_TOKENS:
+        estimated_token_count = self._request_context_token_count(request_args)
+        if estimated_token_count > MAX_MODEL_CONTEXT_TOKENS:
             raise ValueError(
-                f"Request context is {token_count:,} tokens, exceeding Arctic "
+                f"Estimated request context is {estimated_token_count:,} tokens, exceeding Arctic "
                 f"Analytics' {MAX_MODEL_CONTEXT_TOKENS:,}-token limit. Start a "
                 "new analysis session or reduce the conversation history."
             )
@@ -152,7 +237,9 @@ class OpenAIResponsesUtility:
         
         # Calculate cost using the new method
         cost_USD = self._calculate_cost(prompt_tokens, completion_tokens, model)
-        # The UI describes context supplied to the model, not generated output.
+        # Provider usage is authoritative for the UI and trace accounting.
+        # The local estimator is used only to stop an oversized request before
+        # it is sent, when no API usage value exists yet.
         context_window_usage = self._calculate_context_window_usage(prompt_tokens, model)
         # st.toast(f"Cost for this API call: ${cost_USD:.6f}")
         
@@ -196,7 +283,7 @@ class OpenAIResponsesUtility:
                     del output_dict['parsed_arguments']  # Remove parsed_arguments if present
                 messages.append(output_dict)
 
-        return tool_calls, cost_USD, messages, context_window_usage
+        return tool_calls, cost_USD, messages, context_window_usage, prompt_tokens
 
     def _process_tool_call_loop(self, tool_calls, messages, tool_handlers, args, model):
         """Handles the recursive tool call processing"""
@@ -255,7 +342,7 @@ class OpenAIResponsesUtility:
             response = self._responses_with_backoff(**args)
 
             # Process the follow-up response
-            tool_calls, cost_USD_inner, messages, context_window_usage = self._process_api_response(
+            tool_calls, cost_USD_inner, messages, context_window_usage, input_tokens = self._process_api_response(
                 response, messages, model
             )
             
@@ -264,7 +351,7 @@ class OpenAIResponsesUtility:
             if tool_calls is None:
                 tool_calls = []
 
-        return messages, tool_cost, context_window_usage
+        return messages, tool_cost, context_window_usage, input_tokens
 
     def responses_APIcall(
             self, 
@@ -287,15 +374,16 @@ class OpenAIResponsesUtility:
         response = self._responses_with_backoff(**args)
 
         # Process the initial response
-        tool_calls, cost_USD_initial, messages, context_window_usage_1 = self._process_api_response(
+        tool_calls, cost_USD_initial, messages, context_window_usage_1, input_tokens_1 = self._process_api_response(
             response, messages, model
         )
 
         # Handle tool calls if present
         cost_USD_tool = 0
         context_window_usage_2 = 0
+        input_tokens_2 = 0
         if tool_calls is not None and tool_calls != []:
-            messages, cost_USD_tool, context_window_usage_2 = self._process_tool_call_loop(
+            messages, cost_USD_tool, context_window_usage_2, input_tokens_2 = self._process_tool_call_loop(
                 tool_calls, messages, tool_handlers, args, model
             )
             
@@ -303,9 +391,10 @@ class OpenAIResponsesUtility:
         cost_USD = cost_USD_initial + cost_USD_tool
         # Context window usage is cumulative - use the latest value from tool loop if present, otherwise initial
         context_window_usage = context_window_usage_2 if context_window_usage_2 != 0 else context_window_usage_1
+        input_tokens = input_tokens_2 if input_tokens_2 != 0 else input_tokens_1
 
         logging.info(f'Final cost: ${cost_USD}')
-        return [messages, cost_USD, context_window_usage]
+        return [messages, cost_USD, context_window_usage, input_tokens]
     
 
     def run_python_function(self, python_code, reason, vetted_files, report_function):
@@ -515,9 +604,12 @@ class OpenAIResponsesUtility:
                 )
             }
         ]
-        response, cost, context_window_usage = self.responses_APIcall(st.session_state['messages'], model=model, tool_config=tool_config)
+        response, cost, context_window_usage, context_window_tokens = self.responses_APIcall(
+            st.session_state['messages'], model=model, tool_config=tool_config
+        )
 
         st.session_state['prompt_str'] = ""
         st.session_state['cost'] += cost
         st.session_state['context_window_usage'] = context_window_usage
+        st.session_state['context_window_tokens'] = context_window_tokens
         return response

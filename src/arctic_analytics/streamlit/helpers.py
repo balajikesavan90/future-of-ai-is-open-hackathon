@@ -66,6 +66,7 @@ def reset_analysis():
     st.session_state['show_sample'] = True
     st.session_state['disable_sample_button'] = False
     st.session_state['context_window_usage'] = 0
+    st.session_state['context_window_tokens'] = 0
     st.session_state['session_id'] = str(uuid.uuid4())
     print('###############################')
     print('reset_analysis')
@@ -436,6 +437,7 @@ def restore_trace_session(trace, preparation):
             # application limit. The next API request repopulates this from its
             # actual input-token usage.
             "context_window_usage": 0,
+            "context_window_tokens": 0,
             "count": sum(1 for message in trace.get("messages", []) if isinstance(message, dict) and message.get("role") == "user"),
             "show_sample": False,
             "disable_sample_button": False,

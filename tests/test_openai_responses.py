@@ -1,7 +1,10 @@
+import base64
+import io
 import os
 from types import SimpleNamespace
 
 import pytest
+from PIL import Image
 
 import arctic_analytics.llm.openai_responses as openai_responses
 from arctic_analytics.config import MAX_MODEL_CONTEXT_TOKENS
@@ -122,6 +125,29 @@ def test_request_context_limit_rejects_oversized_requests():
         client._enforce_request_context_limit({"input": []})
 
 
+def test_request_context_estimates_image_tokens_without_counting_base64_as_text():
+    image_buffer = io.BytesIO()
+    Image.new("RGB", (1_000, 800)).save(image_buffer, format="PNG")
+    image_url = "data:image/png;base64," + base64.b64encode(image_buffer.getvalue()).decode()
+
+    class TextOnlyEncoding:
+        def encode(self, value):
+            assert image_url not in value
+            return []
+
+    client = OpenAIResponsesUtility()
+    client.enc_gpt4 = TextOnlyEncoding()
+
+    token_count = client._request_context_token_count(
+        {
+            "model": "gpt-5.6-luna",
+            "input": [{"type": "function_call_output", "output": [{"type": "input_image", "image_url": image_url}]}],
+        }
+    )
+
+    assert token_count == 960
+
+
 def test_response_context_usage_excludes_generated_tokens():
     response = SimpleNamespace(
         output=[],
@@ -131,8 +157,9 @@ def test_response_context_usage_excludes_generated_tokens():
         ),
     )
 
-    _tool_calls, _cost, _messages, context_usage = OpenAIResponsesUtility()._process_api_response(
+    _tool_calls, _cost, _messages, context_usage, context_tokens = OpenAIResponsesUtility()._process_api_response(
         response, [], "gpt-5.6-luna"
     )
 
     assert context_usage == pytest.approx(0.5)
+    assert context_tokens == MAX_MODEL_CONTEXT_TOKENS // 2

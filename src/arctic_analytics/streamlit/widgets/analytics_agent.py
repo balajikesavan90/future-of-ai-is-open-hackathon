@@ -66,6 +66,8 @@ def render_analytics_agent():
 
     if 'context_window_usage' not in st.session_state:
         st.session_state['context_window_usage'] = 0
+    if 'context_window_tokens' not in st.session_state:
+        st.session_state['context_window_tokens'] = 0
 
     st.session_state['usage_container'] = st.empty()
 
@@ -126,13 +128,14 @@ def render_analytics_agent():
 
     st.session_state['spinner_container'] = st.container()
 
-    context_window_usage = min(max(st.session_state['context_window_usage'], 0), 1)
-    if context_window_usage > 0:
+    context_window_tokens = st.session_state['context_window_tokens']
+    context_window_usage = min(max(context_window_tokens / MAX_MODEL_CONTEXT_TOKENS, 0), 1)
+    if context_window_tokens > 0:
         st.progress(
             value=context_window_usage,
             text=(
-                f'Model context usage: {context_window_usage * 100:.2f}% '
-                f'of the {MAX_MODEL_CONTEXT_TOKENS // 1_000}K-token limit'
+                f'Model context usage: {context_window_tokens:,} / '
+                f'{MAX_MODEL_CONTEXT_TOKENS:,} tokens ({context_window_usage * 100:.2f}%)'
             ),
         )
 
