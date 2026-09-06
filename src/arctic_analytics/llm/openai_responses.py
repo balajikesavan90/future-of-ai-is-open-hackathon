@@ -1,5 +1,6 @@
 import streamlit as st
 import base64
+import binascii
 import math
 from openai import OpenAI
 import json
@@ -166,7 +167,7 @@ class OpenAIResponsesUtility:
                 warnings.simplefilter('ignore', Image.DecompressionBombWarning)
                 with Image.open(io.BytesIO(base64.b64decode(encoded_image, validate=True))) as image:
                     return image.size
-        except (ValueError, OSError):
+        except (binascii.Error, ValueError, OSError):
             return None
 
     def _scale_to_max_dimension(self, width, height, maximum_dimension):

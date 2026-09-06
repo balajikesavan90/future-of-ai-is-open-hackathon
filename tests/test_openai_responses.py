@@ -105,6 +105,12 @@ def test_image_dimensions_skips_oversized_base64_before_decoding(monkeypatch):
     assert client._image_dimensions("data:image/png;base64,AAAAA") is None
 
 
+def test_image_dimensions_ignores_malformed_base64():
+    client = OpenAIResponsesUtility()
+
+    assert client._image_dimensions("data:image/png;base64,not-valid!") is None
+
+
 def test_client_uses_session_api_key_without_mutating_environment(monkeypatch):
     captured = {}
 
