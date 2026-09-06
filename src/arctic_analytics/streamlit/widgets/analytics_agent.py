@@ -140,7 +140,10 @@ def render_analytics_agent():
         )
 
     if context_window_usage > 0.5:
-        st.warning('Context usage is above 50% of the 128K-token limit. Consider starting a new session.')
+        st.warning(
+            f'Context usage is above 50% of the {MAX_MODEL_CONTEXT_TOKENS:,}-token limit. '
+            'Consider starting a new session.'
+        )
 
     if not is_dev_environment():
         MAX_CHARS = 1000
