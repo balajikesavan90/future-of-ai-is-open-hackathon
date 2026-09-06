@@ -10,6 +10,7 @@ import matplotlib.figure as mfigure
 import os
 
 from arctic_analytics import __version__
+from arctic_analytics.config import DEFAULT_OPENAI_MODEL, SUPPORTED_OPENAI_MODELS
 from arctic_analytics.artifacts import (
     AnalysisTrace,
     ContextBundle,
@@ -405,6 +406,18 @@ def restore_trace_session(trace, preparation):
         researcher_notes = trace.get("researcher_notes", "")
     if not isinstance(researcher_notes, str):
         researcher_notes = ""
+    trace_model = trace.get("model")
+    if trace_model in SUPPORTED_OPENAI_MODELS:
+        resumed_model = trace_model
+        model_warning = None
+    else:
+        resumed_model = DEFAULT_OPENAI_MODEL
+        model_warning = (
+            f"The saved model {trace_model!r} is no longer supported. "
+            f"Using {DEFAULT_OPENAI_MODEL!r} instead."
+            if isinstance(trace_model, str) and trace_model
+            else None
+        )
     original_session_id = trace.get("session_id")
     st.session_state.update(
         {
@@ -417,7 +430,7 @@ def restore_trace_session(trace, preparation):
             ],
             "vetted_files": preparation.vetted_files,
             "messages": messages_for_resume(trace),
-            "model": trace.get("model") if isinstance(trace.get("model"), str) else None,
+            "model": resumed_model,
             "cost": trace.get("cost") if isinstance(trace.get("cost"), (int, float)) else 0,
             # A saved percentage may have been calculated against a different
             # application limit. The next API request repopulates this from its
@@ -431,8 +444,9 @@ def restore_trace_session(trace, preparation):
             "datasets_vetted": False,
         }
     )
-    if preparation.legacy_warning:
-        st.session_state["resume_warning"] = preparation.legacy_warning
+    resume_warnings = [warning for warning in (preparation.legacy_warning, model_warning) if warning]
+    if resume_warnings:
+        st.session_state["resume_warning"] = " ".join(resume_warnings)
 
 
 def _readable_events(messages):

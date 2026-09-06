@@ -447,5 +447,17 @@ def test_restore_trace_session_preserves_api_key_but_not_imported_session_state(
     assert "unrelated_state" not in st.session_state
     assert st.session_state["resumed_from_session_id"] == "old-session"
     assert st.session_state["session_id"] != "old-session"
+    assert st.session_state["model"] == "gpt-5.6-luna"
     assert st.session_state["context_window_usage"] == 0
     assert st.session_state["researcher_notes"] == "Review the July outliers before publishing."
+
+
+def test_restore_trace_session_falls_back_from_unsupported_model():
+    st.session_state.clear()
+    trace = {"messages": [], "model": "gpt-5.4-mini-2026-03-17"}
+    preparation = ResumePreparation(vetted_files={})
+
+    restore_trace_session(trace, preparation)
+
+    assert st.session_state["model"] == "gpt-5.6-luna"
+    assert "gpt-5.4-mini-2026-03-17" in st.session_state["resume_warning"]
