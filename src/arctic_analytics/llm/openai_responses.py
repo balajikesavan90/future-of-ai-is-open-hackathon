@@ -172,7 +172,9 @@ class OpenAIResponsesUtility:
 
     def _scale_to_max_dimension(self, width, height, maximum_dimension):
         scale = min(1, maximum_dimension / max(width, height))
-        return max(1, math.floor(width * scale)), max(1, math.floor(height * scale))
+        # Round up so the context-limit estimate never drops a partial image
+        # patch after scaling.
+        return max(1, math.ceil(width * scale)), max(1, math.ceil(height * scale))
 
     def _image_patch_count(self, width, height):
         return math.ceil(width / self._IMAGE_PATCH_SIZE) * math.ceil(height / self._IMAGE_PATCH_SIZE)

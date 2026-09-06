@@ -225,6 +225,15 @@ def test_request_context_estimates_image_tokens_without_counting_base64_as_text(
     assert token_count == 960
 
 
+def test_image_scaling_rounds_up_to_preserve_partial_patch_rows():
+    client = OpenAIResponsesUtility()
+
+    width, height = client._scale_to_max_dimension(4_096, 514, 512)
+
+    assert (width, height) == (512, 65)
+    assert client._image_patch_count(width, height) == 48
+
+
 def test_response_context_usage_excludes_generated_tokens():
     response = SimpleNamespace(
         output=[],
