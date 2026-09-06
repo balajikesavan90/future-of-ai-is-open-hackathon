@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 import streamlit as st
 from jsonschema import Draft202012Validator, FormatChecker, ValidationError
+from streamlit.testing.v1 import AppTest
 
 from arctic_analytics.streamlit.helpers import (
     _clear_research_bundle_cache,
@@ -180,6 +181,7 @@ def test_upload_trace_includes_resume_manifest_for_uploaded_csvs():
     st.session_state["session_id"] = "resume-export-session"
     st.session_state["source"] = "uploader"
     st.session_state["researcher_notes"] = "Recheck the outliers."
+    st.session_state["context_window_usage"] = 0.125
     st.session_state["messages"] = []
     st.session_state["vetted_files"] = {
         "sales": {
@@ -194,6 +196,7 @@ def test_upload_trace_includes_resume_manifest_for_uploaded_csvs():
     assert trace["resume"] == {
         "resume_schema_version": "1.0",
         "source": "uploader",
+        "context_window_usage": 0.125,
         "datasets": [{
             "dataset_key": "sales",
             "source_filename": "Sales 2026.csv",
@@ -448,8 +451,29 @@ def test_restore_trace_session_preserves_api_key_but_not_imported_session_state(
     assert st.session_state["resumed_from_session_id"] == "old-session"
     assert st.session_state["session_id"] != "old-session"
     assert st.session_state["model"] == "gpt-5.6-luna"
-    assert st.session_state["context_window_usage"] == 0
+    assert st.session_state["context_window_usage"] == 0.1
     assert st.session_state["researcher_notes"] == "Review the July outliers before publishing."
+    assert st.session_state["researcher_notes_widget"] == "Review the July outliers before publishing."
+
+
+def test_researcher_notes_textarea_displays_restored_value_and_saves_edits():
+    def script():
+        import streamlit as st
+
+        from arctic_analytics.streamlit.helpers import render_researcher_notes
+
+        st.session_state.setdefault("researcher_notes", "Restored research context.")
+        render_researcher_notes()
+
+    app = AppTest.from_function(script).run()
+
+    assert not app.exception
+    assert app.text_area(key="researcher_notes_widget").value == "Restored research context."
+
+    app.text_area(key="researcher_notes_widget").set_value("Edited research context.").run()
+
+    assert not app.exception
+    assert app.session_state["researcher_notes"] == "Edited research context."
 
 
 def test_restore_trace_session_falls_back_from_unsupported_model():

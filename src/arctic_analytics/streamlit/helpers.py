@@ -23,6 +23,7 @@ MAX_TRACE_STRING_CHARS = 10000
 TRACE_STRING_PREVIEW_CHARS = 1000
 REDACTED_SECRET_VALUE = "[redacted]"
 SENSITIVE_SESSION_KEY_MARKERS = ("api_key", "token", "password", "secret")
+RESEARCHER_NOTES_WIDGET_KEY = "researcher_notes_widget"
 
 
 class TraceExportError(ValueError):
@@ -128,14 +129,32 @@ def render_ai_prompt():
 
 
 def render_researcher_notes():
+    # Keep the persisted value separate from the widget key.  On a trace
+    # restore, Streamlit can otherwise reconcile a prior browser-side empty
+    # textarea value over the newly restored ``researcher_notes`` state.
+    notes = st.session_state.get("researcher_notes", "")
+    if not isinstance(notes, str):
+        notes = ""
+        st.session_state["researcher_notes"] = notes
+    st.session_state[RESEARCHER_NOTES_WIDGET_KEY] = notes
+
     st.sidebar.text_area(
         "Researcher notes / analysis context",
-        key="researcher_notes",
+        key=RESEARCHER_NOTES_WIDGET_KEY,
+        on_change=_sync_researcher_notes,
         help="Optional human context to include in context_bundle.json when exporting a research bundle.",
         placeholder="Add assumptions, domain context, data caveats, or review notes to export with the bundle.",
         height=180,
     )
     st.sidebar.caption("These notes are exported into the research bundle.")
+
+
+def _sync_researcher_notes():
+    """Copy textarea edits into the trace and research-bundle state."""
+    st.session_state["researcher_notes"] = st.session_state.get(
+        RESEARCHER_NOTES_WIDGET_KEY, ""
+    )
+
 
 def _json_safe(value):
     if isinstance(value, str):
@@ -369,6 +388,12 @@ def _build_resume_manifest():
         "resume_schema_version": "1.0",
         "source": "uploader",
         "datasets": datasets,
+        "context_window_usage": (
+            st.session_state.get("context_window_usage")
+            if isinstance(st.session_state.get("context_window_usage"), (int, float))
+            and not isinstance(st.session_state.get("context_window_usage"), bool)
+            else 0
+        ),
         "researcher_notes": st.session_state.get("researcher_notes", "")
         if isinstance(st.session_state.get("researcher_notes", ""), str) else "",
         "resumed_from_session_id": st.session_state.get("resumed_from_session_id"),
@@ -407,6 +432,15 @@ def restore_trace_session(trace, preparation):
         researcher_notes = trace.get("researcher_notes", "")
     if not isinstance(researcher_notes, str):
         researcher_notes = ""
+    context_window_usage = resume.get("context_window_usage")
+    if not isinstance(context_window_usage, (int, float)) or isinstance(context_window_usage, bool):
+        context_window_usage = trace.get("context_window_usage", 0)
+    if (
+        not isinstance(context_window_usage, (int, float))
+        or isinstance(context_window_usage, bool)
+        or not 0 <= context_window_usage <= 1
+    ):
+        context_window_usage = 0
     trace_model = trace.get("model")
     if trace_model in SUPPORTED_OPENAI_MODELS:
         resumed_model = trace_model
@@ -433,15 +467,13 @@ def restore_trace_session(trace, preparation):
             "messages": messages_for_resume(trace),
             "model": resumed_model,
             "cost": trace.get("cost") if isinstance(trace.get("cost"), (int, float)) else 0,
-            # A saved percentage may have been calculated against a different
-            # application limit. The next API request repopulates this from its
-            # actual input-token usage.
-            "context_window_usage": 0,
+            "context_window_usage": context_window_usage,
             "context_window_tokens": 0,
             "count": sum(1 for message in trace.get("messages", []) if isinstance(message, dict) and message.get("role") == "user"),
             "show_sample": False,
             "disable_sample_button": False,
             "researcher_notes": researcher_notes,
+            RESEARCHER_NOTES_WIDGET_KEY: researcher_notes,
             "data_dictionaries_loaded": False,
             "datasets_vetted": False,
         }

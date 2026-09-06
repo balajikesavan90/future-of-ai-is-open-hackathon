@@ -41,6 +41,7 @@ IMPORT_TRACE_SCHEMA = {
                 "resume_schema_version": {"const": "1.0"},
                 "source": {"const": "uploader"},
                 "datasets": {"type": "array"},
+                "context_window_usage": {"type": "number"},
                 "researcher_notes": {"type": "string"},
             },
         },

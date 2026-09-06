@@ -129,7 +129,12 @@ def render_analytics_agent():
     st.session_state['spinner_container'] = st.container()
 
     context_window_tokens = st.session_state['context_window_tokens']
-    context_window_usage = min(max(context_window_tokens / MAX_MODEL_CONTEXT_TOKENS, 0), 1)
+    saved_context_window_usage = st.session_state['context_window_usage']
+    context_window_usage = (
+        min(max(context_window_tokens / MAX_MODEL_CONTEXT_TOKENS, 0), 1)
+        if context_window_tokens > 0
+        else saved_context_window_usage
+    )
     if context_window_tokens > 0:
         st.progress(
             value=context_window_usage,
@@ -137,6 +142,11 @@ def render_analytics_agent():
                 f'Model context usage: {context_window_tokens:,} / '
                 f'{MAX_MODEL_CONTEXT_TOKENS:,} tokens ({context_window_usage * 100:.2f}%)'
             ),
+        )
+    elif context_window_usage > 0:
+        st.progress(
+            value=context_window_usage,
+            text=f'Model context usage from restored trace: {context_window_usage * 100:.2f}%',
         )
 
     if context_window_usage > 0.5:
