@@ -145,10 +145,11 @@ class OpenAIResponsesUtility:
                 messages.append(output.to_dict())
                 summary_list = output.to_dict()['summary']
                 if summary_list != []:
-                    for summary in summary_list:
-                        with st.session_state['messages_container']:
-                            with st.expander(f"🧠 Agent Reasoning", expanded=True):
-                                st.write(safely_escape_dollars(summary['text']))  # Safely escape dollar signs for LaTeX rendering
+                    with st.session_state['messages_container']:
+                        with st.chat_message('assistant'):
+                            for summary in summary_list:
+                                with st.expander("🧠 Agent reasoning", expanded=True):
+                                    st.write(safely_escape_dollars(summary['text']))  # Safely escape dollar signs for LaTeX rendering
             elif output.type == 'function_call':
                 id = output.id
                 call_id = output.call_id
@@ -162,13 +163,14 @@ class OpenAIResponsesUtility:
                     'arguments': arguments
                 })
                 with st.session_state['messages_container']:
-                    render_tool_call({
-                        'type': 'function_call',
-                        'id': id,
-                        'call_id': call_id,
-                        'name': function_name,
-                        'arguments': arguments
-                    })
+                    with st.chat_message('assistant'):
+                        render_tool_call({
+                            'type': 'function_call',
+                            'id': id,
+                            'call_id': call_id,
+                            'name': function_name,
+                            'arguments': arguments
+                        })
 
                 output_dict = output.to_dict()
                 if 'parsed_arguments' in output_dict:
@@ -211,9 +213,10 @@ class OpenAIResponsesUtility:
                             'type': 'function_call_output',
                             'call_id': tool_call['call_id'],
                             'output': str(tool_response),
-                        })
+                    })
                     with st.session_state['messages_container']:
-                        render_tool_response(tool_response)
+                        with st.chat_message('assistant'):
+                            render_tool_response(tool_response)
                 except Exception as e:
                     error_message = f"Error executing tool {tool_call['name']}: {str(e)}"
                     logging.error(error_message)
@@ -223,7 +226,8 @@ class OpenAIResponsesUtility:
                         'output': error_message
                     })
                     with st.session_state['messages_container']:
-                        render_tool_response(error_message)
+                        with st.chat_message('assistant'):
+                            render_tool_response(error_message)
         
 
             # Update messages in args and set tool_choice to auto for follow-up call

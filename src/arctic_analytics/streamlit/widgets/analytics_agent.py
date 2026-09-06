@@ -105,21 +105,24 @@ def render_analytics_agent():
             elif msg['type'] == 'reasoning':
                 if msg['summary'] != []:
                     summary_list = msg['summary']
-                    for summary in summary_list:
-                        with st.expander("Reasoning", expanded=True):
-                            st.write(safely_escape_dollars(summary['text']))  # Safely escape dollar signs for LaTeX rendering
+                    with st.chat_message('assistant'):
+                        for summary in summary_list:
+                            with st.expander("🧠 Agent reasoning", expanded=True):
+                                st.write(safely_escape_dollars(summary['text']))  # Safely escape dollar signs for LaTeX rendering
             elif msg['type'] == 'function_call':
-                render_tool_call(msg)
+                with st.chat_message('assistant'):
+                    render_tool_call(msg)
             elif msg['type'] == 'function_call_output':
-                if isinstance(msg['output'], str):
-                    render_tool_response(msg['output'])
-                elif isinstance(msg['output'], list):
-                    for output_item in msg['output']:
-                        image_url = output_item.get('image_url') if isinstance(output_item, dict) else None
-                        if isinstance(image_url, str):
-                            render_tool_response(image_url)
-                        else:
-                            st.caption('Historical media output was omitted from the exported trace.')
+                with st.chat_message('assistant'):
+                    if isinstance(msg['output'], str):
+                        render_tool_response(msg['output'])
+                    elif isinstance(msg['output'], list):
+                        for output_item in msg['output']:
+                            image_url = output_item.get('image_url') if isinstance(output_item, dict) else None
+                            if isinstance(image_url, str):
+                                render_tool_response(image_url)
+                            else:
+                                st.caption('Historical media output was omitted from the exported trace.')
 
     st.session_state['spinner_container'] = st.container()
 
