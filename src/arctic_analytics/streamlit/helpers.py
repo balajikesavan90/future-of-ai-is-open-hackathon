@@ -468,9 +468,9 @@ def render_trace_export():
     if "messages" not in st.session_state and "vetted_files" not in st.session_state:
         return
 
-    st.sidebar.subheader("Analysis Trace")
+    st.sidebar.write("Analysis Trace")
     st.sidebar.caption("Prepare a JSON snapshot of the current analysis session when you need to export it.")
-    if st.sidebar.button("Prepare Trace Export", key="prepare_trace_export"):
+    if st.sidebar.button("Prepare Trace Export", key="prepare_trace_export", width='stretch'):
         trace = build_analysis_trace()
         try:
             st.session_state["trace_export_json"] = serialize_analysis_trace(trace)
@@ -488,9 +488,10 @@ def render_trace_export():
             file_name=f"arctic_analytics_trace_{st.session_state.get('trace_export_session_id', 'session')}.json",
             mime="application/json",
             key="download_trace_export",
+            width='stretch',
         )
 
-    if st.sidebar.button("Prepare Research Bundle", key="prepare_research_bundle"):
+    if st.sidebar.button("Prepare Research Bundle", key="prepare_research_bundle", width='stretch'):
         trace = build_analysis_trace()
         session = build_research_session_from_streamlit(trace)
         st.session_state["research_bundle_zip"] = build_research_bundle_zip(session)
@@ -505,6 +506,7 @@ def render_trace_export():
                 file_name=f"arctic_analytics_research_bundle_{st.session_state.get('research_bundle_session_id', 'session')}.zip",
                 mime="application/zip",
                 key="download_research_bundle",
+                width='stretch',
             )
         else:
             _clear_research_bundle_cache()
