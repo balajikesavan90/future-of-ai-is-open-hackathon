@@ -106,7 +106,10 @@ def _is_sensitive_session_key(key):
     normalized_key = str(key).lower()
     return any(marker in normalized_key for marker in SENSITIVE_SESSION_KEY_MARKERS)
 
-def disable_sample_button():
+def select_sample_prompt(prompt):
+    """Queue a sample prompt from a button callback for the next script run."""
+    st.session_state['pending_sample_prompt'] = prompt
+    st.session_state['show_sample'] = False
     st.session_state['disable_sample_button'] = True
 
 def render_ai_prompt():

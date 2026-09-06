@@ -1,6 +1,7 @@
 import streamlit as st
 
 from arctic_analytics.llm import ai
+from arctic_analytics.streamlit.helpers import select_sample_prompt
 
 
 class StubResponsesClient:
@@ -17,3 +18,13 @@ def test_generate_ai_response_dispatches_to_tool_calling_analysis(monkeypatch):
         {},
         "gpt-5.6-luna",
     )
+
+
+def test_select_sample_prompt_queues_prompt_for_rerun():
+    st.session_state.clear()
+
+    select_sample_prompt("Analyze the sample data")
+
+    assert st.session_state["pending_sample_prompt"] == "Analyze the sample data"
+    assert st.session_state["show_sample"] is False
+    assert st.session_state["disable_sample_button"] is True

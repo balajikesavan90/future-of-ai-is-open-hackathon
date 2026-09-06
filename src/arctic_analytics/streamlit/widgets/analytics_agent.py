@@ -8,7 +8,7 @@ from arctic_analytics.llm.ai import construct_welcome_message, generate_ai_respo
 from arctic_analytics.core.system_messages import construct_system_message
 
 from arctic_analytics.streamlit.widgets.prompt_guide import render_tool_calling_analysis_prompt_guide
-from arctic_analytics.streamlit.helpers import render_ai_prompt, render_researcher_notes, safely_escape_dollars, render_tool_call, render_tool_response, disable_sample_button
+from arctic_analytics.streamlit.helpers import render_ai_prompt, render_researcher_notes, safely_escape_dollars, render_tool_call, render_tool_response, select_sample_prompt
 from arctic_analytics.streamlit.helpers import is_dev_environment
 
 
@@ -142,7 +142,7 @@ def render_analytics_agent():
     api_key_available = has_openai_api_key(secrets=st.secrets, environ=os.environ, session_state=st.session_state)
     if not api_key_available:
         st.warning("Configure `OPENAI_API_KEY` before running agent analysis.")
-    st.session_state['user_input'] = st.chat_input(
+    user_input = st.chat_input(
         max_chars = MAX_CHARS, 
         disabled=not api_key_available,
     )
@@ -150,33 +150,32 @@ def render_analytics_agent():
     if st.session_state['show_sample']:
         col1, col2 = st.columns([1, 1])
         with col1:
-            if st.button(
+            st.button(
                 label=':blue[Please find me something interesting in this data and plot it]',
                 width='stretch',
-                on_click=disable_sample_button,
+                on_click=select_sample_prompt,
+                args=('Find me something interesting in this data and plot it',),
                 disabled=(not api_key_available) or (st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False),
-            ):
-                st.session_state['user_input'] = 'Find me something interesting in this data and plot it'
-                st.session_state['show_sample'] = False
+            )
         with col2:
-            if st.button(
+            st.button(
                 label=':blue[Please identify interesting patterns/correlations in the data and plot them]',
                 width='stretch',
-                on_click=disable_sample_button,
+                on_click=select_sample_prompt,
+                args=('Please identify interesting patterns/correlations in the data and plot them',),
                 disabled=(not api_key_available) or (st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False),
-            ):
-                st.session_state['user_input'] = 'Please identify interesting patterns/correlations in the data and plot them'
-                st.session_state['show_sample'] = False
+            )
         
+    user_input = user_input or st.session_state.pop('pending_sample_prompt', None)
 
-    if st.session_state['user_input'] is not None and st.session_state['user_input'].strip():
+    if user_input is not None and user_input.strip():
         with st.spinner('Loading...'):
             st.session_state['messages'].append(
                 {
                     'role': 'user', 
                     'content': [
                         {
-                            'text': st.session_state['user_input'],
+                            'text': user_input,
                             'type': 'input_text'
                         },
                     ],
@@ -184,7 +183,7 @@ def render_analytics_agent():
                 }
             )
             with st.session_state['messages_container']:
-                st.chat_message('user').write(safely_escape_dollars(st.session_state['user_input']))  # Safely escape dollar signs for LaTeX rendering
+                st.chat_message('user').write(safely_escape_dollars(user_input))  # Safely escape dollar signs for LaTeX rendering
             st.session_state['messages'] = generate_ai_response(st.session_state['vetted_files'], st.session_state['model'])
             st.session_state['count'] += 1
         st.chat_message('assistant').write_stream(stream_text(safely_escape_dollars(st.session_state['messages'][-1]['content'][0]['text'])))  # Safely escape dollar signs for LaTeX rendering
