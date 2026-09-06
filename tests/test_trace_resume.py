@@ -115,3 +115,17 @@ def test_messages_for_resume_uses_full_fidelity_messages_and_sanitizes_old_chart
         "output": [{"type": "input_image", "image_url": "data:image/png;base64,abc"}],
     }]
     assert messages_for_resume(trace)[0]["output"][0]["image_url"] == "data:image/png;base64,abc"
+
+
+def test_messages_for_resume_sanitizes_direct_legacy_chart_descriptor():
+    trace = resumable_trace()
+    del trace["resume"]
+    trace["trace_schema_version"] = "0.2.0"
+    trace["messages"] = [{
+        "type": "function_call_output",
+        "output": {"type": "image_base64", "media_type": "image/png", "truncated": True},
+    }]
+
+    messages = messages_for_resume(trace)
+
+    assert messages[0]["output"] == "Historical chart output is unavailable in this exported trace."

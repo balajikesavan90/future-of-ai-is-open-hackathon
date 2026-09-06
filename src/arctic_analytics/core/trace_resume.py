@@ -123,9 +123,15 @@ def _sanitize_resumed_message(message: Any) -> Any:
     if not isinstance(message, dict):
         return message
     restored = dict(message)
-    if restored.get("type") != "function_call_output" or not isinstance(restored.get("output"), list):
+    if restored.get("type") != "function_call_output":
         return restored
-    for output_item in restored["output"]:
+    output = restored.get("output")
+    if isinstance(output, dict) and output.get("type") == "image_base64":
+        restored["output"] = "Historical chart output is unavailable in this exported trace."
+        return restored
+    if not isinstance(output, list):
+        return restored
+    for output_item in output:
         if not isinstance(output_item, dict):
             continue
         image_url = output_item.get("image_url")
