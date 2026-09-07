@@ -3,6 +3,7 @@ import uuid
 import logging
 import json
 import hashlib
+import math
 from collections.abc import Mapping
 from datetime import datetime, timezone
 import pandas as pd
@@ -10,17 +11,26 @@ import matplotlib.figure as mfigure
 import os
 
 from arctic_analytics import __version__
+from arctic_analytics.config import (
+    MAX_MODEL_CONTEXT_TOKENS,
+)
 from arctic_analytics.artifacts import (
     AnalysisTrace,
     ContextBundle,
     ResearchSession,
     build_research_bundle_zip,
 )
+from arctic_analytics.core.trace_resume import MAX_TRACE_BYTES, messages_for_resume
 
 MAX_TRACE_STRING_CHARS = 10000
 TRACE_STRING_PREVIEW_CHARS = 1000
 REDACTED_SECRET_VALUE = "[redacted]"
 SENSITIVE_SESSION_KEY_MARKERS = ("api_key", "token", "password", "secret")
+RESEARCHER_NOTES_WIDGET_KEY = "researcher_notes_widget"
+
+
+class TraceExportError(ValueError):
+    """Raised when an exported trace cannot be imported by the resume flow."""
 
 def setup_session_state():
     logging.info(f'###############################')
@@ -60,6 +70,7 @@ def reset_analysis():
     st.session_state['show_sample'] = True
     st.session_state['disable_sample_button'] = False
     st.session_state['context_window_usage'] = 0
+    st.session_state['context_window_tokens'] = 0
     st.session_state['session_id'] = str(uuid.uuid4())
     print('###############################')
     print('reset_analysis')
@@ -101,12 +112,16 @@ def _is_sensitive_session_key(key):
     normalized_key = str(key).lower()
     return any(marker in normalized_key for marker in SENSITIVE_SESSION_KEY_MARKERS)
 
-def disable_sample_button():
+def select_sample_prompt(prompt):
+    """Queue a sample prompt from a button callback for the next script run."""
+    st.session_state['pending_sample_prompt'] = prompt
+    st.session_state['show_sample'] = False
     st.session_state['disable_sample_button'] = True
 
 def render_ai_prompt():
     logging.info(f'render_ai_prompt - {st.session_state["session_id"]}')
-    with st.sidebar.expander('What does the AI see?', expanded=True):
+    render_trace_export()
+    with st.sidebar.expander('What does the AI see?', expanded=False):
         if 'system_message' in st.session_state.keys():
             st.subheader(':blue[System Message]')
             st.write(st.session_state['system_message'])
@@ -114,18 +129,35 @@ def render_ai_prompt():
             st.subheader(':blue[Messages]')
             messages_wo_system_message = st.session_state['messages'][1:]
             st.write(messages_wo_system_message)
-    render_trace_export()
 
 
 def render_researcher_notes():
+    # Keep the persisted value separate from the widget key.  On a trace
+    # restore, Streamlit can otherwise reconcile a prior browser-side empty
+    # textarea value over the newly restored ``researcher_notes`` state.
+    notes = st.session_state.get("researcher_notes", "")
+    if not isinstance(notes, str):
+        notes = ""
+        st.session_state["researcher_notes"] = notes
+    st.session_state[RESEARCHER_NOTES_WIDGET_KEY] = notes
+
     st.sidebar.text_area(
         "Researcher notes / analysis context",
-        key="researcher_notes",
+        key=RESEARCHER_NOTES_WIDGET_KEY,
+        on_change=_sync_researcher_notes,
         help="Optional human context to include in context_bundle.json when exporting a research bundle.",
         placeholder="Add assumptions, domain context, data caveats, or review notes to export with the bundle.",
         height=180,
     )
     st.sidebar.caption("These notes are exported into the research bundle.")
+
+
+def _sync_researcher_notes():
+    """Copy textarea edits into the trace and research-bundle state."""
+    st.session_state["researcher_notes"] = st.session_state.get(
+        RESEARCHER_NOTES_WIDGET_KEY, ""
+    )
+
 
 def _json_safe(value):
     if isinstance(value, str):
@@ -305,14 +337,15 @@ def _latest_user_prompt(messages):
 
 def build_analysis_trace():
     messages = st.session_state.get("messages", [])
-    return {
-        "trace_schema_version": "0.2.0",
+    trace = {
+        "trace_schema_version": "0.3.0",
         "package_version": __version__,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "session_id": st.session_state.get("session_id"),
-        "model": st.session_state.get("model"),
         "cost": st.session_state.get("cost"),
         "context_window_usage": st.session_state.get("context_window_usage"),
+        "researcher_notes": st.session_state.get("researcher_notes", "")
+        if isinstance(st.session_state.get("researcher_notes", ""), str) else "",
         "system_message": _json_safe(_system_message_from_messages(messages)),
         "prompt_str": _json_safe(st.session_state.get("prompt_str") or _latest_user_prompt(messages)),
         "messages": _json_safe(messages),
@@ -327,6 +360,150 @@ def build_analysis_trace():
             "The trace is not replayable and does not include full dataset provenance records.",
         ],
     }
+    if st.session_state.get("source") == "uploader":
+        trace["resume"] = _build_resume_manifest()
+    return trace
+
+
+def serialize_analysis_trace(trace):
+    """Serialize a trace only when it meets the resume import size limit."""
+    payload = json.dumps(trace, separators=(",", ":"), default=str).encode("utf-8")
+    if len(payload) > MAX_TRACE_BYTES:
+        raise TraceExportError(
+            "This trace is larger than 10 MiB and cannot be resumed. "
+            "Reduce the analysis history or chart outputs, then export again."
+        )
+    return payload.decode("utf-8")
+
+
+def _build_resume_manifest():
+    datasets = []
+    for dataset_key, file_info in st.session_state.get("vetted_files", {}).items():
+        datasets.append(
+            {
+                "dataset_key": str(dataset_key),
+                "source_filename": str(file_info.get("source_filename") or dataset_key),
+                "column_names": [str(column) for column in file_info.get("columns_names", [])],
+            }
+        )
+    return {
+        "resume_schema_version": "1.0",
+        "source": "uploader",
+        "datasets": datasets,
+        "context_window_usage": (
+            st.session_state.get("context_window_usage")
+            if isinstance(st.session_state.get("context_window_usage"), (int, float))
+            and not isinstance(st.session_state.get("context_window_usage"), bool)
+            else 0
+        ),
+        "context_window_tokens": (
+            st.session_state.get("context_window_tokens")
+            if isinstance(st.session_state.get("context_window_tokens"), int)
+            and not isinstance(st.session_state.get("context_window_tokens"), bool)
+            and st.session_state.get("context_window_tokens") >= 0
+            else 0
+        ),
+        "researcher_notes": st.session_state.get("researcher_notes", "")
+        if isinstance(st.session_state.get("researcher_notes", ""), str) else "",
+        "resumed_from_session_id": st.session_state.get("resumed_from_session_id"),
+        "messages": _resume_json_safe(st.session_state.get("messages", [])),
+    }
+
+
+def _resume_json_safe(value):
+    """JSON-safe resume data that intentionally preserves chart data URLs."""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        return {str(key): _resume_json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_resume_json_safe(item) for item in value]
+    if isinstance(value, (pd.DataFrame, pd.Series, mfigure.Figure)):
+        return _json_safe(value)
+    try:
+        json.dumps(value)
+        return value
+    except TypeError:
+        return str(value)
+
+
+def restore_trace_session(trace, preparation):
+    """Replace analysis state with an explicitly selected subset of an imported trace."""
+    api_key = st.session_state.get("OPENAI_API_KEY")
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    if api_key:
+        st.session_state["OPENAI_API_KEY"] = api_key
+
+    resume = trace.get("resume") if isinstance(trace.get("resume"), dict) else {}
+    researcher_notes = resume.get("researcher_notes")
+    if not isinstance(researcher_notes, str):
+        researcher_notes = trace.get("researcher_notes", "")
+    if not isinstance(researcher_notes, str):
+        researcher_notes = ""
+    context_window_usage = resume.get("context_window_usage")
+    if not isinstance(context_window_usage, (int, float)) or isinstance(context_window_usage, bool):
+        context_window_usage = trace.get("context_window_usage", 0)
+    if (
+        not isinstance(context_window_usage, (int, float))
+        or isinstance(context_window_usage, bool)
+        or not 0 <= context_window_usage <= 1
+    ):
+        context_window_usage = 0
+    context_window_tokens = resume.get("context_window_tokens")
+    if (
+        not isinstance(context_window_tokens, int)
+        or isinstance(context_window_tokens, bool)
+        or context_window_tokens < 0
+        or context_window_tokens > MAX_MODEL_CONTEXT_TOKENS
+    ):
+        # Traces produced before context token counts were persisted retain the
+        # percentage, which was calculated using this configured limit.
+        context_window_tokens = round(context_window_usage * MAX_MODEL_CONTEXT_TOKENS)
+    cost = trace.get("cost")
+    if (
+        not isinstance(cost, (int, float))
+        or isinstance(cost, bool)
+        or (isinstance(cost, float) and not math.isfinite(cost))
+        or cost < 0
+    ):
+        cost = 0
+    resumed_messages = messages_for_resume(trace)
+    original_session_id = trace.get("session_id")
+    st.session_state.update(
+        {
+            "session_id": str(uuid.uuid4()),
+            "resumed_from_session_id": original_session_id,
+            "source": "uploader",
+            "uploaded_file_names": [
+                info.get("source_filename") or dataset_key
+                for dataset_key, info in preparation.vetted_files.items()
+            ],
+            "vetted_files": preparation.vetted_files,
+            "messages": resumed_messages,
+            "rebuild_system_message": bool(resumed_messages),
+            "cost": cost,
+            "context_window_usage": context_window_usage,
+            "context_window_tokens": context_window_tokens,
+            "count": sum(
+                1 for message in resumed_messages
+                if isinstance(message, dict) and message.get("role") == "user"
+            ),
+            "show_sample": False,
+            "disable_sample_button": False,
+            "researcher_notes": researcher_notes,
+            RESEARCHER_NOTES_WIDGET_KEY: researcher_notes,
+            "data_dictionaries_loaded": False,
+            "datasets_vetted": False,
+        }
+    )
+    if preparation.vetted_files:
+        # Resume intentionally permits refreshed rows. Keep the history for
+        # continuity, but make its earlier-data scope clear before analysis.
+        st.session_state["resume_warning"] = (
+            "This analysis was resumed with uploaded data that may have been refreshed. "
+            "Historical outputs and charts describe the earlier data; re-run important findings before relying on them."
+        )
 
 
 def _readable_events(messages):
@@ -374,41 +551,49 @@ def render_trace_export():
     if "messages" not in st.session_state and "vetted_files" not in st.session_state:
         return
 
-    with st.sidebar.expander("Analysis Trace", expanded=False):
-        st.caption("Prepare a JSON snapshot of the current analysis session when you need to export it.")
-        if st.button("Prepare Trace Export", key="prepare_trace_export"):
-            trace = build_analysis_trace()
-            st.session_state["trace_export_json"] = json.dumps(trace, indent=2, default=str)
+    st.sidebar.write("Analysis Trace")
+    st.sidebar.caption("Prepare a JSON snapshot of the current analysis session when you need to export it.")
+    if st.sidebar.button("Prepare Trace Export", key="prepare_trace_export", width='stretch'):
+        trace = build_analysis_trace()
+        try:
+            st.session_state["trace_export_json"] = serialize_analysis_trace(trace)
+        except TraceExportError as exc:
+            st.session_state.pop("trace_export_json", None)
+            st.session_state.pop("trace_export_session_id", None)
+            st.sidebar.error(str(exc))
+        else:
             st.session_state["trace_export_session_id"] = trace.get("session_id", "session")
 
-        if "trace_export_json" in st.session_state:
-            st.download_button(
-                label="Export Analysis Trace",
-                data=st.session_state["trace_export_json"],
-                file_name=f"arctic_analytics_trace_{st.session_state.get('trace_export_session_id', 'session')}.json",
-                mime="application/json",
-                key="download_trace_export",
+    if "trace_export_json" in st.session_state:
+        st.sidebar.download_button(
+            label=":green[Download Analysis Trace]",
+            data=st.session_state["trace_export_json"],
+            file_name=f"arctic_analytics_trace_{st.session_state.get('trace_export_session_id', 'session')}.json",
+            mime="application/json",
+            key="download_trace_export",
+            width='stretch',
+        )
+
+    if st.sidebar.button("Prepare Research Bundle", key="prepare_research_bundle", width='stretch'):
+        trace = build_analysis_trace()
+        session = build_research_session_from_streamlit(trace)
+        st.session_state["research_bundle_zip"] = build_research_bundle_zip(session)
+        st.session_state["research_bundle_session_id"] = trace.get("session_id", "session")
+        st.session_state["research_bundle_fingerprint"] = _research_bundle_fingerprint(trace)
+
+    if "research_bundle_zip" in st.session_state:
+        if _research_bundle_cache_is_current():
+            st.sidebar.download_button(
+                label=":green[Download Research Bundle]",
+                data=st.session_state["research_bundle_zip"],
+                file_name=f"arctic_analytics_research_bundle_{st.session_state.get('research_bundle_session_id', 'session')}.zip",
+                mime="application/zip",
+                key="download_research_bundle",
+                width='stretch',
             )
-
-        if st.button("Prepare Research Bundle", key="prepare_research_bundle"):
-            trace = build_analysis_trace()
-            session = build_research_session_from_streamlit(trace)
-            st.session_state["research_bundle_zip"] = build_research_bundle_zip(session)
-            st.session_state["research_bundle_session_id"] = trace.get("session_id", "session")
-            st.session_state["research_bundle_fingerprint"] = _research_bundle_fingerprint(trace)
-
-        if "research_bundle_zip" in st.session_state:
-            if _research_bundle_cache_is_current():
-                st.download_button(
-                    label="Export Research Bundle",
-                    data=st.session_state["research_bundle_zip"],
-                    file_name=f"arctic_analytics_research_bundle_{st.session_state.get('research_bundle_session_id', 'session')}.zip",
-                    mime="application/zip",
-                    key="download_research_bundle",
-                )
-            else:
-                _clear_research_bundle_cache()
-                st.info("Analysis inputs changed. Prepare the research bundle again before exporting.")
+        else:
+            _clear_research_bundle_cache()
+            st.sidebar.info("Analysis inputs changed. Prepare the research bundle again before exporting.")
 
 def _research_bundle_fingerprint(trace=None):
     if trace is None:
@@ -417,6 +602,7 @@ def _research_bundle_fingerprint(trace=None):
     trace_for_hash.pop("timestamp", None)
     payload = {
         "trace": trace_for_hash,
+        "model": st.session_state.get("model"),
         "researcher_notes": st.session_state.get("researcher_notes", ""),
         "uploaded_context": {
             "source": st.session_state.get("source"),
@@ -455,6 +641,7 @@ def build_research_session_from_streamlit(trace=None):
     }
     return ResearchSession(
         prompt=st.session_state.get("prompt_str") or trace.get("prompt_str"),
+        model=st.session_state.get("model"),
         analysis_trace=AnalysisTrace(trace),
         context_bundle=ContextBundle(context_bundle),
         source_files=context_bundle["uploaded_context"],
@@ -527,15 +714,19 @@ def render_tool_response(tool_response):
     Args:
         tool_response: The tool response to render
     """
-    if tool_response.startswith('data:image/png;base64,'):
+    if tool_response.startswith((
+        'data:image/png;base64,',
+        'data:image/jpeg;base64,',
+        'data:image/gif;base64,',
+        'data:image/webp;base64,',
+    )):
         st.image(tool_response)
         return
 
     if tool_response.startswith('Error'):
-        st.error('Tool execution failed. Expand the response below for details.')
-        # Keep error details collapsed by design so successful results remain the primary focus.
-        with st.expander('🛠️ See Tool Response', expanded=False):
-            st.write(tool_response)
+        # Keep failed-tool details available without interrupting the analysis flow.
+        with st.expander('⚠️ Tool execution failed — see details', expanded=False):
+            st.error(tool_response)
         return
 
     try:

@@ -142,3 +142,27 @@ def generate_report():
     )
 
     assert "Please refactor the code to keep the result under 5000 tokens" in result
+
+
+@pytest.mark.parametrize(
+    "code",
+    [
+        "sales['value']",
+        "{'total': 6}",
+        "sales['value'].sum()",
+    ],
+)
+def test_tool_execution_requires_dataframe_results(code):
+    st.session_state.clear()
+    st.session_state["session_id"] = "test-session"
+    client = OpenAIResponsesUtility()
+    vetted_files = {"sales": {"dataframe": pd.DataFrame({"value": [1, 2, 3]})}}
+
+    result = client.run_python_code(
+        python_code=code,
+        reason="verify table-only output contract",
+        vetted_files=vetted_files,
+        report_function=None,
+    )
+
+    assert "must return a pandas DataFrame so it can be rendered as a table" in result

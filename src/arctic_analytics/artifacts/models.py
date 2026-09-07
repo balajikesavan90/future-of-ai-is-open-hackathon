@@ -40,6 +40,7 @@ class ResearchSession:
     assumptions: list[str] = field(default_factory=list)
     command: str | None = None
     raw_outputs: list[Any] = field(default_factory=list)
+    model: str | None = None
 
 
 @dataclass

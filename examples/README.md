@@ -26,7 +26,7 @@ The checked-in `sample_research_bundle/` directory lets reviewers inspect the ar
 
 ## Trace Provenance
 
-`sample_trace_export.json` and `sample_research_bundle/` were generated with Arctic Analytics' application path using a real external OpenAI API call. The checked-in trace records the current supported example model, `gpt-5.4-mini-2026-03-17`.
+`sample_trace_export.json` and `sample_research_bundle/` were generated with Arctic Analytics' application path using a real external OpenAI API call. The bundle's run manifest records the example model, `gpt-5.4-mini-2026-03-17`.
 
 To regenerate both the trace and the checked-in research bundle:
 

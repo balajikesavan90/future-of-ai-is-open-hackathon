@@ -82,7 +82,7 @@ The sample bundle does not run a new analysis. It lets you inspect a completed a
 - Builds dataset metadata, including columns, data types, summary statistics, missing values, and row samples.
 - Lets researchers edit dataset descriptions, column descriptions, data types, and primary key flags before analysis.
 - Injects metadata into model context before agent inference.
-- Exports lightweight JSON analysis traces.
+- Exports lightweight JSON analysis traces and can resume an analysis when CSVs with the original filenames and ordered columns are uploaded again. Matching intentionally does not use a content hash, so refreshed rows are supported; a visible stale-results warning prompts researchers to re-run important findings.
 - Exports local research artifact bundles containing traces, context, prompts, generated code, outputs, environment metadata, methods drafts, limitations, and citation files.
 
 ## Intended Usage Model
@@ -178,7 +178,7 @@ This project does not provide:
 
 Current implementation limits:
 
-- Traces are snapshots of Streamlit session state.
+- Traces are snapshots of Streamlit session state. They can restore conversation and metadata for continuation with re-uploaded CSVs, but are not deterministic execution replays. Only trace-schema version 0.3.0 exports with a resume manifest are resumable; those traces retain chart payloads. Trace exports larger than 10 MiB are not prepared because they cannot be imported for resume.
 - Research bundles package artifacts for review; they are not replayable runs.
 - Execution restrictions are not isolation.
 - Examples may require external APIs when regenerating traces.

@@ -12,7 +12,7 @@ from arctic_analytics.artifacts.models import ResearchSession
 
 def render_methods(session: ResearchSession) -> str:
     trace = session.analysis_trace.data or {}
-    model = trace.get("model") or "not recorded"
+    model = session.model or trace.get("model") or "not recorded"
     code_snippets = extract_generated_code(trace)
     metadata_names = ", ".join(_dataset_names(session)) or "not recorded"
     prompt = session.prompt or trace.get("prompt_str") or "not recorded"

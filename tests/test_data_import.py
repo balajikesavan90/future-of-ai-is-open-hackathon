@@ -1,8 +1,13 @@
 import io
 from types import SimpleNamespace
 
+import pandas as pd
+import pytest
+
 from arctic_analytics.core import data_import
 from arctic_analytics.core.data_import import (
+    check_datatypes,
+    build_vetted_files_from_uploads,
     dataframe_name_from_filename,
     gather_metadata,
     unique_dataframe_name,
@@ -30,6 +35,11 @@ def test_dataframe_name_from_filename_handles_python_keywords():
     assert dataframe_name_from_filename("class.csv") == "df_class"
 
 
+@pytest.mark.parametrize("filename", ["pd.csv", "st.csv", "get_dataframe_names.csv"])
+def test_dataframe_name_from_filename_avoids_reserved_execution_globals(filename):
+    assert dataframe_name_from_filename(filename).startswith("df_")
+
+
 def test_unique_dataframe_name_adds_numeric_suffix_for_collisions():
     existing_names = {"sales_2026", "sales_2026_2"}
 
@@ -54,6 +64,70 @@ def test_gather_metadata_sets_description_and_preserves_colliding_uploads(monkey
     assert list(vetted_files) == ["sales_2026", "sales_2026_2"]
     assert vetted_files["sales_2026"]["dataset_description"] == ""
     assert vetted_files["sales_2026_2"]["dataframe"]["value"].iloc[0] == 2
+
+
+def test_build_vetted_files_from_uploads_strips_path_from_source_filename():
+    vetted_files = build_vetted_files_from_uploads([Upload(b"value\n1\n", name="../../sales.csv")])
+
+    assert list(vetted_files) == ["sales"]
+    assert vetted_files["sales"]["source_filename"] == "sales.csv"
+
+
+def test_check_datatypes_uses_column_name_index_from_data_editor(monkeypatch):
+    session_state = {"session_id": "test-session"}
+    monkeypatch.setattr(data_import, "st", SimpleNamespace(session_state=session_state))
+    data_dictionary = pd.DataFrame(
+        {
+            "Primary Key": [False],
+            "Column Name": ["name"],
+            "Data Type": ["object"],
+            "Description": ["Customer name"],
+        }
+    ).set_index("Column Name", drop=False)
+    vetted_files = {
+        "customers": {
+            "data_dictionary": data_dictionary,
+            "dataframe": pd.DataFrame({"name": ["Ada"]}),
+        }
+    }
+
+    result = check_datatypes(vetted_files)
+
+    assert result["customers"]["data_dictionary"].index.tolist() == ["name"]
+    assert str(result["customers"]["dataframe"]["name"].dtype) == "string"
+
+
+@pytest.mark.parametrize(
+    ("selected_dtype", "values", "expected_dtype"),
+    [
+        ("Int64", ["1", "2"], "Int64"),
+        ("Float64", ["1.5", "2.5"], "Float64"),
+        ("string", [1, 2], "string"),
+    ],
+)
+def test_check_datatypes_applies_data_editor_dtype_labels(
+    monkeypatch, selected_dtype, values, expected_dtype
+):
+    session_state = {"session_id": "test-session"}
+    monkeypatch.setattr(data_import, "st", SimpleNamespace(session_state=session_state))
+    data_dictionary = pd.DataFrame(
+        {
+            "Primary Key": [False],
+            "Column Name": ["value"],
+            "Data Type": [selected_dtype],
+            "Description": ["A value"],
+        }
+    ).set_index("Column Name", drop=False)
+    vetted_files = {
+        "values": {
+            "data_dictionary": data_dictionary,
+            "dataframe": pd.DataFrame({"value": values}),
+        }
+    }
+
+    result = check_datatypes(vetted_files)
+
+    assert str(result["values"]["dataframe"]["value"].dtype) == expected_dtype
 
 
 def test_is_valid_csv_accepts_plain_csv():

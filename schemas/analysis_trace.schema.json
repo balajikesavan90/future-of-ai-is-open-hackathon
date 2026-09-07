@@ -10,7 +10,6 @@
     "package_version",
     "timestamp",
     "session_id",
-    "model",
     "cost",
     "context_window_usage",
     "system_message",
@@ -26,7 +25,7 @@
   "properties": {
     "trace_schema_version": {
       "type": "string",
-      "const": "0.2.0"
+      "enum": ["0.2.0", "0.3.0"]
     },
     "package_version": {
       "type": "string"
@@ -38,14 +37,15 @@
     "session_id": {
       "type": ["string", "null"]
     },
-    "model": {
-      "type": ["string", "null"]
-    },
     "cost": {
       "type": ["number", "integer", "null"]
     },
     "context_window_usage": {
       "type": ["number", "integer", "null"]
+    },
+    "researcher_notes": {
+      "type": "string",
+      "description": "Optional notes entered by the researcher and restored when a trace is resumed."
     },
     "system_message": {
       "$ref": "#/$defs/json_safe"
@@ -148,8 +148,64 @@
       "items": {
         "type": "string"
       }
+    },
+    "resume": {
+      "type": "object",
+      "description": "Optional manifest used to continue an analysis with CSVs matched by source filename and ordered columns. Row data may be refreshed and is not content-verified.",
+      "required": ["resume_schema_version", "source", "datasets"],
+      "properties": {
+        "resume_schema_version": {"const": "1.0"},
+        "source": {"const": "uploader"},
+        "context_window_usage": {"type": ["number", "integer"]},
+        "context_window_tokens": {"type": "integer", "minimum": 0},
+        "researcher_notes": {"type": "string"},
+        "resumed_from_session_id": {"type": ["string", "null"]},
+        "messages": {
+          "type": "array",
+          "description": "Full-fidelity conversation state used only when resuming an analysis."
+        },
+        "datasets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["dataset_key", "source_filename", "column_names"],
+            "properties": {
+              "dataset_key": {"type": "string"},
+              "source_filename": {"type": "string"},
+              "column_names": {"type": "array", "items": {"type": "string"}}
+            }
+          }
+        }
+      }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "trace_schema_version": {"const": "0.2.0"}
+        },
+        "required": ["trace_schema_version"]
+      },
+      "then": {
+        "required": ["model"],
+        "properties": {
+          "model": {"type": ["string", "null"]}
+        }
+      }
+    },
+    {
+      "if": {
+        "required": ["resume"]
+      },
+      "then": {
+        "properties": {
+          "trace_schema_version": {"const": "0.3.0"}
+        }
+      }
+    }
+  ],
   "$defs": {
     "event": {
       "type": "object",

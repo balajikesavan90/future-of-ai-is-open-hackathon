@@ -8,6 +8,8 @@ import re
 from seaborn import load_dataset
 import logging
 
+from arctic_analytics.core.trace_resume import RESERVED_EXECUTION_GLOBAL_NAMES
+
 datasets = {
     'tips': {
         'description': 'This dataset contains data on tips given to waitstaff at a restaurant.',
@@ -96,7 +98,11 @@ def dataframe_name_from_filename(filename):
 
     if not dataframe_name:
         dataframe_name = 'unnamed'
-    if dataframe_name[0].isdigit() or keyword.iskeyword(dataframe_name):
+    if (
+        dataframe_name[0].isdigit()
+        or keyword.iskeyword(dataframe_name)
+        or dataframe_name in RESERVED_EXECUTION_GLOBAL_NAMES
+    ):
         dataframe_name = f'df_{dataframe_name}'
 
     return dataframe_name
@@ -124,26 +130,7 @@ def gather_metadata(params=None):
             getattr(uploaded_file, "name", str(uploaded_file))
             for uploaded_file in st.session_state['uploaded_files']
         ]
-        for uploaded_file in st.session_state['uploaded_files']:
-            filename = unique_dataframe_name(
-                dataframe_name_from_filename(uploaded_file.name), vetted_files
-            )
-            vetted_files[filename] = {}
-            vetted_files[filename]['source_filename'] = uploaded_file.name
-            vetted_files[filename]['dataset_description'] = ''
-            df = pd.read_csv(
-                filepath_or_buffer=uploaded_file, 
-                parse_dates=True,
-                low_memory=False,
-                encoding='utf-8',
-                encoding_errors='replace'
-            )
-            df = df.convert_dtypes()
-            vetted_files[filename]['columns_names'] = df.columns
-            vetted_files[filename]['data_types'] = df.dtypes
-            vetted_files[filename]['pandas_describe'] = df.describe(include='all')
-            vetted_files[filename]['primary_key'] = []
-            vetted_files[filename]['dataframe'] = df
+        vetted_files = build_vetted_files_from_uploads(st.session_state['uploaded_files'])
 
     if st.session_state['source'] in ['tips', 'planets', 'penguins', 'car_crashes', 'diamonds', 'mpg']:
         filename = st.session_state['source']
@@ -159,6 +146,32 @@ def gather_metadata(params=None):
         vetted_files[filename]['dataframe'] = df
     
     st.session_state['vetted_files'] = vetted_files
+
+
+def build_vetted_files_from_uploads(uploaded_files):
+    """Read validated uploaded CSVs into the same structure used by normal ingestion."""
+    vetted_files = {}
+    for uploaded_file in uploaded_files:
+        source_filename = os.path.basename(uploaded_file.name)
+        filename = unique_dataframe_name(dataframe_name_from_filename(source_filename), vetted_files)
+        df = pd.read_csv(
+            filepath_or_buffer=uploaded_file,
+            parse_dates=True,
+            low_memory=False,
+            encoding='utf-8',
+            encoding_errors='replace',
+        ).convert_dtypes()
+        vetted_files[filename] = {
+            'source_filename': source_filename,
+            'dataset_description': '',
+            'columns_names': df.columns,
+            'data_types': df.dtypes,
+            'pandas_describe': df.describe(include='all'),
+            'primary_key': [],
+            'dataframe': df,
+        }
+    return vetted_files
+
 
 # Function is too slow for larger datasets. Need to optimize. Not being used currently.
 def detect_primary_keys(df):
@@ -202,23 +215,26 @@ def check_datatypes(vetted_files):
     for filename in vetted_files:
         vetted_files[filename]['data_dictionary'] = pd.DataFrame(vetted_files[filename]['data_dictionary'])
         for column in vetted_files[filename]['data_dictionary']['Column Name']:
+            selected_dtype = str(
+                vetted_files[filename]['data_dictionary'].loc[column]['Data Type']
+            ).lower()
 
-            if vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'object':
+            if selected_dtype in {'object', 'string'}:
                 vetted_files[filename]['dataframe'][column] = vetted_files[filename]['dataframe'][column].astype('string')
 
-            elif vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'float64':
+            elif selected_dtype == 'float64':
                 vetted_files[filename]['dataframe'][column] = vetted_files[filename]['dataframe'][column].astype('Float64')
 
-            elif vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'int64':
+            elif selected_dtype == 'int64':
                 vetted_files[filename]['dataframe'][column] = vetted_files[filename]['dataframe'][column].astype('Int64')
 
-            elif vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'datetime64[ns]':
+            elif selected_dtype == 'datetime64[ns]':
                 vetted_files[filename]['dataframe'][column] = pd.to_datetime(vetted_files[filename]['dataframe'][column])
 
-            elif vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'bool':
+            elif selected_dtype == 'bool':
                 vetted_files[filename]['dataframe'][column] = vetted_files[filename]['dataframe'][column].astype('bool')
 
-            elif vetted_files[filename]['data_dictionary'].loc[column]['Data Type'] == 'category':
+            elif selected_dtype == 'category':
                 vetted_files[filename]['dataframe'][column] = vetted_files[filename]['dataframe'][column].astype('category')
     return vetted_files
 

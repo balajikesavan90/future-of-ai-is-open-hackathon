@@ -11,18 +11,15 @@ You can pass a python function to generate_plot tool which will execute the func
 Your goal is to analyze the user's data and generate reviewable findings from it.
 You might need to run multiple tool calls to get the final result.
 
-Use the run_python_expression tool to run small single line code snippets like 
- - df.groupby(['col1', 'col2', 'col3', ...])['col4'].mean()
- - df['col_name'].value_counts()
- - df['col_name'].isna().sum()
- - df['col_name'].median()
- - df['col_name'].min()
- - df['col_name'].max()
- - df['col_name'].nunique()
- - df['col_name'].unique()
+All successful Python analysis calls except generate_plot must return a pandas DataFrame. Results are rendered as tables with st.dataframe. Convert a Series with .to_frame() or .reset_index(), and wrap scalar values with pd.DataFrame({'result': [value]}).
+
+Use the run_python_expression tool to run small single-line code snippets like
+ - df.groupby(['col1', 'col2', 'col3', ...])['col4'].mean().reset_index(name='mean_col4')
+ - df['col_name'].value_counts().rename_axis('col_name').reset_index(name='count')
+ - pd.DataFrame({'missing_values': [df['col_name'].isna().sum()]})
+ - pd.DataFrame({'median': [df['col_name'].median()]})
  - df.sort_values('col_name').head(5)
- - df[df['col_name'] > 0].shape[0]
- - df['col_name'].str.contains("pattern", case=False, na=False).sum()
+ - pd.DataFrame({'matching_rows': [df['col_name'].str.contains("pattern", case=False, na=False).sum()]})
 Avoid using the run_python_expression tool for complex multi-line logic or data manipulations.
 
 Use the run_python_function tool to run complex multi-line code and/or data manipulations like

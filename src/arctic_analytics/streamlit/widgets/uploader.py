@@ -5,8 +5,9 @@ import pandas as pd
 import re
 import os
 
-from arctic_analytics.core.data_import import gather_metadata
-from arctic_analytics.streamlit.helpers import is_dev_environment
+from arctic_analytics.core.data_import import build_vetted_files_from_uploads, gather_metadata
+from arctic_analytics.core.trace_resume import TraceResumeError, load_analysis_trace, prepare_resume
+from arctic_analytics.streamlit.helpers import is_dev_environment, restore_trace_session
 
 def is_valid_csv(file):
     """Validate if file is a proper CSV and not malicious"""
@@ -106,3 +107,37 @@ def render_uploader():
                     st.rerun()
             else:
                 st.warning("Please upload at least one CSV file.")
+
+    with st.form(key='resume_analysis'):
+        st.write(':blue[Resume saved analysis]')
+        st.caption(
+            'Upload an Arctic Analytics trace and CSVs with the original filenames and ordered columns. '
+            'Refreshed rows are supported; prior findings should be re-run.'
+        )
+        trace_file = st.file_uploader(
+            'Analysis trace (.json)', type=['json'], key='resume_trace_file'
+        )
+        resume_files = st.file_uploader(
+            'CSV files to continue analysis', type=['csv'], accept_multiple_files=True, key='resume_csv_files'
+        )
+        resume_submitted = st.form_submit_button(':green[Resume analysis]', width='stretch')
+
+    if resume_submitted:
+        if trace_file is None or not resume_files:
+            st.error('Upload one trace JSON file and compatible CSV files to continue the analysis.')
+            return
+        try:
+            trace = load_analysis_trace(trace_file.getvalue())
+            for file in resume_files:
+                sanitized_name = sanitize_filename(file.name)
+                valid, error = is_valid_csv(file)
+                if not valid:
+                    raise TraceResumeError(f"Error in file {sanitized_name}: {error}")
+            uploaded_vetted_files = build_vetted_files_from_uploads(resume_files)
+            preparation = prepare_resume(trace, uploaded_vetted_files)
+        except (TraceResumeError, pd.errors.ParserError, UnicodeDecodeError) as exc:
+            st.error(str(exc))
+            return
+
+        restore_trace_session(trace, preparation)
+        st.rerun()

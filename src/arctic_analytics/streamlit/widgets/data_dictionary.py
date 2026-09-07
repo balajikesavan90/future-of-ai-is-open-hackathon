@@ -1,14 +1,43 @@
 import streamlit as st
 import pandas as pd
 import logging
+import json
 
 from arctic_analytics.core.data_import import process_data_dictionaries, datasets
+
+
+def preserve_or_derive_primary_keys(df, primary_keys):
+    """Keep saved key selections, deriving them only for a new dictionary."""
+    if 'Primary Key' not in df:
+        df['Primary Key'] = df['Column Name'].isin(primary_keys)
+    return df
+
+
+def _restored_data_dictionary_frame(serialized_dictionary):
+    """Return a frame from either supported exported dictionary representation."""
+    if not serialized_dictionary:
+        return pd.DataFrame()
+    try:
+        decoded_dictionary = json.loads(serialized_dictionary)
+    except (TypeError, json.JSONDecodeError):
+        return pd.DataFrame()
+    try:
+        if isinstance(decoded_dictionary, dict):
+            return pd.DataFrame.from_dict(decoded_dictionary, orient='index')
+        if isinstance(decoded_dictionary, list):
+            return pd.DataFrame(decoded_dictionary)
+    except (AttributeError, TypeError, ValueError):
+        return pd.DataFrame()
+    return pd.DataFrame()
+
 
 def render_data_dictionary_widget():
     logging.info(f'render_data_dictionary_widget - {st.session_state["session_id"]}')
     st.divider()
     st.subheader(':blue[Data Dictionary]')
     st.info('Please review the data dictionaries for the files you uploaded. You can edit data types, primary keys, and descriptions before this metadata is injected into analysis prompts.')
+    if st.session_state.get("resume_warning"):
+        st.warning(st.session_state.pop("resume_warning"))
     uploaded_file_count = len(st.session_state['vetted_files'])
     if uploaded_file_count == 1:
         st.toast(':green[Lets create a data dictionary for your file]')
@@ -18,20 +47,26 @@ def render_data_dictionary_widget():
 
     for filename in st.session_state['vetted_files']:
 
-        df = pd.DataFrame({
-            'Column Name': st.session_state['vetted_files'][filename]['columns_names'],
-            'Data Type': st.session_state['vetted_files'][filename]['data_types']
-        })
+        restored_dictionary = st.session_state['vetted_files'][filename].get('data_dictionary_json')
+        df = _restored_data_dictionary_frame(restored_dictionary)
+        if df.empty or 'Column Name' not in df or 'Data Type' not in df:
+            df = pd.DataFrame({
+                'Column Name': st.session_state['vetted_files'][filename]['columns_names'],
+                'Data Type': st.session_state['vetted_files'][filename]['data_types']
+            })
 
         df['Data Type'] = df['Data Type'].astype(str)
-        df['Primary Key'] = df['Column Name'].apply(lambda x: x in st.session_state['vetted_files'][filename]['primary_key'])
+        df = preserve_or_derive_primary_keys(
+            df,
+            st.session_state['vetted_files'][filename]['primary_key'],
+        )
 
-        if st.session_state['source'] == 'uploader':
+        if 'Description' not in df and st.session_state['source'] == 'uploader':
             df['Description'] = ''
-        elif st.session_state['source'] in ['tips', 'planets', 'penguins', 'car_crashes', 'diamonds', 'mpg']:
+        elif 'Description' not in df and st.session_state['source'] in ['tips', 'planets', 'penguins', 'car_crashes', 'diamonds', 'mpg']:
             df['Description'] = df['Column Name'].apply(lambda x: datasets[st.session_state['source']]['column_descriptions'][x])
 
-        df = df[['Primary Key', 'Column Name', 'Data Type', 'Description']]
+        df = df[['Primary Key', 'Column Name', 'Data Type', 'Description']].set_index('Column Name', drop=False)
 
         st.subheader(f':blue[{filename}]')
         with st.expander('See uploaded Dataset'):
@@ -47,10 +82,7 @@ def render_data_dictionary_widget():
             elif data_filter == 'Random 5 rows':
                 st.dataframe(st.session_state['vetted_files'][filename]['dataframe'].sample(5), width='stretch')
 
-        if st.session_state['source'] == 'uploader':
-            value = ''
-        else:
-            value = st.session_state['vetted_files'][filename]['dataset_description']
+        value = st.session_state['vetted_files'][filename]['dataset_description']
 
         st.session_state['vetted_files'][filename]['dataset_description'] = st.text_input(
             label='Dataset Description:',
