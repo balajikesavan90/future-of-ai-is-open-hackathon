@@ -233,13 +233,12 @@ def _has_valid_message_content(role: str, content: Any) -> bool:
     expected_type = "output_text" if role == "assistant" else "input_text"
     return (
         isinstance(content, list)
-        and bool(content)
-        and all(
-            isinstance(item, dict)
-            and item.get("type") == expected_type
-            and isinstance(item.get("text"), str)
-            for item in content
-        )
+        # The transcript renderer displays one text item per message. Reject
+        # multi-item imports rather than passing hidden text to the API.
+        and len(content) == 1
+        and isinstance(content[0], dict)
+        and content[0].get("type") == expected_type
+        and isinstance(content[0].get("text"), str)
     )
 
 

@@ -109,6 +109,18 @@ def test_research_session_positional_arguments_remain_compatible():
     assert session.model is None
 
 
+def test_methods_prefers_session_model_over_trace_model(tmp_path):
+    session = ResearchSession(
+        analysis_trace=AnalysisTrace({"model": "trace-model"}),
+        context_bundle=ContextBundle({}),
+        model="session-model",
+    )
+
+    bundle = write_research_bundle(session, tmp_path / "bundle")
+
+    assert "Model recorded in the trace: session-model." in (bundle.output_dir / "methods.md").read_text()
+
+
 def test_research_bundle_writes_raw_image_outputs_from_sanitized_trace(tmp_path):
     image_payload = "data:image/png;base64,iVBORw0KGgo="
     session = ResearchSession(

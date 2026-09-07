@@ -714,7 +714,12 @@ def render_tool_response(tool_response):
     Args:
         tool_response: The tool response to render
     """
-    if tool_response.startswith('data:image/png;base64,'):
+    if tool_response.startswith((
+        'data:image/png;base64,',
+        'data:image/jpeg;base64,',
+        'data:image/gif;base64,',
+        'data:image/webp;base64,',
+    )):
         st.image(tool_response)
         return
 

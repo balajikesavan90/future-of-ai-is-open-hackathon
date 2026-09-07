@@ -289,6 +289,24 @@ def test_messages_for_resume_discards_history_with_invalid_later_content_item():
     assert messages_for_resume(trace) == []
 
 
+def test_messages_for_resume_discards_history_with_multiple_text_items():
+    trace = resumable_trace()
+    trace["resume"]["messages"] = [{
+        "type": "message",
+        "role": "system",
+        "content": [{"type": "input_text", "text": "System prompt"}],
+    }, {
+        "type": "message",
+        "role": "user",
+        "content": [
+            {"type": "input_text", "text": "Visible question"},
+            {"type": "input_text", "text": "Hidden question"},
+        ],
+    }]
+
+    assert messages_for_resume(trace) == []
+
+
 @pytest.mark.parametrize(
     ("role", "content_type"),
     [("system", "output_text"), ("user", "output_text"), ("assistant", "input_text")],
