@@ -10,6 +10,7 @@ import json
 import keyword
 import math
 from typing import Any
+import warnings
 
 import pandas as pd
 from jsonschema import Draft202012Validator
@@ -20,7 +21,7 @@ MAX_TRACE_BYTES = 10 * 1024 * 1024
 SUPPORTED_TRACE_VERSIONS = {"0.3.0"}
 RESERVED_EXECUTION_GLOBAL_NAMES = {
     "pd", "np", "plt", "go", "px", "datetime", "warnings", "math", "print", "st", "sm",
-    "get_dataframe_names",
+    "get_dataframe_names", "__builtins__",
 }
 IMPORT_TRACE_SCHEMA = {
     "type": "object",
@@ -331,12 +332,15 @@ def _is_valid_base64_image_data_url(value: Any) -> bool:
         return False
     try:
         image_bytes = base64.b64decode(payload, validate=True)
-        with Image.open(io.BytesIO(image_bytes)) as image:
-            image.verify()
-            return image.format == expected_format
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", Image.DecompressionBombWarning)
+            with Image.open(io.BytesIO(image_bytes)) as image:
+                image.verify()
+                return image.format == expected_format
     except (
         binascii.Error,
         Image.DecompressionBombError,
+        Image.DecompressionBombWarning,
         UnidentifiedImageError,
         OSError,
         SyntaxError,

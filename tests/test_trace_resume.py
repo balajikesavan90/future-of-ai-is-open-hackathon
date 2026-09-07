@@ -1,4 +1,5 @@
 import json
+import warnings
 
 import pandas as pd
 import pytest
@@ -127,7 +128,9 @@ def test_prepare_resume_requires_original_filename_and_columns():
         prepare_resume(trace, {"other": uploaded_file("Sales 2026.csv", ["amount", "id"])})
 
 
-@pytest.mark.parametrize("dataset_key", ["pd", "st", "get_dataframe_names", "invalid-key", "class"])
+@pytest.mark.parametrize(
+    "dataset_key", ["pd", "st", "get_dataframe_names", "__builtins__", "invalid-key", "class"],
+)
 def test_prepare_resume_rejects_unsafe_dataset_keys(dataset_key):
     trace = resumable_trace()
     trace["resume"]["datasets"][0]["dataset_key"] = dataset_key
@@ -479,6 +482,15 @@ def test_resumed_image_validation_discards_decompression_bombs(monkeypatch):
         raise Image.DecompressionBombError("too many pixels")
 
     monkeypatch.setattr(trace_resume.Image, "open", raise_decompression_bomb)
+
+    assert not trace_resume._is_valid_base64_image_data_url(VALID_PNG_DATA_URL)
+
+
+def test_resumed_image_validation_discards_decompression_bomb_warnings(monkeypatch):
+    def warn_decompression_bomb(*args, **kwargs):
+        warnings.warn("too many pixels", Image.DecompressionBombWarning)
+
+    monkeypatch.setattr(trace_resume.Image, "open", warn_decompression_bomb)
 
     assert not trace_resume._is_valid_base64_image_data_url(VALID_PNG_DATA_URL)
 
