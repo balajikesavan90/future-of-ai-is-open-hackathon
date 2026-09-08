@@ -643,7 +643,7 @@ def test_researcher_notes_textarea_is_disabled_during_an_agent_turn():
     assert not app.exception
     assert not app.text_area(key="researcher_notes_widget").disabled
 
-    app.session_state["agent_turn_state"] = "running"
+    app.session_state["agent_turn_state"] = "queued"
     app.run()
 
     assert not app.exception
@@ -658,7 +658,7 @@ def test_export_preparation_buttons_are_disabled_during_an_agent_turn():
 
         st.session_state["messages"] = []
         st.session_state["vetted_files"] = {}
-        st.session_state["agent_turn_state"] = "running"
+        st.session_state["agent_turn_state"] = "queued"
         render_trace_export()
 
     app = AppTest.from_function(script).run()
