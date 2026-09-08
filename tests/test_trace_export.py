@@ -13,9 +13,12 @@ from jsonschema import Draft202012Validator, FormatChecker, ValidationError
 from streamlit.testing.v1 import AppTest
 
 from arctic_analytics.streamlit.helpers import (
+    _clear_trace_export_cache,
     _clear_research_bundle_cache,
     _research_bundle_cache_is_current,
     _research_bundle_fingerprint,
+    _trace_export_cache_is_current,
+    _trace_export_fingerprint,
     build_analysis_trace,
     build_research_session_from_streamlit,
     goto_data_analysis_widget,
@@ -419,6 +422,34 @@ def test_research_bundle_fingerprint_ignores_trace_timestamp():
     assert _research_bundle_fingerprint(trace) == _research_bundle_fingerprint(same_trace_new_timestamp)
 
 
+def test_trace_export_cache_invalidates_when_inputs_change_or_agent_starts():
+    st.session_state.clear()
+    st.session_state.update({
+        "session_id": "trace-cache-test-session",
+        "researcher_notes": "Initial notes.",
+        "messages": [],
+        "vetted_files": {},
+        "agent_turn_state": "idle",
+        "trace_export_json": "{}",
+        "trace_export_session_id": "trace-cache-test-session",
+    })
+    st.session_state["trace_export_fingerprint"] = _trace_export_fingerprint()
+
+    assert _trace_export_cache_is_current() is True
+
+    st.session_state["researcher_notes"] = "Edited notes."
+    assert _trace_export_cache_is_current() is False
+
+    st.session_state["researcher_notes"] = "Initial notes."
+    st.session_state["agent_turn_state"] = "queued"
+    assert _trace_export_cache_is_current() is False
+
+    _clear_trace_export_cache()
+    assert "trace_export_json" not in st.session_state
+    assert "trace_export_session_id" not in st.session_state
+    assert "trace_export_fingerprint" not in st.session_state
+
+
 def test_research_bundle_cache_invalidates_when_inputs_change():
     st.session_state.clear()
     st.session_state["session_id"] = "bundle-cache-test-session"
@@ -440,6 +471,22 @@ def test_research_bundle_cache_invalidates_when_inputs_change():
     assert "research_bundle_zip" not in st.session_state
     assert "research_bundle_session_id" not in st.session_state
     assert "research_bundle_fingerprint" not in st.session_state
+
+
+def test_research_bundle_cache_invalidates_when_agent_starts():
+    st.session_state.clear()
+    st.session_state.update({
+        "session_id": "bundle-agent-state-test-session",
+        "researcher_notes": "",
+        "messages": [],
+        "vetted_files": {},
+        "agent_turn_state": "idle",
+    })
+    st.session_state["research_bundle_fingerprint"] = _research_bundle_fingerprint()
+
+    st.session_state["agent_turn_state"] = "queued"
+
+    assert _research_bundle_cache_is_current() is False
 
 
 def test_research_bundle_cache_invalidates_when_messages_change():
