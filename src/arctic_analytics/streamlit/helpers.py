@@ -556,9 +556,15 @@ def render_trace_export():
     if "messages" not in st.session_state and "vetted_files" not in st.session_state:
         return
 
+    export_actions_disabled = st.session_state.get("agent_turn_state", "idle") != "idle"
     st.sidebar.write("Analysis Trace")
     st.sidebar.caption("Prepare a JSON snapshot of the current analysis session when you need to export it.")
-    if st.sidebar.button("Prepare Trace Export", key="prepare_trace_export", width='stretch'):
+    if st.sidebar.button(
+        "Prepare Trace Export",
+        key="prepare_trace_export",
+        width='stretch',
+        disabled=export_actions_disabled,
+    ):
         trace = build_analysis_trace()
         try:
             st.session_state["trace_export_json"] = serialize_analysis_trace(trace)
@@ -579,7 +585,12 @@ def render_trace_export():
             width='stretch',
         )
 
-    if st.sidebar.button("Prepare Research Bundle", key="prepare_research_bundle", width='stretch'):
+    if st.sidebar.button(
+        "Prepare Research Bundle",
+        key="prepare_research_bundle",
+        width='stretch',
+        disabled=export_actions_disabled,
+    ):
         trace = build_analysis_trace()
         session = build_research_session_from_streamlit(trace)
         st.session_state["research_bundle_zip"] = build_research_bundle_zip(session)

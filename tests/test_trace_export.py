@@ -603,6 +603,24 @@ def test_researcher_notes_textarea_is_disabled_during_an_agent_turn():
     assert app.text_area(key="researcher_notes_widget").disabled
 
 
+def test_export_preparation_buttons_are_disabled_during_an_agent_turn():
+    def script():
+        import streamlit as st
+
+        from arctic_analytics.streamlit.helpers import render_trace_export
+
+        st.session_state["messages"] = []
+        st.session_state["vetted_files"] = {}
+        st.session_state["agent_turn_state"] = "running"
+        render_trace_export()
+
+    app = AppTest.from_function(script).run()
+
+    assert not app.exception
+    assert app.button(key="prepare_trace_export").disabled
+    assert app.button(key="prepare_research_bundle").disabled
+
+
 def test_restore_trace_session_ignores_model_from_older_traces():
     st.session_state.clear()
     trace = {"messages": [], "model": "gpt-5.4-mini-2026-03-17"}
