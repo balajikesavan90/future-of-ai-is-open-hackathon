@@ -143,6 +143,15 @@ def render_analytics_agent():
                             else:
                                 st.caption('Historical media output was omitted from the exported trace.')
 
+    streaming_completed = False
+    if agent_turn_state == 'streaming':
+        # Render the live answer before the context-usage element so it has
+        # the same visual order as the stable post-stream rerun.
+        st.chat_message('assistant').write_stream(
+            stream_text(safely_escape_dollars(st.session_state['messages'][-1]['content'][0]['text']))
+        )
+        streaming_completed = True
+
     st.session_state['spinner_container'] = st.container()
 
     context_window_tokens = st.session_state['context_window_tokens']
@@ -232,7 +241,6 @@ def render_analytics_agent():
         st.session_state['agent_turn_state'] = 'streaming'
         st.rerun()
 
-    if agent_turn_state == 'streaming':
-        st.chat_message('assistant').write_stream(stream_text(safely_escape_dollars(st.session_state['messages'][-1]['content'][0]['text'])))  # Safely escape dollar signs for LaTeX rendering
+    if streaming_completed:
         st.session_state['agent_turn_state'] = 'idle'
         st.rerun()
