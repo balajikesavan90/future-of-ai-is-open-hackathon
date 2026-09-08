@@ -26,5 +26,6 @@ def test_select_sample_prompt_queues_prompt_for_rerun():
     select_sample_prompt("Analyze the sample data")
 
     assert st.session_state["pending_sample_prompt"] == "Analyze the sample data"
+    assert st.session_state["agent_turn_state"] == "queued"
     assert st.session_state["show_sample"] is False
     assert st.session_state["disable_sample_button"] is True

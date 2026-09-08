@@ -26,6 +26,9 @@ def render_analytics_agent():
     st.divider()
 
     st.session_state.setdefault('model', DEFAULT_OPENAI_MODEL)
+    st.session_state.setdefault('agent_turn_state', 'idle')
+    agent_turn_state = st.session_state['agent_turn_state']
+    agent_turn_active = agent_turn_state != 'idle'
 
     st.caption(f"Uploaded data is analyzed through visible tool calls and constrained generated code. Review tool calls, generated code, and outputs before relying on the analysis. This analysis uses the {st.session_state['model']} model.")
 
@@ -82,7 +85,7 @@ def render_analytics_agent():
             value=f'${st.session_state["cost"]}',
         )
 
-    render_researcher_notes()
+    render_researcher_notes(disabled=agent_turn_active)
     render_ai_prompt()
     render_tool_calling_analysis_prompt_guide()
 
@@ -104,7 +107,16 @@ def render_analytics_agent():
     st.session_state['messages_container'] = st.container()
 
     with st.session_state['messages_container']:
-        for msg in st.session_state['messages']:
+        for message_index, msg in enumerate(st.session_state['messages']):
+            # The completed answer is rendered by ``write_stream`` below while
+            # the turn is still locked. Avoid rendering it twice on that pass.
+            if (
+                agent_turn_state == 'streaming'
+                and message_index == len(st.session_state['messages']) - 1
+                and msg['type'] == 'message'
+                and msg['role'] == 'assistant'
+            ):
+                continue
             if msg['type'] == 'message':
                 if msg['role'] in ['user', 'assistant']:
                     text = msg['content'][0]['text']
@@ -130,6 +142,15 @@ def render_analytics_agent():
                                 render_tool_response(image_url)
                             else:
                                 st.caption('Historical media output was omitted from the exported trace.')
+
+    streaming_completed = False
+    if agent_turn_state == 'streaming':
+        # Render the live answer before the context-usage element so it has
+        # the same visual order as the stable post-stream rerun.
+        st.chat_message('assistant').write_stream(
+            stream_text(safely_escape_dollars(st.session_state['messages'][-1]['content'][0]['text']))
+        )
+        streaming_completed = True
 
     st.session_state['spinner_container'] = st.container()
 
@@ -159,7 +180,8 @@ def render_analytics_agent():
         st.warning("Configure `OPENAI_API_KEY` before running agent analysis.")
     user_input = st.chat_input(
         max_chars = MAX_CHARS, 
-        disabled=not api_key_available,
+        disabled=(not api_key_available) or agent_turn_active,
+        submit_mode='disable',
     )
 
     if st.session_state['show_sample']:
@@ -170,7 +192,7 @@ def render_analytics_agent():
                 width='stretch',
                 on_click=select_sample_prompt,
                 args=('Find me something interesting in this data and plot it',),
-                disabled=(not api_key_available) or (st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False),
+                disabled=(not api_key_available) or agent_turn_active or (st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False),
             )
         with col2:
             st.button(
@@ -178,12 +200,23 @@ def render_analytics_agent():
                 width='stretch',
                 on_click=select_sample_prompt,
                 args=('Please identify interesting patterns/correlations in the data and plot them',),
-                disabled=(not api_key_available) or (st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False),
+                disabled=(not api_key_available) or agent_turn_active or (st.session_state['disable_sample_button'] if 'disable_sample_button' in st.session_state else False),
             )
         
-    user_input = user_input or st.session_state.pop('pending_sample_prompt', None)
+    if agent_turn_state == 'idle':
+        user_input = user_input or st.session_state.pop('pending_sample_prompt', None)
+        if user_input is not None and user_input.strip():
+            st.session_state['pending_agent_prompt'] = user_input
+            st.session_state['agent_turn_state'] = 'queued'
+            st.rerun()
 
-    if user_input is not None and user_input.strip():
+    if agent_turn_state == 'queued':
+        user_input = st.session_state.pop('pending_agent_prompt', None)
+        if user_input is None:
+            user_input = st.session_state.pop('pending_sample_prompt', None)
+        if not isinstance(user_input, str) or not user_input.strip():
+            st.session_state['agent_turn_state'] = 'idle'
+            st.rerun()
         with st.spinner('Loading...'):
             st.session_state['messages'].append(
                 {
@@ -199,7 +232,15 @@ def render_analytics_agent():
             )
             with st.session_state['messages_container']:
                 st.chat_message('user').write(safely_escape_dollars(user_input))  # Safely escape dollar signs for LaTeX rendering
-            st.session_state['messages'] = generate_ai_response(st.session_state['vetted_files'], st.session_state['model'])
-            st.session_state['count'] += 1
-        st.chat_message('assistant').write_stream(stream_text(safely_escape_dollars(st.session_state['messages'][-1]['content'][0]['text'])))  # Safely escape dollar signs for LaTeX rendering
+            try:
+                st.session_state['messages'] = generate_ai_response(st.session_state['vetted_files'], st.session_state['model'])
+                st.session_state['count'] += 1
+            except Exception:
+                st.session_state['agent_turn_state'] = 'idle'
+                raise
+        st.session_state['agent_turn_state'] = 'streaming'
+        st.rerun()
+
+    if streaming_completed:
+        st.session_state['agent_turn_state'] = 'idle'
         st.rerun()

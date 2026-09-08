@@ -71,6 +71,9 @@ def reset_analysis():
     st.session_state['disable_sample_button'] = False
     st.session_state['context_window_usage'] = 0
     st.session_state['context_window_tokens'] = 0
+    st.session_state['agent_turn_state'] = 'idle'
+    st.session_state.pop('pending_agent_prompt', None)
+    st.session_state.pop('pending_sample_prompt', None)
     st.session_state['session_id'] = str(uuid.uuid4())
     print('###############################')
     print('reset_analysis')
@@ -115,6 +118,7 @@ def _is_sensitive_session_key(key):
 def select_sample_prompt(prompt):
     """Queue a sample prompt from a button callback for the next script run."""
     st.session_state['pending_sample_prompt'] = prompt
+    st.session_state['agent_turn_state'] = 'queued'
     st.session_state['show_sample'] = False
     st.session_state['disable_sample_button'] = True
 
@@ -131,7 +135,7 @@ def render_ai_prompt():
             st.write(messages_wo_system_message)
 
 
-def render_researcher_notes():
+def render_researcher_notes(disabled=False):
     # Keep the persisted value separate from the widget key.  On a trace
     # restore, Streamlit can otherwise reconcile a prior browser-side empty
     # textarea value over the newly restored ``researcher_notes`` state.
@@ -148,6 +152,7 @@ def render_researcher_notes():
         help="Optional human context to include in context_bundle.json when exporting a research bundle.",
         placeholder="Add assumptions, domain context, data caveats, or review notes to export with the bundle.",
         height=180,
+        disabled=disabled,
     )
     st.sidebar.caption("These notes are exported into the research bundle.")
 
@@ -551,30 +556,47 @@ def render_trace_export():
     if "messages" not in st.session_state and "vetted_files" not in st.session_state:
         return
 
+    export_actions_disabled = st.session_state.get("agent_turn_state", "idle") != "idle"
     st.sidebar.write("Analysis Trace")
     st.sidebar.caption("Prepare a JSON snapshot of the current analysis session when you need to export it.")
-    if st.sidebar.button("Prepare Trace Export", key="prepare_trace_export", width='stretch'):
+    if st.sidebar.button(
+        "Prepare Trace Export",
+        key="prepare_trace_export",
+        width='stretch',
+        disabled=export_actions_disabled,
+    ):
         trace = build_analysis_trace()
         try:
             st.session_state["trace_export_json"] = serialize_analysis_trace(trace)
         except TraceExportError as exc:
             st.session_state.pop("trace_export_json", None)
             st.session_state.pop("trace_export_session_id", None)
+            st.session_state.pop("trace_export_fingerprint", None)
             st.sidebar.error(str(exc))
         else:
             st.session_state["trace_export_session_id"] = trace.get("session_id", "session")
+            st.session_state["trace_export_fingerprint"] = _trace_export_fingerprint(trace)
 
     if "trace_export_json" in st.session_state:
-        st.sidebar.download_button(
-            label=":green[Download Analysis Trace]",
-            data=st.session_state["trace_export_json"],
-            file_name=f"arctic_analytics_trace_{st.session_state.get('trace_export_session_id', 'session')}.json",
-            mime="application/json",
-            key="download_trace_export",
-            width='stretch',
-        )
+        if _trace_export_cache_is_current():
+            st.sidebar.download_button(
+                label=":green[Download Analysis Trace]",
+                data=st.session_state["trace_export_json"],
+                file_name=f"arctic_analytics_trace_{st.session_state.get('trace_export_session_id', 'session')}.json",
+                mime="application/json",
+                key="download_trace_export",
+                width='stretch',
+            )
+        else:
+            _clear_trace_export_cache()
+            st.sidebar.info(_export_cache_stale_message())
 
-    if st.sidebar.button("Prepare Research Bundle", key="prepare_research_bundle", width='stretch'):
+    if st.sidebar.button(
+        "Prepare Research Bundle",
+        key="prepare_research_bundle",
+        width='stretch',
+        disabled=export_actions_disabled,
+    ):
         trace = build_analysis_trace()
         session = build_research_session_from_streamlit(trace)
         st.session_state["research_bundle_zip"] = build_research_bundle_zip(session)
@@ -593,7 +615,34 @@ def render_trace_export():
             )
         else:
             _clear_research_bundle_cache()
-            st.sidebar.info("Analysis inputs changed. Prepare the research bundle again before exporting.")
+            st.sidebar.info(_export_cache_stale_message())
+
+
+def _export_cache_stale_message():
+    if st.session_state.get("agent_turn_state", "idle") != "idle":
+        return "Analysis is running. Prepare the export after it finishes."
+    return "Analysis inputs changed. Prepare the export again before downloading."
+
+
+def _trace_export_fingerprint(trace=None):
+    if trace is None:
+        trace = build_analysis_trace()
+    trace_for_hash = dict(trace)
+    trace_for_hash.pop("timestamp", None)
+    encoded = json.dumps(trace_for_hash, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _trace_export_cache_is_current():
+    return (
+        st.session_state.get("agent_turn_state", "idle") == "idle"
+        and st.session_state.get("trace_export_fingerprint") == _trace_export_fingerprint()
+    )
+
+
+def _clear_trace_export_cache():
+    for key in ("trace_export_json", "trace_export_session_id", "trace_export_fingerprint"):
+        st.session_state.pop(key, None)
 
 def _research_bundle_fingerprint(trace=None):
     if trace is None:
@@ -614,7 +663,10 @@ def _research_bundle_fingerprint(trace=None):
     return hashlib.sha256(encoded).hexdigest()
 
 def _research_bundle_cache_is_current():
-    return st.session_state.get("research_bundle_fingerprint") == _research_bundle_fingerprint()
+    return (
+        st.session_state.get("agent_turn_state", "idle") == "idle"
+        and st.session_state.get("research_bundle_fingerprint") == _research_bundle_fingerprint()
+    )
 
 def _clear_research_bundle_cache():
     for key in ("research_bundle_zip", "research_bundle_session_id", "research_bundle_fingerprint"):
