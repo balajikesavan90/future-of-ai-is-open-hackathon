@@ -580,6 +580,29 @@ def test_researcher_notes_textarea_displays_restored_value_and_saves_edits():
     assert app.session_state["researcher_notes"] == "Edited research context."
 
 
+def test_researcher_notes_textarea_is_disabled_during_an_agent_turn():
+    def script():
+        import streamlit as st
+
+        from arctic_analytics.streamlit.helpers import render_researcher_notes
+
+        st.session_state.setdefault("researcher_notes", "Keep this context.")
+        st.session_state.setdefault("agent_turn_state", "idle")
+        render_researcher_notes(
+            disabled=st.session_state.get("agent_turn_state") != "idle"
+        )
+
+    app = AppTest.from_function(script).run()
+    assert not app.exception
+    assert not app.text_area(key="researcher_notes_widget").disabled
+
+    app.session_state["agent_turn_state"] = "running"
+    app.run()
+
+    assert not app.exception
+    assert app.text_area(key="researcher_notes_widget").disabled
+
+
 def test_restore_trace_session_ignores_model_from_older_traces():
     st.session_state.clear()
     trace = {"messages": [], "model": "gpt-5.4-mini-2026-03-17"}

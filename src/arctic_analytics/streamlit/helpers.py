@@ -71,6 +71,9 @@ def reset_analysis():
     st.session_state['disable_sample_button'] = False
     st.session_state['context_window_usage'] = 0
     st.session_state['context_window_tokens'] = 0
+    st.session_state['agent_turn_state'] = 'idle'
+    st.session_state.pop('pending_agent_prompt', None)
+    st.session_state.pop('pending_sample_prompt', None)
     st.session_state['session_id'] = str(uuid.uuid4())
     print('###############################')
     print('reset_analysis')
@@ -115,6 +118,7 @@ def _is_sensitive_session_key(key):
 def select_sample_prompt(prompt):
     """Queue a sample prompt from a button callback for the next script run."""
     st.session_state['pending_sample_prompt'] = prompt
+    st.session_state['agent_turn_state'] = 'queued'
     st.session_state['show_sample'] = False
     st.session_state['disable_sample_button'] = True
 
@@ -131,7 +135,7 @@ def render_ai_prompt():
             st.write(messages_wo_system_message)
 
 
-def render_researcher_notes():
+def render_researcher_notes(disabled=False):
     # Keep the persisted value separate from the widget key.  On a trace
     # restore, Streamlit can otherwise reconcile a prior browser-side empty
     # textarea value over the newly restored ``researcher_notes`` state.
@@ -148,6 +152,7 @@ def render_researcher_notes():
         help="Optional human context to include in context_bundle.json when exporting a research bundle.",
         placeholder="Add assumptions, domain context, data caveats, or review notes to export with the bundle.",
         height=180,
+        disabled=disabled,
     )
     st.sidebar.caption("These notes are exported into the research bundle.")
 
