@@ -26,6 +26,7 @@ from arctic_analytics.llm.tokenization import safe_encoding_for_model
 
 
 class OpenAIResponsesUtility:
+    _MAX_MODEL_TOOL_OUTPUT_TOKENS = 5_000
     _IMAGE_PATCH_SIZE = 32
     _GPT_56_IMAGE_TOKEN_MULTIPLIER = 1.2
     _MAX_IMAGE_PATCHES = 30_000
@@ -214,7 +215,7 @@ class OpenAIResponsesUtility:
             # The initial system message is represented by the Responses API's
             # dedicated ``instructions`` field.  Keeping it in ``input`` as
             # well duplicates it in both the request and local context check.
-            'input': messages[1:],
+            'input': self._messages_for_model(messages[1:]),
             'instructions': messages[0]['content'][0]['text'],
             'model': model,
             'include': include
@@ -236,6 +237,37 @@ class OpenAIResponsesUtility:
 
 
         return args
+
+    @staticmethod
+    def _messages_for_model(messages):
+        """Remove UI-only payloads before sending conversation history to the API."""
+        return [
+            {key: value for key, value in message.items() if key != 'display_output'}
+            if isinstance(message, dict) else message
+            for message in messages
+        ]
+
+    def _oversized_tool_output_notice(self, tool_name, tool_response):
+        """Return a compact model-facing notice for oversized Python outputs."""
+        if tool_name not in {'run_python_expression', 'run_python_function'}:
+            return None
+        if not isinstance(tool_response, str) or tool_response.startswith('data:image/'):
+            return None
+
+        token_count = len(self.enc_gpt4.encode(tool_response))
+        logging.info(
+            'Token count for tool response - %s - %s',
+            token_count,
+            st.session_state['session_id'],
+        )
+        if token_count < self._MAX_MODEL_TOOL_OUTPUT_TOKENS:
+            return None
+
+        return (
+            f'Code execution returned a result of {token_count:,} tokens, meeting or exceeding '
+            f'the {self._MAX_MODEL_TOOL_OUTPUT_TOKENS:,}-token context limit. The complete output '
+            'was shown to the user. Proceed with the analysis and run smaller cuts only as needed.'
+        )
     
 
     def _process_api_response(self, response, messages, model):
@@ -325,12 +357,18 @@ class OpenAIResponsesUtility:
                                 }
                             ],
                         })
-                    else:                           
-                        messages.append({
+                    else:
+                        model_tool_response = self._oversized_tool_output_notice(
+                            tool_name, str(tool_response)
+                        )
+                        tool_output = {
                             'type': 'function_call_output',
                             'call_id': tool_call['call_id'],
-                            'output': str(tool_response),
-                        })
+                            'output': model_tool_response or str(tool_response),
+                        }
+                        if model_tool_response:
+                            tool_output['display_output'] = str(tool_response)
+                        messages.append(tool_output)
                     with st.session_state['messages_container']:
                         with st.chat_message('assistant'):
                             render_tool_response(tool_response)
@@ -349,7 +387,7 @@ class OpenAIResponsesUtility:
 
             # Keep the system message solely in ``instructions``, as on the
             # initial request. It must not be duplicated in follow-up input.
-            args['input'] = messages[1:]
+            args['input'] = self._messages_for_model(messages[1:])
             args['tool_choice'] = 'auto'
             response = self._responses_with_backoff(**args)
 
@@ -506,14 +544,6 @@ class OpenAIResponsesUtility:
 
         logging.info(f'Final execution result - {result[:100]}... - {st.session_state["session_id"]}' 
                     if len(str(result)) > 100 else f'Final execution result - {result} - {st.session_state["session_id"]}')
-
-        # calculate token count for the result
-        token_count = len(self.enc_gpt4.encode(str(result)))
-        logging.info(f'Token count for tool response - {token_count} - {st.session_state["session_id"]}')
-
-        if token_count >= 5000 and report_function != 'generate_plot':
-            logging.error(f"Code execution returned a result of {token_count} tokens. Please refactor the code to keep the result under 5000 tokens.")
-            result = f"Code execution returned a result of {token_count} tokens. Please refactor the code to keep the result under 5000 tokens."
 
         return result
 

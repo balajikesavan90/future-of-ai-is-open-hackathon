@@ -261,6 +261,31 @@ def test_messages_for_resume_uses_full_fidelity_messages_and_sanitizes_old_chart
     assert messages_for_resume(trace)[2]["output"][0]["image_url"] == VALID_PNG_DATA_URL
 
 
+def test_messages_for_resume_preserves_user_visible_display_output():
+    trace = resumable_trace()
+    system_message = {
+        "type": "message",
+        "role": "system",
+        "content": [{"type": "input_text", "text": "System prompt"}],
+    }
+    trace["resume"]["messages"] = [system_message, {
+        "type": "function_call",
+        "call_id": "call_1",
+        "name": "run_python_expression",
+        "arguments": "{}",
+    }, {
+        "type": "function_call_output",
+        "call_id": "call_1",
+        "output": "Compact model-facing notice.",
+        "display_output": "Full user-visible result.",
+    }]
+
+    restored = messages_for_resume(trace)
+
+    assert restored[-1]["output"] == "Compact model-facing notice."
+    assert restored[-1]["display_output"] == "Full user-visible result."
+
+
 def test_messages_for_resume_discards_non_dict_history_items():
     trace = resumable_trace()
     system_message = {

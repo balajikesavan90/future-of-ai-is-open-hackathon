@@ -54,6 +54,37 @@ def test_prepare_api_args_uses_system_message_only_as_instructions():
     assert args["input"] == [user_message]
 
 
+def test_prepare_api_args_excludes_user_visible_tool_output_from_model_context():
+    client = OpenAIResponsesUtility()
+    messages = [
+        {"role": "system", "content": [{"text": "System instructions."}]},
+        {"role": "user", "content": [{"text": "Analyze the data."}]},
+        {
+            "type": "function_call_output",
+            "call_id": "call_1",
+            "output": "Compact model-facing notice.",
+            "display_output": "Full user-visible result.",
+        },
+    ]
+
+    args = client._prepare_api_args(
+        messages=messages,
+        model="gpt-5.6-luna",
+        response_format=None,
+        reasoning_effort=None,
+        tools=[],
+        tool_choice="auto",
+        include=[],
+    )
+
+    assert args["input"][-1] == {
+        "type": "function_call_output",
+        "call_id": "call_1",
+        "output": "Compact model-facing notice.",
+    }
+    assert messages[-1]["display_output"] == "Full user-visible result."
+
+
 def test_tool_call_follow_up_keeps_system_message_out_of_input(monkeypatch):
     system_message = {"role": "system", "content": [{"text": "System instructions."}]}
     user_message = {"role": "user", "content": [{"text": "Analyze the data."}]}
@@ -91,6 +122,52 @@ def test_tool_call_follow_up_keeps_system_message_out_of_input(monkeypatch):
 
     assert captured_requests[0]["input"] == messages[1:]
     assert system_message not in captured_requests[0]["input"]
+
+
+def test_oversized_tool_output_is_visible_but_not_sent_to_model(monkeypatch):
+    system_message = {"role": "system", "content": [{"text": "System instructions."}]}
+    user_message = {"role": "user", "content": [{"text": "Analyze the data."}]}
+    messages = [system_message, user_message]
+    captured_requests = []
+    rendered = []
+    visible_output = "row " * 5_000
+    client = OpenAIResponsesUtility()
+
+    monkeypatch.setattr(
+        openai_responses,
+        "st",
+        SimpleNamespace(
+            session_state={"messages_container": nullcontext(), "session_id": "test-session"},
+            chat_message=lambda _role: nullcontext(),
+        ),
+    )
+    monkeypatch.setattr(openai_responses, "render_tool_response", rendered.append)
+    monkeypatch.setattr(
+        client,
+        "_responses_with_backoff",
+        lambda **kwargs: captured_requests.append(kwargs) or object(),
+    )
+    monkeypatch.setattr(
+        client,
+        "_process_api_response",
+        lambda _response, updated_messages, _model: ([], 0, updated_messages, 0, 0),
+    )
+
+    client._process_tool_call_loop(
+        tool_calls=[{"name": "run_python_expression", "arguments": "{}", "call_id": "call_1"}],
+        messages=messages,
+        tool_handlers={"run_python_expression": lambda _arguments: visible_output},
+        args={"instructions": "System instructions.", "input": [user_message]},
+        model="gpt-5.6-luna",
+    )
+
+    tool_message = messages[-1]
+    assert tool_message["display_output"] == visible_output
+    assert f"{len(client.enc_gpt4.encode(visible_output)):,}" in tool_message["output"]
+    assert visible_output not in tool_message["output"]
+    assert rendered == [visible_output]
+    assert captured_requests[0]["input"][-1]["output"] == tool_message["output"]
+    assert "display_output" not in captured_requests[0]["input"][-1]
 
 
 def test_image_dimensions_skips_oversized_base64_before_decoding(monkeypatch):

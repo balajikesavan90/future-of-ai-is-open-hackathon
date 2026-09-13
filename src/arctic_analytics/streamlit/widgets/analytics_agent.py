@@ -133,10 +133,11 @@ def render_analytics_agent():
                     render_tool_call(msg)
             elif msg['type'] == 'function_call_output':
                 with st.chat_message('assistant'):
-                    if isinstance(msg['output'], str):
-                        render_tool_response(msg['output'])
-                    elif isinstance(msg['output'], list):
-                        for output_item in msg['output']:
+                    display_output = msg.get('display_output', msg['output'])
+                    if isinstance(display_output, str):
+                        render_tool_response(display_output)
+                    elif isinstance(display_output, list):
+                        for output_item in display_output:
                             image_url = output_item.get('image_url') if isinstance(output_item, dict) else None
                             if isinstance(image_url, str):
                                 render_tool_response(image_url)

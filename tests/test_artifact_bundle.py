@@ -154,6 +154,28 @@ def test_research_bundle_writes_raw_image_outputs_from_sanitized_trace(tmp_path)
         assert "research_bundle/figures/001_figure.png" in archive.namelist()
 
 
+def test_research_bundle_writes_full_display_output_when_model_output_is_compact(tmp_path):
+    full_output = '{"0":{"value":0},"1":{"value":1}}'
+    model_notice = "The complete output was shown to the user."
+    session = ResearchSession(
+        analysis_trace=AnalysisTrace(
+            {"outputs": [{"type": "function_call_output", "output": model_notice}]}
+        ),
+        context_bundle=ContextBundle({}),
+        raw_outputs=[{
+            "type": "function_call_output",
+            "output": model_notice,
+            "display_output": full_output,
+        }],
+    )
+
+    bundle = write_research_bundle(session, tmp_path / "bundle")
+
+    output = json.loads((bundle.output_dir / "outputs" / "001_output.json").read_text())
+    assert output["output"] == model_notice
+    assert output["display_output"] == full_output
+
+
 def test_research_bundle_zip_uses_posix_archive_names(monkeypatch):
     arcnames = []
 

@@ -88,6 +88,7 @@ def write_outputs_and_figures(
 
     outputs = trace.get("outputs", [])
     figure_outputs = raw_outputs or outputs
+    output_records = raw_outputs or outputs
 
     written_figure_indexes = set()
     for index, output in enumerate(figure_outputs, start=1):
@@ -97,7 +98,7 @@ def write_outputs_and_figures(
             written.append(image_path)
             written_figure_indexes.add(index)
 
-    for index, output in enumerate(outputs, start=1):
+    for index, output in enumerate(output_records, start=1):
         if index in written_figure_indexes:
             continue
 

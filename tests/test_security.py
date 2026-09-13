@@ -120,7 +120,7 @@ def generate_report():
     ]
 
 
-def test_tool_execution_rejects_oversized_text_outputs():
+def test_tool_execution_preserves_oversized_text_outputs_for_display():
     st.session_state.clear()
     st.session_state["session_id"] = "test-session"
     client = OpenAIResponsesUtility()
@@ -141,7 +141,8 @@ def generate_report():
         report_function="generate_report",
     )
 
-    assert "Please refactor the code to keep the result under 5000 tokens" in result
+    assert result.startswith('{"0":')
+    assert '"2999":{"value":2999}' in result
 
 
 @pytest.mark.parametrize(
