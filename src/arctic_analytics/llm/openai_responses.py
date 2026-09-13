@@ -19,7 +19,7 @@ from arctic_analytics.config import (
     get_openai_api_key,
     validate_openai_model,
 )
-from arctic_analytics.streamlit.helpers import safely_escape_dollars, render_tool_call, render_tool_response
+from arctic_analytics.streamlit.helpers import safely_escape_dollars, render_tool_call, render_tool_response, retain_tool_output
 from arctic_analytics.core.security import safely_execute_code
 from arctic_analytics.llm.tokenization import safe_encoding_for_model
 
@@ -393,12 +393,14 @@ class OpenAIResponsesUtility:
                             )
                             tool_output['display_output'] = display_output
                             if display_output_truncated:
+                                retain_tool_output(tool_call['call_id'], str(tool_response))
+                                tool_output['display_output_ref'] = tool_call['call_id']
                                 tool_output['display_output_truncated'] = True
                                 tool_output['display_output_length_chars'] = len(str(tool_response))
                         messages.append(tool_output)
                     with st.session_state['messages_container']:
                         with st.chat_message('assistant'):
-                            render_tool_response(tool_response, output_id=tool_call['call_id'])
+                            render_tool_response(tool_response, output_id=tool_call['call_id'], full_output_path=(st.session_state.get('retained_tool_outputs', {}).get(tool_call['call_id'])))
                 except Exception as e:
                     error_message = f"Error executing tool {tool_call['name']}: {str(e)}"
                     logging.error(error_message)

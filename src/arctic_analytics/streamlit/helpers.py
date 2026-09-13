@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 import pandas as pd
 import matplotlib.figure as mfigure
 import os
+import tempfile
+from pathlib import Path
 
 from arctic_analytics import __version__
 from arctic_analytics.config import (
@@ -28,6 +30,8 @@ MAX_RENDERED_TOOL_RESPONSE_CHARS = 50_000
 REDACTED_SECRET_VALUE = "[redacted]"
 SENSITIVE_SESSION_KEY_MARKERS = ("api_key", "token", "password", "secret")
 RESEARCHER_NOTES_WIDGET_KEY = "researcher_notes_widget"
+RETAINED_TOOL_OUTPUTS_KEY = "retained_tool_outputs"
+RETAINED_TOOL_OUTPUT_DIRECTORY_KEY = "retained_tool_output_directory"
 
 
 class TraceExportError(ValueError):
@@ -772,7 +776,23 @@ def render_tool_call(tool_call):
         if not arguments:
             st.code(str(raw_arguments), language='json')
 
-def render_tool_response(tool_response, output_id=None):
+def retain_tool_output(output_id, tool_response):
+    """Persist an oversized result outside conversation state for this session only."""
+    directory = st.session_state.get(RETAINED_TOOL_OUTPUT_DIRECTORY_KEY)
+    if directory is None:
+        directory = tempfile.TemporaryDirectory(prefix="arctic-analytics-tool-output-")
+        st.session_state[RETAINED_TOOL_OUTPUT_DIRECTORY_KEY] = directory
+    path = Path(directory.name) / f"{output_id}.txt"
+    path.write_text(tool_response, encoding="utf-8")
+    st.session_state.setdefault(RETAINED_TOOL_OUTPUTS_KEY, {})[output_id] = str(path)
+
+
+def retained_tool_output_path(output_id):
+    path = st.session_state.get(RETAINED_TOOL_OUTPUTS_KEY, {}).get(output_id)
+    return path if isinstance(path, str) and Path(path).is_file() else None
+
+
+def render_tool_response(tool_response, output_id=None, full_output_path=None):
     """
     Renders a tool response in the Streamlit UI
     
@@ -789,16 +809,14 @@ def render_tool_response(tool_response, output_id=None):
         st.image(tool_response)
         return
 
-    if len(tool_response) > MAX_RENDERED_TOOL_RESPONSE_CHARS:
+    if len(tool_response) > MAX_RENDERED_TOOL_RESPONSE_CHARS or full_output_path:
         preview = tool_response[:MAX_RENDERED_TOOL_RESPONSE_CHARS]
-        st.warning(
-            f"Tool output is {len(tool_response):,} characters. Showing the first "
-            f"{MAX_RENDERED_TOOL_RESPONSE_CHARS:,} characters to keep the app responsive."
-        )
+        if len(tool_response) > MAX_RENDERED_TOOL_RESPONSE_CHARS:
+            st.warning(f"Tool output is {len(tool_response):,} characters. Showing a preview to keep the app responsive.")
         st.code(preview, language="json" if preview.lstrip().startswith(("{", "[")) else None)
         st.download_button(
             "Download full tool output",
-            data=tool_response,
+            data=(lambda: open(full_output_path, "rb")) if full_output_path else tool_response,
             file_name="tool-output.txt",
             mime="text/plain",
             key=(

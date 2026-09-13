@@ -9,7 +9,7 @@ from arctic_analytics.core.system_messages import construct_system_message
 from arctic_analytics.core.trace_resume import replace_resumed_system_message
 
 from arctic_analytics.streamlit.widgets.prompt_guide import render_tool_calling_analysis_prompt_guide
-from arctic_analytics.streamlit.helpers import render_ai_prompt, render_researcher_notes, safely_escape_dollars, render_tool_call, render_tool_response, select_sample_prompt
+from arctic_analytics.streamlit.helpers import render_ai_prompt, render_researcher_notes, safely_escape_dollars, render_tool_call, render_tool_response, select_sample_prompt, retained_tool_output_path
 from arctic_analytics.streamlit.helpers import is_dev_environment
 
 
@@ -137,10 +137,10 @@ def render_analytics_agent():
                     if display_output is None:
                         display_output = msg['output']
                     if isinstance(display_output, str):
-                        render_tool_response(display_output, output_id=msg.get('call_id'))
+                        render_tool_response(display_output, output_id=msg.get('call_id'), full_output_path=retained_tool_output_path(msg.get('display_output_ref')))
                         if msg.get('display_output_truncated'):
                             st.caption(
-                                'Historical tool output is a preview; download the complete response from its original result.'
+                                'Historical tool output is a preview; the complete response is available while this session remains active.'
                             )
                     elif isinstance(display_output, list):
                         for output_item in display_output:
