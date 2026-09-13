@@ -47,6 +47,7 @@ def setup_session_state():
 
 def reset_app():
     logging.info(f'reset_app - {st.session_state["session_id"]}')
+    clear_retained_tool_outputs()
     # Clear all keys in st.session_state
     for key in list(st.session_state.keys()):
         del st.session_state[key]
@@ -69,6 +70,7 @@ def goto_data_analysis_widget():
 
 def reset_analysis():
     logging.info(f'reset_analysis - {st.session_state["session_id"]}')
+    clear_retained_tool_outputs()
     st.session_state['messages'] = []
     st.session_state['count'] = 0
     st.session_state['cost'] = 0
@@ -280,7 +282,11 @@ def _extract_raw_outputs(messages):
         if not isinstance(message, dict):
             continue
         if message.get("type") == "function_call_output":
-            outputs.append(message)
+            output = dict(message)
+            retained_path = retained_tool_output_path(output.get("display_output_ref"))
+            if retained_path:
+                output["_retained_output_path"] = retained_path
+            outputs.append(output)
             continue
         if "output" in message:
             outputs.append(
@@ -790,6 +796,13 @@ def retain_tool_output(output_id, tool_response):
 def retained_tool_output_path(output_id):
     path = st.session_state.get(RETAINED_TOOL_OUTPUTS_KEY, {}).get(output_id)
     return path if isinstance(path, str) and Path(path).is_file() else None
+
+
+def clear_retained_tool_outputs():
+    directory = st.session_state.pop(RETAINED_TOOL_OUTPUT_DIRECTORY_KEY, None)
+    if directory is not None:
+        directory.cleanup()
+    st.session_state.pop(RETAINED_TOOL_OUTPUTS_KEY, None)
 
 
 def render_tool_response(tool_response, output_id=None, full_output_path=None):

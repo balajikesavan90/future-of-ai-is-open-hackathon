@@ -137,10 +137,13 @@ def render_analytics_agent():
                     if display_output is None:
                         display_output = msg['output']
                     if isinstance(display_output, str):
-                        render_tool_response(display_output, output_id=msg.get('call_id'), full_output_path=retained_tool_output_path(msg.get('display_output_ref')))
+                        full_output_path = retained_tool_output_path(msg.get('display_output_ref'))
+                        render_tool_response(display_output, output_id=msg.get('call_id'), full_output_path=full_output_path)
                         if msg.get('display_output_truncated'):
                             st.caption(
-                                'Historical tool output is a preview; the complete response is available while this session remains active.'
+                                'Historical tool output is a preview; the complete response is available for download in this session.'
+                                if full_output_path else
+                                'Historical tool output is a preview; the complete response is unavailable after resume.'
                             )
                     elif isinstance(display_output, list):
                         for output_item in display_output:

@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import binascii
 import json
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -115,8 +116,14 @@ def write_outputs_and_figures(
             continue
 
         path = outputs_dir / f"{index:03d}_output.json"
-        path.write_text(json.dumps(json_safe(output), indent=2, default=str) + "\n")
+        serialized_output = dict(output) if isinstance(output, dict) else output
+        retained_path = serialized_output.pop("_retained_output_path", None) if isinstance(serialized_output, dict) else None
+        path.write_text(json.dumps(json_safe(serialized_output), indent=2, default=str) + "\n")
         written.append(path)
+        if isinstance(retained_path, str) and Path(retained_path).is_file():
+            full_output_path = outputs_dir / f"{index:03d}_full_output.txt"
+            shutil.copyfile(retained_path, full_output_path)
+            written.append(full_output_path)
 
     if not output_records:
         path = outputs_dir / "outputs_empty.md"

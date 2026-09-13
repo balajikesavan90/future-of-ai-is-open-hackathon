@@ -247,6 +247,7 @@ class OpenAIResponsesUtility:
             'display_output',
             'display_output_truncated',
             'display_output_length_chars',
+            'display_output_ref',
         }
         return [
             {key: value for key, value in message.items() if key not in ui_only_fields}
