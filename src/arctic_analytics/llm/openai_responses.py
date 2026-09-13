@@ -398,7 +398,7 @@ class OpenAIResponsesUtility:
                         messages.append(tool_output)
                     with st.session_state['messages_container']:
                         with st.chat_message('assistant'):
-                            render_tool_response(tool_response)
+                            render_tool_response(tool_response, output_id=tool_call['call_id'])
                 except Exception as e:
                     error_message = f"Error executing tool {tool_call['name']}: {str(e)}"
                     logging.error(error_message)
@@ -409,7 +409,7 @@ class OpenAIResponsesUtility:
                     })
                     with st.session_state['messages_container']:
                         with st.chat_message('assistant'):
-                            render_tool_response(error_message)
+                            render_tool_response(error_message, output_id=tool_call['call_id'])
         
 
             # Keep the system message solely in ``instructions``, as on the

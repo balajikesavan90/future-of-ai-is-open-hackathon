@@ -135,7 +135,7 @@ def render_analytics_agent():
                 with st.chat_message('assistant'):
                     display_output = msg.get('display_output', msg['output'])
                     if isinstance(display_output, str):
-                        render_tool_response(display_output)
+                        render_tool_response(display_output, output_id=msg.get('call_id'))
                         if msg.get('display_output_truncated'):
                             st.caption(
                                 'Historical tool output was truncated for safe replay and export.'
@@ -144,7 +144,7 @@ def render_analytics_agent():
                         for output_item in display_output:
                             image_url = output_item.get('image_url') if isinstance(output_item, dict) else None
                             if isinstance(image_url, str):
-                                render_tool_response(image_url)
+                                render_tool_response(image_url, output_id=msg.get('call_id'))
                             else:
                                 st.caption('Historical media output was omitted from the exported trace.')
 

@@ -772,12 +772,13 @@ def render_tool_call(tool_call):
         if not arguments:
             st.code(str(raw_arguments), language='json')
 
-def render_tool_response(tool_response):
+def render_tool_response(tool_response, output_id=None):
     """
     Renders a tool response in the Streamlit UI
     
     Args:
-        tool_response: The tool response to render
+        tool_response: The tool response to render.
+        output_id: Stable identifier used to avoid duplicate download-widget keys.
     """
     if tool_response.startswith((
         'data:image/png;base64,',
@@ -800,7 +801,11 @@ def render_tool_response(tool_response):
             data=tool_response,
             file_name="tool-output.txt",
             mime="text/plain",
-            key=f"tool-output-{hashlib.sha256(tool_response.encode('utf-8')).hexdigest()}",
+            key=(
+                f"tool-output-{output_id}"
+                if output_id is not None
+                else f"tool-output-{hashlib.sha256(tool_response.encode('utf-8')).hexdigest()}"
+            ),
             icon=":material/download:",
             on_click="ignore",
         )

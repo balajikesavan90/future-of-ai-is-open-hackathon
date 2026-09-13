@@ -100,7 +100,7 @@ def test_tool_call_follow_up_keeps_system_message_out_of_input(monkeypatch):
             chat_message=lambda _role: nullcontext(),
         ),
     )
-    monkeypatch.setattr(openai_responses, "render_tool_response", lambda _response: None)
+    monkeypatch.setattr(openai_responses, "render_tool_response", lambda _response, **_kwargs: None)
     monkeypatch.setattr(
         client,
         "_responses_with_backoff",
@@ -141,7 +141,11 @@ def test_oversized_tool_output_is_visible_but_not_sent_to_model(monkeypatch):
             chat_message=lambda _role: nullcontext(),
         ),
     )
-    monkeypatch.setattr(openai_responses, "render_tool_response", rendered.append)
+    monkeypatch.setattr(
+        openai_responses,
+        "render_tool_response",
+        lambda response, **_kwargs: rendered.append(response),
+    )
     monkeypatch.setattr(
         client,
         "_responses_with_backoff",
