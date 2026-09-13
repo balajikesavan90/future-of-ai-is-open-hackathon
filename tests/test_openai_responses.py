@@ -176,6 +176,7 @@ def test_oversized_tool_output_is_visible_but_not_sent_to_model(monkeypatch):
     messages = [system_message, user_message]
     captured_requests = []
     rendered = []
+    user_notices = []
     visible_output = "row " * 5_000
     client = OpenAIResponsesUtility()
 
@@ -185,6 +186,7 @@ def test_oversized_tool_output_is_visible_but_not_sent_to_model(monkeypatch):
         SimpleNamespace(
             session_state={"messages_container": nullcontext(), "session_id": "test-session"},
             chat_message=lambda _role: nullcontext(),
+            info=user_notices.append,
         ),
     )
     monkeypatch.setattr(
@@ -213,11 +215,15 @@ def test_oversized_tool_output_is_visible_but_not_sent_to_model(monkeypatch):
 
     tool_message = messages[-1]
     assert tool_message["display_output"] == visible_output
+    assert tool_message["display_output_agent_limited"] is True
     assert f"{len(client.enc_gpt4.encode(visible_output)):,}" in tool_message["output"]
+    assert "must inform the user" in tool_message["output"]
     assert visible_output not in tool_message["output"]
     assert rendered == [visible_output]
     assert captured_requests[0]["input"][-1]["output"] == tool_message["output"]
     assert "display_output" not in captured_requests[0]["input"][-1]
+    assert "display_output_agent_limited" not in captured_requests[0]["input"][-1]
+    assert user_notices == [openai_responses.LARGE_PYTHON_OUTPUT_USER_NOTICE]
 
 
 def test_oversized_execution_error_keeps_a_bounded_diagnostic_for_the_model(monkeypatch):

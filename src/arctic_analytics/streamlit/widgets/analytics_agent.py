@@ -9,7 +9,7 @@ from arctic_analytics.core.system_messages import construct_system_message
 from arctic_analytics.core.trace_resume import replace_resumed_system_message
 
 from arctic_analytics.streamlit.widgets.prompt_guide import render_tool_calling_analysis_prompt_guide
-from arctic_analytics.streamlit.helpers import render_ai_prompt, render_researcher_notes, safely_escape_dollars, render_tool_call, render_tool_response, select_sample_prompt, retained_tool_output_path
+from arctic_analytics.streamlit.helpers import LARGE_PYTHON_OUTPUT_USER_NOTICE, render_ai_prompt, render_researcher_notes, safely_escape_dollars, render_tool_call, render_tool_response, select_sample_prompt, retained_tool_output_path
 from arctic_analytics.streamlit.helpers import is_dev_environment
 
 
@@ -143,7 +143,9 @@ def render_analytics_agent():
                             output_id=msg.get('call_id'),
                             full_output_path=full_output_path,
                         )
-                        if msg.get('display_output_truncated') and not rendered_as_dataframe:
+                        if msg.get('display_output_agent_limited'):
+                            st.info(LARGE_PYTHON_OUTPUT_USER_NOTICE)
+                        elif msg.get('display_output_truncated') and not rendered_as_dataframe:
                             st.caption(
                                 'Historical tool output is a preview; the complete response is available for download in this session.'
                                 if full_output_path else

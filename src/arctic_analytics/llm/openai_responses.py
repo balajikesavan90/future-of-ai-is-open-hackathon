@@ -20,6 +20,7 @@ from arctic_analytics.config import (
     validate_openai_model,
 )
 from arctic_analytics.streamlit.helpers import (
+    LARGE_PYTHON_OUTPUT_USER_NOTICE,
     MAX_RETAINED_TOOL_OUTPUT_BYTES,
     safely_escape_dollars,
     render_tool_call,
@@ -254,6 +255,7 @@ class OpenAIResponsesUtility:
             'display_output_truncated',
             'display_output_length_chars',
             'display_output_ref',
+            'display_output_agent_limited',
         }
         return [
             {key: value for key, value in message.items() if key not in ui_only_fields}
@@ -294,7 +296,8 @@ class OpenAIResponsesUtility:
         return (
             f'Code execution returned a result of {token_count:,} tokens, meeting or exceeding '
             f'the {self._MAX_MODEL_TOOL_OUTPUT_TOKENS:,}-token model-output threshold. The complete '
-            'output was omitted from model context. Proceed with the analysis and run smaller cuts only as needed.'
+            'output was omitted from model context. You must inform the user that you cannot see or reason '
+            'about this tool result because of its size. Proceed with the analysis and run smaller cuts only as needed.'
         )
     
 
@@ -423,6 +426,8 @@ class OpenAIResponsesUtility:
                                 str(tool_response)
                             )
                             tool_output['display_output'] = display_output
+                            if not str(tool_response).startswith('Error executing code:'):
+                                tool_output['display_output_agent_limited'] = True
                             if display_output_truncated:
                                 retained_output_path = retain_tool_output(
                                     tool_call['call_id'], str(tool_response)
@@ -440,6 +445,8 @@ class OpenAIResponsesUtility:
                                 full_output_path=retained_output_path,
                                 allow_full_download=not model_tool_response or retained_output_path is not None,
                             )
+                            if tool_output.get('display_output_agent_limited'):
+                                st.info(LARGE_PYTHON_OUTPUT_USER_NOTICE)
                 except Exception as e:
                     error_message = f"Error executing tool {tool_call['name']}: {str(e)}"
                     logging.error(error_message)

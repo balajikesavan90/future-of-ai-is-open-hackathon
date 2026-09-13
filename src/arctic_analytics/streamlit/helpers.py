@@ -29,6 +29,10 @@ TRACE_STRING_PREVIEW_CHARS = 1000
 MAX_RENDERED_TOOL_RESPONSE_CHARS = 50_000
 MAX_RETAINED_TOOL_OUTPUT_BYTES = 10 * 1024 * 1024
 MAX_RETAINED_TOOL_OUTPUT_SESSION_BYTES = 25 * 1024 * 1024
+LARGE_PYTHON_OUTPUT_USER_NOTICE = (
+    "Unlike other Python execution outputs, this result is too large for the agent to see "
+    "and reason about. The agent cannot reason about this table in its final response."
+)
 REDACTED_SECRET_VALUE = "[redacted]"
 SENSITIVE_SESSION_KEY_MARKERS = ("api_key", "token", "password", "secret")
 RESEARCHER_NOTES_WIDGET_KEY = "researcher_notes_widget"
