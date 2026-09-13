@@ -35,7 +35,6 @@ from arctic_analytics.llm.tokenization import safe_encoding_for_model
 class OpenAIResponsesUtility:
     _MAX_MODEL_TOOL_OUTPUT_TOKENS = 5_000
     _MAX_MODEL_ERROR_DIAGNOSTIC_CHARS = 4_000
-    _MAX_RETAINED_DISPLAY_OUTPUT_CHARS = 50_000
     _IMAGE_PATCH_SIZE = 32
     _GPT_56_IMAGE_TOKEN_MULTIPLIER = 1.2
     _MAX_IMAGE_PATCHES = 30_000
@@ -264,10 +263,8 @@ class OpenAIResponsesUtility:
         ]
 
     def _retained_display_output(self, tool_response):
-        """Bound UI/session retention while preserving enough text for safe replay."""
-        if len(tool_response) <= self._MAX_RETAINED_DISPLAY_OUTPUT_CHARS:
-            return tool_response, False
-        return tool_response[:self._MAX_RETAINED_DISPLAY_OUTPUT_CHARS], True
+        """Keep complete results that passed the 10 MiB retention limit."""
+        return tool_response, False
 
     def _oversized_tool_output_notice(self, tool_name, tool_response):
         """Return a compact model-facing notice for oversized Python outputs."""

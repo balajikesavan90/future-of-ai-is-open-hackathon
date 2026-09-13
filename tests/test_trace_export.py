@@ -29,7 +29,7 @@ from arctic_analytics.streamlit.helpers import (
 )
 from arctic_analytics.streamlit import helpers
 from arctic_analytics.config import MAX_MODEL_CONTEXT_TOKENS
-from arctic_analytics.core.trace_resume import MAX_TRACE_BYTES, ResumePreparation, load_analysis_trace
+from arctic_analytics.core.trace_resume import MAX_TRACE_BYTES, ResumePreparation, load_analysis_trace, messages_for_resume
 from arctic_analytics.artifacts import build_research_bundle_zip
 
 
@@ -249,6 +249,39 @@ def test_resume_manifest_preserves_chart_data_urls():
 
     assert trace["messages"][0]["output"][0]["image_url"]["type"] == "image_base64"
     assert trace["resume"]["messages"][0]["output"][0]["image_url"] == chart_url
+
+
+def test_resume_trace_preserves_full_display_output_without_duplicate_export_copies():
+    st.session_state.clear()
+    full_output = pd.DataFrame({"text": ["x" * 1_000] * 100}).to_json(orient="index")
+    system_message = {
+        "type": "message",
+        "role": "system",
+        "content": [{"type": "input_text", "text": "System prompt"}],
+    }
+    st.session_state.update({
+        "session_id": "full-output-export-session",
+        "source": "uploader",
+        "messages": [
+            system_message,
+            {"type": "function_call", "call_id": "call_1", "name": "run_python_expression", "arguments": "{}"},
+            {
+                "type": "function_call_output",
+                "call_id": "call_1",
+                "output": "Compact model-facing notice.",
+                "display_output": full_output,
+                "display_output_agent_limited": True,
+            },
+        ],
+        "vetted_files": {"sales": {"source_filename": "sales.csv", "columns_names": pd.Index(["amount"])}},
+    })
+
+    trace = build_analysis_trace()
+    exported_trace = load_analysis_trace(serialize_analysis_trace(trace).encode("utf-8"))
+
+    assert "display_output" not in trace["messages"][-1]
+    assert "display_output" not in trace["outputs"][-1]
+    assert messages_for_resume(exported_trace)[-1]["display_output"] == full_output
 
 
 def test_resume_trace_export_rejects_payloads_larger_than_import_limit():

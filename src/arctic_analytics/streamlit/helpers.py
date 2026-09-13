@@ -359,6 +359,10 @@ def _latest_user_prompt(messages):
 
 def build_analysis_trace():
     messages = st.session_state.get("messages", [])
+    # The resumable manifest is the only copy that needs user-visible tool
+    # output. Keeping those payloads out of the top-level audit summaries
+    # avoids spending the 10 MiB import budget on duplicate data.
+    trace_messages = _messages_without_display_output(messages)
     trace = {
         "trace_schema_version": "0.3.0",
         "package_version": __version__,
@@ -370,10 +374,10 @@ def build_analysis_trace():
         if isinstance(st.session_state.get("researcher_notes", ""), str) else "",
         "system_message": _json_safe(_system_message_from_messages(messages)),
         "prompt_str": _json_safe(st.session_state.get("prompt_str") or _latest_user_prompt(messages)),
-        "messages": _json_safe(messages),
+        "messages": _json_safe(trace_messages),
         "events": _readable_events(messages),
         "tool_calls": _extract_tool_calls(messages),
-        "outputs": _extract_outputs(messages),
+        "outputs": _extract_outputs(trace_messages),
         "dataset_metadata": _dataset_metadata_for_trace(),
         "errors": _extract_errors(messages),
         "limitations": [
@@ -385,6 +389,21 @@ def build_analysis_trace():
     if st.session_state.get("source") == "uploader":
         trace["resume"] = _build_resume_manifest()
     return trace
+
+
+def _messages_without_display_output(messages):
+    display_fields = {
+        "display_output",
+        "display_output_truncated",
+        "display_output_length_chars",
+        "display_output_ref",
+        "display_output_agent_limited",
+    }
+    return [
+        {key: value for key, value in message.items() if key not in display_fields}
+        if isinstance(message, dict) else message
+        for message in messages
+    ]
 
 
 def serialize_analysis_trace(trace):
