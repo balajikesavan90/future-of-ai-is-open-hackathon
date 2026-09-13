@@ -57,7 +57,9 @@ def is_valid_csv(file):
                 continue  # Skip numeric columns
                 
             # Check each cell in string columns
-            for value in df[column].astype(str):
+            # Empty CSV fields are parsed as NaN floats, even in otherwise textual
+            # columns. Normalize them before passing values to the regex engine.
+            for value in df[column].fillna("").astype(str):
                 match = pattern_regex.search(value)
                 if match:
                     matched_pattern = match.group(0)
