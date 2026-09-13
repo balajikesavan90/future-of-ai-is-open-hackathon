@@ -93,3 +93,14 @@ def test_retain_tool_output_uses_generated_filename_and_enforces_limit(monkeypat
     assert helpers.retain_tool_output("second", "abcd") is None
 
     helpers.clear_retained_tool_outputs()
+
+
+def test_retain_tool_output_falls_back_when_temp_storage_write_fails(monkeypatch):
+    session_state = {}
+    monkeypatch.setattr(helpers, "st", SimpleNamespace(session_state=session_state))
+    monkeypatch.setattr(Path, "write_bytes", lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError("full")))
+
+    assert helpers.retain_tool_output("call_1", "output") is None
+    assert session_state[helpers.RETAINED_TOOL_OUTPUTS_KEY] == {}
+
+    helpers.clear_retained_tool_outputs()

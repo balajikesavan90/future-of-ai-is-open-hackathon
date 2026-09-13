@@ -27,6 +27,7 @@ from arctic_analytics.streamlit.helpers import (
     serialize_analysis_trace,
     TraceExportError,
 )
+from arctic_analytics.streamlit import helpers
 from arctic_analytics.config import MAX_MODEL_CONTEXT_TOKENS
 from arctic_analytics.core.trace_resume import MAX_TRACE_BYTES, ResumePreparation, load_analysis_trace
 from arctic_analytics.artifacts import build_research_bundle_zip
@@ -269,6 +270,25 @@ def test_resume_trace_export_rejects_payloads_larger_than_import_limit():
 
     with pytest.raises(TraceExportError, match="larger than 10 MiB and cannot be resumed"):
         serialize_analysis_trace(trace)
+
+
+def test_trace_export_retained_output_hint_requires_a_download_reference(monkeypatch):
+    monkeypatch.setattr(helpers, "MAX_TRACE_BYTES", 1)
+    trace = {
+        "messages": [{
+            "type": "function_call_output",
+            "display_output_truncated": True,
+            "display_output_ref": "call_1",
+        }],
+    }
+
+    with pytest.raises(TraceExportError, match="available from its original download control"):
+        serialize_analysis_trace(trace)
+
+    trace["messages"][0].pop("display_output_ref")
+    with pytest.raises(TraceExportError, match="larger than 10 MiB and cannot be resumed") as exc:
+        serialize_analysis_trace(trace)
+    assert "original download control" not in str(exc.value)
 
 
 def test_trace_export_uses_compact_json_to_maximize_resumable_size():

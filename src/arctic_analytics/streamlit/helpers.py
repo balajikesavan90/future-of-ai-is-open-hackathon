@@ -387,14 +387,15 @@ def serialize_analysis_trace(trace):
     """Serialize a trace only when it meets the resume import size limit."""
     payload = json.dumps(trace, separators=(",", ":"), default=str).encode("utf-8")
     if len(payload) > MAX_TRACE_BYTES:
-        resume = trace.get("resume")
-        resume_messages = resume.get("messages", []) if isinstance(resume, dict) else []
+        messages = trace.get("messages", [])
         retained_output_hint = (
             " A retained tool-output preview may be contributing to the size; the complete response "
             "was available from its original download control."
             if any(
-                isinstance(message, dict) and message.get("display_output_truncated")
-                for message in resume_messages
+                isinstance(message, dict)
+                and message.get("display_output_truncated")
+                and isinstance(message.get("display_output_ref"), str)
+                for message in messages
             )
             else ""
         )
@@ -815,7 +816,15 @@ def retain_tool_output(output_id, tool_response):
 
     # Never derive a filesystem path from the model/API-provided call ID.
     path = Path(directory.name) / f"{uuid.uuid4().hex}.txt"
-    path.write_bytes(output_bytes)
+    try:
+        path.write_bytes(output_bytes)
+    except OSError:
+        logging.exception("Unable to retain tool output")
+        try:
+            path.unlink(missing_ok=True)
+        except OSError:
+            pass
+        return None
     retained_outputs[output_id] = str(path)
     return str(path)
 

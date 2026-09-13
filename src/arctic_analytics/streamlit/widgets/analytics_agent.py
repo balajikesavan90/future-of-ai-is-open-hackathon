@@ -143,7 +143,7 @@ def render_analytics_agent():
                             st.caption(
                                 'Historical tool output is a preview; the complete response is available for download in this session.'
                                 if full_output_path else
-                                'Historical tool output is a preview; the complete response is unavailable after resume.'
+                                'Historical tool output is a preview; the complete response is unavailable in this session.'
                             )
                     elif isinstance(display_output, list):
                         for output_item in display_output:

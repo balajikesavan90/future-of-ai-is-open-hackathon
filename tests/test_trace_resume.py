@@ -78,6 +78,21 @@ def test_load_analysis_trace_rejects_invalid_json_and_unknown_versions():
     assert load_analysis_trace(json.dumps(resumable_trace()).encode())["session_id"] == "original-session"
 
 
+def test_sanitize_resumed_message_removes_ref_when_preview_is_invalid():
+    restored = trace_resume._sanitize_resumed_message({
+        "type": "function_call_output",
+        "call_id": "call_1",
+        "output": "Model-facing output.",
+        "display_output": ["not text"],
+        "display_output_truncated": True,
+        "display_output_length_chars": 100,
+        "display_output_ref": "call_1",
+    })
+
+    assert "display_output" not in restored
+    assert "display_output_ref" not in restored
+
+
 def test_load_analysis_trace_converts_excessive_nesting_to_trace_resume_error():
     with pytest.raises(TraceResumeError, match="valid UTF-8"):
         load_analysis_trace(b'{"nested":' * 2_000 + b"0" + b"}" * 2_000)

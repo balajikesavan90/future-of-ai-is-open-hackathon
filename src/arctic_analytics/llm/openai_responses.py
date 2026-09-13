@@ -280,7 +280,7 @@ class OpenAIResponsesUtility:
         if tool_response.startswith('Error executing code:'):
             diagnostic = tool_response[:self._MAX_MODEL_ERROR_DIAGNOSTIC_CHARS]
             return (
-                'Tool execution failed. The complete error output was shown to the user. '
+                'Tool execution failed. The complete error output was omitted from model context. '
                 f'Diagnostic excerpt (truncated to {self._MAX_MODEL_ERROR_DIAGNOSTIC_CHARS:,} characters):\n'
                 f'{diagnostic}'
             )
@@ -288,7 +288,7 @@ class OpenAIResponsesUtility:
         return (
             f'Code execution returned a result of {token_count:,} tokens, meeting or exceeding '
             f'the {self._MAX_MODEL_TOOL_OUTPUT_TOKENS:,}-token model-output threshold. The complete '
-            'output was shown to the user. Proceed with the analysis and run smaller cuts only as needed.'
+            'output was omitted from model context. Proceed with the analysis and run smaller cuts only as needed.'
         )
     
 
