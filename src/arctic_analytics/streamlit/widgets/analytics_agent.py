@@ -138,19 +138,13 @@ def render_analytics_agent():
                         display_output = msg['output']
                     if isinstance(display_output, str):
                         full_output_path = retained_tool_output_path(msg.get('display_output_ref'))
-                        rendered_as_dataframe = render_tool_response(
+                        render_tool_response(
                             display_output,
                             output_id=msg.get('call_id'),
                             full_output_path=full_output_path,
                         )
                         if msg.get('display_output_agent_limited'):
                             st.info(LARGE_PYTHON_OUTPUT_USER_NOTICE)
-                        if msg.get('display_output_truncated') and not rendered_as_dataframe:
-                            st.caption(
-                                'Historical tool output is a preview; the complete response is available for download in this session.'
-                                if full_output_path else
-                                'Historical tool output is a preview; the complete response is unavailable in this session.'
-                            )
                     elif isinstance(display_output, list):
                         for output_item in display_output:
                             image_url = output_item.get('image_url') if isinstance(output_item, dict) else None

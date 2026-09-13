@@ -755,6 +755,49 @@ def try_convert_to_dataframe(data):
     except Exception:
         return None
 
+
+def _parse_truncated_table_json(value):
+    """Recover complete rows from a truncated pandas ``orient='index'`` payload."""
+    if not isinstance(value, str):
+        return None
+    payload = value.lstrip()
+    if not payload.startswith("{"):
+        return None
+
+    decoder = json.JSONDecoder()
+    position = 1
+    rows = {}
+
+    def skip_whitespace(index):
+        while index < len(payload) and payload[index].isspace():
+            index += 1
+        return index
+
+    while True:
+        position = skip_whitespace(position)
+        if position >= len(payload) or payload[position] == "}":
+            break
+        try:
+            key, position = decoder.raw_decode(payload, position)
+            position = skip_whitespace(position)
+            if not isinstance(key, str) or position >= len(payload) or payload[position] != ":":
+                return None
+            row, position = decoder.raw_decode(payload, skip_whitespace(position + 1))
+        except json.JSONDecodeError:
+            break
+        if not isinstance(row, dict):
+            return None
+        rows[key] = row
+        position = skip_whitespace(position)
+        if position >= len(payload) or payload[position] == "}":
+            break
+        if payload[position] != ",":
+            return None
+        position += 1
+
+    return rows or None
+
+
 def render_tool_call(tool_call):
     """
     Renders a tool call in the Streamlit UI
@@ -897,27 +940,15 @@ def render_tool_response(tool_response, output_id=None, full_output_path=None, a
                     parsed_response = json.loads(parsed_response)
                 except json.JSONDecodeError:
                     pass
-
-            dataframe = try_convert_to_dataframe(parsed_response)
-            if dataframe is not None:
-                st.dataframe(dataframe, width="stretch")
-                if full_output_path and allow_full_download:
-                    st.download_button(
-                        "Download full tool output",
-                        data=Path(full_output_path).read_bytes(),
-                        file_name="tool-output.txt",
-                        mime="text/plain",
-                        key=(
-                            f"tool-output-{output_id}"
-                            if output_id is not None
-                            else f"tool-output-{hashlib.sha256(tool_response.encode('utf-8')).hexdigest()}"
-                        ),
-                        icon=":material/download:",
-                        on_click="ignore",
-                    )
-                return True
         except json.JSONDecodeError:
-            pass
+            parsed_response = _parse_truncated_table_json(renderable_response)
+
+        dataframe = try_convert_to_dataframe(parsed_response)
+        if dataframe is not None:
+            # Streamlit's native dataframe toolbar lets users download the
+            # displayed data as CSV, so no separate raw-output button is needed.
+            st.dataframe(dataframe, width="stretch")
+            return True
 
     if len(tool_response) > MAX_RENDERED_TOOL_RESPONSE_CHARS or full_output_path:
         preview = tool_response[:MAX_RENDERED_TOOL_RESPONSE_CHARS]
