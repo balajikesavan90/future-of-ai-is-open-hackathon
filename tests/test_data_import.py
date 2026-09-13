@@ -138,7 +138,13 @@ def test_is_valid_csv_accepts_plain_csv():
 
 
 def test_is_valid_csv_accepts_blank_cells_in_text_columns():
-    valid, error = is_valid_csv(Upload(b"station,weather_code\n01001099999,\n"))
+    valid, error = is_valid_csv(
+        Upload(
+            b"station,weather_code\n"
+            b"01001099999,V020\n"
+            b"01001099999,\n"
+        )
+    )
 
     assert valid is True
     assert error == ""
