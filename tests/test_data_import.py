@@ -1,4 +1,5 @@
 import io
+import re
 from types import SimpleNamespace
 
 import pandas as pd
@@ -12,6 +13,7 @@ from arctic_analytics.core.data_import import (
     gather_metadata,
     unique_dataframe_name,
 )
+from arctic_analytics.streamlit.widgets import uploader
 from arctic_analytics.streamlit.widgets.uploader import is_valid_csv, sanitize_filename
 
 
@@ -135,6 +137,44 @@ def test_is_valid_csv_accepts_plain_csv():
 
     assert valid is True
     assert error == ""
+
+
+def test_is_valid_csv_normalizes_blank_cells_in_text_columns(monkeypatch):
+    scanned_values = []
+    original_compile = re.compile
+
+    class CapturingPattern:
+        def __init__(self, pattern):
+            self.pattern = pattern
+
+        def search(self, value):
+            scanned_values.append(value)
+            return self.pattern.search(value)
+
+    def compile_pattern(*args, **kwargs):
+        return CapturingPattern(original_compile(*args, **kwargs))
+
+    monkeypatch.setattr(
+        uploader,
+        "re",
+        SimpleNamespace(
+            IGNORECASE=re.IGNORECASE,
+            compile=compile_pattern,
+            search=re.search,
+        ),
+    )
+
+    valid, error = is_valid_csv(
+        Upload(
+            b"station,weather_code\n"
+            b"01001099999,V020\n"
+            b"01001099999,\n"
+        )
+    )
+
+    assert valid is True
+    assert error == ""
+    assert scanned_values == ["V020", ""]
 
 
 def test_is_valid_csv_rejects_suspicious_content():
