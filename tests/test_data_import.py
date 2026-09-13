@@ -137,6 +137,13 @@ def test_is_valid_csv_accepts_plain_csv():
     assert error == ""
 
 
+def test_is_valid_csv_accepts_blank_cells_in_text_columns():
+    valid, error = is_valid_csv(Upload(b"station,weather_code\n01001099999,\n"))
+
+    assert valid is True
+    assert error == ""
+
+
 def test_is_valid_csv_rejects_suspicious_content():
     valid, error = is_valid_csv(Upload(b"name,formula\nx,=cmd|calc\n"))
 
