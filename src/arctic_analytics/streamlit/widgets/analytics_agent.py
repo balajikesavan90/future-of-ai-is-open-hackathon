@@ -136,6 +136,10 @@ def render_analytics_agent():
                     display_output = msg.get('display_output', msg['output'])
                     if isinstance(display_output, str):
                         render_tool_response(display_output)
+                        if msg.get('display_output_truncated'):
+                            st.caption(
+                                'Historical tool output was truncated for safe replay and export.'
+                            )
                     elif isinstance(display_output, list):
                         for output_item in display_output:
                             image_url = output_item.get('image_url') if isinstance(output_item, dict) else None

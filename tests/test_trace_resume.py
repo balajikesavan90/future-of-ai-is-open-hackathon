@@ -286,6 +286,34 @@ def test_messages_for_resume_preserves_user_visible_display_output():
     assert restored[-1]["display_output"] == "Full user-visible result."
 
 
+def test_messages_for_resume_discards_non_text_display_output():
+    trace = resumable_trace()
+    system_message = {
+        "type": "message",
+        "role": "system",
+        "content": [{"type": "input_text", "text": "System prompt"}],
+    }
+    trace["resume"]["messages"] = [system_message, {
+        "type": "function_call",
+        "call_id": "call_1",
+        "name": "run_python_expression",
+        "arguments": "{}",
+    }, {
+        "type": "function_call_output",
+        "call_id": "call_1",
+        "output": "Compact model-facing notice.",
+        "display_output": VALID_PNG_DATA_URL,
+        "display_output_truncated": True,
+        "display_output_length_chars": 123,
+    }]
+
+    restored = messages_for_resume(trace)
+
+    assert "display_output" not in restored[-1]
+    assert "display_output_truncated" not in restored[-1]
+    assert "display_output_length_chars" not in restored[-1]
+
+
 def test_messages_for_resume_discards_non_dict_history_items():
     trace = resumable_trace()
     system_message = {

@@ -187,6 +187,16 @@ def test_oversized_execution_error_keeps_a_bounded_diagnostic_for_the_model(monk
     assert len(notice) <= client._MAX_MODEL_ERROR_DIAGNOSTIC_CHARS + 200
 
 
+def test_retained_display_output_is_bounded():
+    client = OpenAIResponsesUtility()
+    output = "x" * (client._MAX_RETAINED_DISPLAY_OUTPUT_CHARS + 1)
+
+    retained, truncated = client._retained_display_output(output)
+
+    assert truncated is True
+    assert retained == output[:client._MAX_RETAINED_DISPLAY_OUTPUT_CHARS]
+
+
 def test_image_dimensions_skips_oversized_base64_before_decoding(monkeypatch):
     client = OpenAIResponsesUtility()
     client._MAX_IMAGE_BASE64_CHARACTERS = 4

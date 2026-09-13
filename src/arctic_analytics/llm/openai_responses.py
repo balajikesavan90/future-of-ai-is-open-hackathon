@@ -28,6 +28,7 @@ from arctic_analytics.llm.tokenization import safe_encoding_for_model
 class OpenAIResponsesUtility:
     _MAX_MODEL_TOOL_OUTPUT_TOKENS = 5_000
     _MAX_MODEL_ERROR_DIAGNOSTIC_CHARS = 4_000
+    _MAX_RETAINED_DISPLAY_OUTPUT_CHARS = 50_000
     _IMAGE_PATCH_SIZE = 32
     _GPT_56_IMAGE_TOKEN_MULTIPLIER = 1.2
     _MAX_IMAGE_PATCHES = 30_000
@@ -242,11 +243,22 @@ class OpenAIResponsesUtility:
     @staticmethod
     def _messages_for_model(messages):
         """Remove UI-only payloads before sending conversation history to the API."""
+        ui_only_fields = {
+            'display_output',
+            'display_output_truncated',
+            'display_output_length_chars',
+        }
         return [
-            {key: value for key, value in message.items() if key != 'display_output'}
+            {key: value for key, value in message.items() if key not in ui_only_fields}
             if isinstance(message, dict) else message
             for message in messages
         ]
+
+    def _retained_display_output(self, tool_response):
+        """Bound UI/session retention while preserving enough text for safe replay."""
+        if len(tool_response) <= self._MAX_RETAINED_DISPLAY_OUTPUT_CHARS:
+            return tool_response, False
+        return tool_response[:self._MAX_RETAINED_DISPLAY_OUTPUT_CHARS], True
 
     def _oversized_tool_output_notice(self, tool_name, tool_response):
         """Return a compact model-facing notice for oversized Python outputs."""
@@ -376,7 +388,13 @@ class OpenAIResponsesUtility:
                             'output': model_tool_response or str(tool_response),
                         }
                         if model_tool_response:
-                            tool_output['display_output'] = str(tool_response)
+                            display_output, display_output_truncated = self._retained_display_output(
+                                str(tool_response)
+                            )
+                            tool_output['display_output'] = display_output
+                            if display_output_truncated:
+                                tool_output['display_output_truncated'] = True
+                                tool_output['display_output_length_chars'] = len(str(tool_response))
                         messages.append(tool_output)
                     with st.session_state['messages_container']:
                         with st.chat_message('assistant'):

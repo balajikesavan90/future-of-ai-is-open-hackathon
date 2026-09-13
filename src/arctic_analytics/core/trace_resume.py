@@ -297,6 +297,16 @@ def _sanitize_resumed_message(message: Any) -> Any:
     restored = dict(message)
     if restored.get("type") != "function_call_output":
         return restored
+    display_output = restored.get("display_output")
+    if display_output is not None and (
+        not isinstance(display_output, str) or display_output.lower().startswith("data:")
+    ):
+        for key in (
+            "display_output",
+            "display_output_truncated",
+            "display_output_length_chars",
+        ):
+            restored.pop(key, None)
     output = restored.get("output")
     if isinstance(output, dict) and output.get("type") == "image_base64":
         restored["output"] = "Historical chart output is unavailable in this exported trace."
