@@ -378,8 +378,8 @@ def serialize_analysis_trace(trace):
         resume = trace.get("resume")
         resume_messages = resume.get("messages", []) if isinstance(resume, dict) else []
         retained_output_hint = (
-            " Retained full tool output may be contributing to the size; export a research bundle "
-            "to preserve it."
+            " A retained tool-output preview may be contributing to the size; the complete response "
+            "was available from its original download control."
             if any(
                 isinstance(message, dict) and "display_output" in message
                 for message in resume_messages

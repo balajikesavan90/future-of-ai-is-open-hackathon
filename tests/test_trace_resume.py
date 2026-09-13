@@ -302,7 +302,7 @@ def test_messages_for_resume_discards_non_text_display_output():
         "type": "function_call_output",
         "call_id": "call_1",
         "output": "Compact model-facing notice.",
-        "display_output": VALID_PNG_DATA_URL,
+        "display_output": "data:image/png;base64,not-valid-base64",
         "display_output_truncated": True,
         "display_output_length_chars": 123,
     }]
@@ -312,6 +312,28 @@ def test_messages_for_resume_discards_non_text_display_output():
     assert "display_output" not in restored[-1]
     assert "display_output_truncated" not in restored[-1]
     assert "display_output_length_chars" not in restored[-1]
+
+
+def test_messages_for_resume_preserves_text_that_starts_with_data():
+    trace = resumable_trace()
+    system_message = {
+        "type": "message",
+        "role": "system",
+        "content": [{"type": "input_text", "text": "System prompt"}],
+    }
+    trace["resume"]["messages"] = [system_message, {
+        "type": "function_call",
+        "call_id": "call_1",
+        "name": "run_python_expression",
+        "arguments": "{}",
+    }, {
+        "type": "function_call_output",
+        "call_id": "call_1",
+        "output": "Compact model-facing notice.",
+        "display_output": "data: a textual value",
+    }]
+
+    assert messages_for_resume(trace)[-1]["display_output"] == "data: a textual value"
 
 
 def test_messages_for_resume_discards_non_dict_history_items():

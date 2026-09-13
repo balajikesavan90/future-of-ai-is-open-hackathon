@@ -92,10 +92,12 @@ def write_outputs_and_figures(
         # Preserve normal trace-safe records, but replace compact model-facing
         # records with their full user-visible counterpart when one was kept.
         output_records = [
-            raw_output
-            if isinstance(raw_output, dict) and "display_output" in raw_output
+            raw_outputs[index]
+            if index < len(raw_outputs)
+            and isinstance(raw_outputs[index], dict)
+            and "display_output" in raw_outputs[index]
             else output
-            for output, raw_output in zip(outputs, raw_outputs)
+            for index, output in enumerate(outputs)
         ]
     else:
         output_records = raw_outputs or outputs

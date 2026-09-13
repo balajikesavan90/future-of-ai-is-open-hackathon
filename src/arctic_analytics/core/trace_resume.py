@@ -298,8 +298,18 @@ def _sanitize_resumed_message(message: Any) -> Any:
     if restored.get("type") != "function_call_output":
         return restored
     display_output = restored.get("display_output")
+    supported_image_prefixes = (
+        "data:image/png;base64,",
+        "data:image/jpeg;base64,",
+        "data:image/gif;base64,",
+        "data:image/webp;base64,",
+    )
     if display_output is not None and (
-        not isinstance(display_output, str) or display_output.lower().startswith("data:")
+        not isinstance(display_output, str)
+        or (
+            display_output.lower().startswith(supported_image_prefixes)
+            and not _is_valid_base64_image_data_url(display_output)
+        )
     ):
         for key in (
             "display_output",

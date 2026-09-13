@@ -133,12 +133,14 @@ def render_analytics_agent():
                     render_tool_call(msg)
             elif msg['type'] == 'function_call_output':
                 with st.chat_message('assistant'):
-                    display_output = msg.get('display_output', msg['output'])
+                    display_output = msg.get('display_output')
+                    if display_output is None:
+                        display_output = msg['output']
                     if isinstance(display_output, str):
                         render_tool_response(display_output, output_id=msg.get('call_id'))
                         if msg.get('display_output_truncated'):
                             st.caption(
-                                'Historical tool output was truncated for safe replay and export.'
+                                'Historical tool output is a preview; download the complete response from its original result.'
                             )
                     elif isinstance(display_output, list):
                         for output_item in display_output:
