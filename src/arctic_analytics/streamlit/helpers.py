@@ -375,12 +375,14 @@ def serialize_analysis_trace(trace):
     """Serialize a trace only when it meets the resume import size limit."""
     payload = json.dumps(trace, separators=(",", ":"), default=str).encode("utf-8")
     if len(payload) > MAX_TRACE_BYTES:
+        resume = trace.get("resume")
+        resume_messages = resume.get("messages", []) if isinstance(resume, dict) else []
         retained_output_hint = (
             " Retained full tool output may be contributing to the size; export a research bundle "
             "to preserve it."
             if any(
                 isinstance(message, dict) and "display_output" in message
-                for message in trace.get("resume", {}).get("messages", [])
+                for message in resume_messages
             )
             else ""
         )
@@ -777,6 +779,15 @@ def render_tool_response(tool_response):
     Args:
         tool_response: The tool response to render
     """
+    if tool_response.startswith((
+        'data:image/png;base64,',
+        'data:image/jpeg;base64,',
+        'data:image/gif;base64,',
+        'data:image/webp;base64,',
+    )):
+        st.image(tool_response)
+        return
+
     if len(tool_response) > MAX_RENDERED_TOOL_RESPONSE_CHARS:
         preview = tool_response[:MAX_RENDERED_TOOL_RESPONSE_CHARS]
         st.warning(
@@ -793,15 +804,6 @@ def render_tool_response(tool_response):
             icon=":material/download:",
             on_click="ignore",
         )
-        return
-
-    if tool_response.startswith((
-        'data:image/png;base64,',
-        'data:image/jpeg;base64,',
-        'data:image/gif;base64,',
-        'data:image/webp;base64,',
-    )):
-        st.image(tool_response)
         return
 
     if tool_response.startswith('Error'):
