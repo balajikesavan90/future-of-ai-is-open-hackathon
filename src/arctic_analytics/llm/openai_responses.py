@@ -400,6 +400,9 @@ class OpenAIResponsesUtility:
                                 render_tool_response(error_message, output_id=tool_call['call_id'])
                         continue
 
+                    model_tool_response = None
+                    retained_output_path = None
+                    tool_output = {}
                     if tool_response.startswith('data:image/png;base64,'): 
                         messages.append({
                             'type': 'function_call_output',
@@ -420,7 +423,6 @@ class OpenAIResponsesUtility:
                             'call_id': tool_call['call_id'],
                             'output': model_tool_response or str(tool_response),
                         }
-                        retained_output_path = None
                         if model_tool_response:
                             display_output, display_output_truncated = self._retained_display_output(
                                 str(tool_response)

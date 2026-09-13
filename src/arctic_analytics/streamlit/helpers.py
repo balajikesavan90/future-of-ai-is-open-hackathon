@@ -901,6 +901,20 @@ def render_tool_response(tool_response, output_id=None, full_output_path=None, a
             dataframe = try_convert_to_dataframe(parsed_response)
             if dataframe is not None:
                 st.dataframe(dataframe, width="stretch")
+                if full_output_path and allow_full_download:
+                    st.download_button(
+                        "Download full tool output",
+                        data=Path(full_output_path).read_bytes(),
+                        file_name="tool-output.txt",
+                        mime="text/plain",
+                        key=(
+                            f"tool-output-{output_id}"
+                            if output_id is not None
+                            else f"tool-output-{hashlib.sha256(tool_response.encode('utf-8')).hexdigest()}"
+                        ),
+                        icon=":material/download:",
+                        on_click="ignore",
+                    )
                 return True
         except json.JSONDecodeError:
             pass

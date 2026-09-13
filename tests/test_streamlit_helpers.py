@@ -77,19 +77,29 @@ def test_render_tool_response_renders_large_dataframe_json_as_a_table(monkeypatc
 
 def test_render_tool_response_replays_retained_dataframe_instead_of_partial_json(monkeypatch, tmp_path):
     rendered_dataframes = []
+    downloads = []
     full_response = pd.DataFrame({"text": ["x" * 1_000] * 100}).to_json(orient="index")
     retained_path = tmp_path / "retained-output.json"
     retained_path.write_text(full_response, encoding="utf-8")
 
     monkeypatch.setattr(helpers.st, "dataframe", lambda dataframe, **_kwargs: rendered_dataframes.append(dataframe))
     monkeypatch.setattr(helpers.st, "code", lambda *_args, **_kwargs: pytest.fail("retained table JSON must not use text preview"))
+    monkeypatch.setattr(
+        helpers.st,
+        "download_button",
+        lambda *args, **kwargs: downloads.append((args, kwargs)),
+    )
 
     assert helpers.render_tool_response(
         full_response[:helpers.MAX_RENDERED_TOOL_RESPONSE_CHARS],
+        output_id="call_1",
         full_output_path=str(retained_path),
     ) is True
 
     assert rendered_dataframes[0].shape == (100, 1)
+    assert downloads[0][0] == ("Download full tool output",)
+    assert downloads[0][1]["data"] == full_response.encode("utf-8")
+    assert downloads[0][1]["key"] == "tool-output-call_1"
 
 
 def test_render_tool_response_reads_retained_file_for_download(monkeypatch, tmp_path):

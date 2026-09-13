@@ -170,6 +170,52 @@ def test_tool_call_rejects_output_larger_than_retention_limit(monkeypatch):
     assert captured_requests[0]["input"][-1] == messages[-1]
 
 
+def test_tool_call_renders_png_without_unbound_local_error(monkeypatch):
+    messages = [{"role": "system", "content": [{"text": "System instructions."}]}]
+    captured_requests = []
+    rendered = []
+    client = OpenAIResponsesUtility()
+    image_output = "data:image/png;base64,AAAA"
+
+    monkeypatch.setattr(
+        openai_responses,
+        "st",
+        SimpleNamespace(
+            session_state={"messages_container": nullcontext()},
+            chat_message=lambda _role: nullcontext(),
+        ),
+    )
+    monkeypatch.setattr(
+        openai_responses,
+        "render_tool_response",
+        lambda response, **kwargs: rendered.append((response, kwargs)),
+    )
+    monkeypatch.setattr(
+        client,
+        "_responses_with_backoff",
+        lambda **kwargs: captured_requests.append(kwargs) or object(),
+    )
+    monkeypatch.setattr(
+        client,
+        "_process_api_response",
+        lambda _response, updated_messages, _model: ([], 0, updated_messages, 0, 0),
+    )
+
+    client._process_tool_call_loop(
+        tool_calls=[{"name": "run_python_code", "arguments": "{}", "call_id": "call_1"}],
+        messages=messages,
+        tool_handlers={"run_python_code": lambda _arguments: image_output},
+        args={"instructions": "System instructions.", "input": []},
+        model="gpt-5.6-luna",
+    )
+
+    assert messages[-1]["output"] == [{"type": "input_image", "image_url": image_output}]
+    assert rendered == [
+        (image_output, {"output_id": "call_1", "full_output_path": None, "allow_full_download": True})
+    ]
+    assert captured_requests[0]["input"][-1] == messages[-1]
+
+
 def test_oversized_tool_output_is_visible_but_not_sent_to_model(monkeypatch):
     system_message = {"role": "system", "content": [{"text": "System instructions."}]}
     user_message = {"role": "user", "content": [{"text": "Analyze the data."}]}

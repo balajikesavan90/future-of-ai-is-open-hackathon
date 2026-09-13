@@ -87,10 +87,12 @@ def test_sanitize_resumed_message_removes_ref_when_preview_is_invalid():
         "display_output_truncated": True,
         "display_output_length_chars": 100,
         "display_output_ref": "call_1",
+        "display_output_agent_limited": True,
     })
 
     assert "display_output" not in restored
     assert "display_output_ref" not in restored
+    assert "display_output_agent_limited" not in restored
 
 
 def test_load_analysis_trace_converts_excessive_nesting_to_trace_resume_error():

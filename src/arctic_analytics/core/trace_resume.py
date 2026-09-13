@@ -316,6 +316,7 @@ def _sanitize_resumed_message(message: Any) -> Any:
             "display_output_truncated",
             "display_output_length_chars",
             "display_output_ref",
+            "display_output_agent_limited",
         ):
             restored.pop(key, None)
     output = restored.get("output")

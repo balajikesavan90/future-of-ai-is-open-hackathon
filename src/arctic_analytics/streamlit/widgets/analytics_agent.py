@@ -145,7 +145,7 @@ def render_analytics_agent():
                         )
                         if msg.get('display_output_agent_limited'):
                             st.info(LARGE_PYTHON_OUTPUT_USER_NOTICE)
-                        elif msg.get('display_output_truncated') and not rendered_as_dataframe:
+                        if msg.get('display_output_truncated') and not rendered_as_dataframe:
                             st.caption(
                                 'Historical tool output is a preview; the complete response is available for download in this session.'
                                 if full_output_path else
