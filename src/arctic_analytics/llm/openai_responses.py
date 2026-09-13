@@ -19,7 +19,13 @@ from arctic_analytics.config import (
     get_openai_api_key,
     validate_openai_model,
 )
-from arctic_analytics.streamlit.helpers import safely_escape_dollars, render_tool_call, render_tool_response, retain_tool_output
+from arctic_analytics.streamlit.helpers import (
+    MAX_RETAINED_TOOL_OUTPUT_BYTES,
+    safely_escape_dollars,
+    render_tool_call,
+    render_tool_response,
+    retain_tool_output,
+)
 from arctic_analytics.core.security import safely_execute_code
 from arctic_analytics.llm.tokenization import safe_encoding_for_model
 
@@ -367,6 +373,29 @@ class OpenAIResponsesUtility:
                         tool_response = tool_handlers[tool_name](args_dict)
                     else:
                         tool_response = f"Tool '{tool_name}' not implemented or not available."
+
+                    if (
+                        isinstance(tool_response, str)
+                        and len(tool_response.encode("utf-8")) > MAX_RETAINED_TOOL_OUTPUT_BYTES
+                    ):
+                        limit_mib = MAX_RETAINED_TOOL_OUTPUT_BYTES / (1024 * 1024)
+                        output_mib = len(tool_response.encode("utf-8")) / (1024 * 1024)
+                        error_message = (
+                            "Error executing code: Tool output is "
+                            f"{output_mib:.2f} MiB, exceeding the {limit_mib:.0f} MiB output limit. "
+                            "The result was not rendered or retained. Return a smaller dataframe or aggregate "
+                            "the results before returning them."
+                        )
+                        logging.warning(error_message)
+                        messages.append({
+                            'type': 'function_call_output',
+                            'call_id': tool_call['call_id'],
+                            'output': error_message,
+                        })
+                        with st.session_state['messages_container']:
+                            with st.chat_message('assistant'):
+                                render_tool_response(error_message, output_id=tool_call['call_id'])
+                        continue
 
                     if tool_response.startswith('data:image/png;base64,'): 
                         messages.append({

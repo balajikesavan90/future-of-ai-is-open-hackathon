@@ -124,6 +124,52 @@ def test_tool_call_follow_up_keeps_system_message_out_of_input(monkeypatch):
     assert system_message not in captured_requests[0]["input"]
 
 
+def test_tool_call_rejects_output_larger_than_retention_limit(monkeypatch):
+    messages = [{"role": "system", "content": [{"text": "System instructions."}]}]
+    captured_requests = []
+    rendered = []
+    client = OpenAIResponsesUtility()
+
+    output_limit = 1024 * 1024
+    monkeypatch.setattr(openai_responses, "MAX_RETAINED_TOOL_OUTPUT_BYTES", output_limit)
+    monkeypatch.setattr(
+        openai_responses,
+        "st",
+        SimpleNamespace(
+            session_state={"messages_container": nullcontext()},
+            chat_message=lambda _role: nullcontext(),
+        ),
+    )
+    monkeypatch.setattr(
+        openai_responses,
+        "render_tool_response",
+        lambda response, **_kwargs: rendered.append(response),
+    )
+    monkeypatch.setattr(
+        client,
+        "_responses_with_backoff",
+        lambda **kwargs: captured_requests.append(kwargs) or object(),
+    )
+    monkeypatch.setattr(
+        client,
+        "_process_api_response",
+        lambda _response, updated_messages, _model: ([], 0, updated_messages, 0, 0),
+    )
+
+    client._process_tool_call_loop(
+        tool_calls=[{"name": "lookup", "arguments": "{}", "call_id": "call_1"}],
+        messages=messages,
+        tool_handlers={"lookup": lambda _arguments: "x" * (output_limit + 1)},
+        args={"instructions": "System instructions.", "input": []},
+        model="gpt-5.6-luna",
+    )
+
+    assert "exceeding the 1 MiB output limit" in messages[-1]["output"]
+    assert "display_output" not in messages[-1]
+    assert rendered == [messages[-1]["output"]]
+    assert captured_requests[0]["input"][-1] == messages[-1]
+
+
 def test_oversized_tool_output_is_visible_but_not_sent_to_model(monkeypatch):
     system_message = {"role": "system", "content": [{"text": "System instructions."}]}
     user_message = {"role": "user", "content": [{"text": "Analyze the data."}]}

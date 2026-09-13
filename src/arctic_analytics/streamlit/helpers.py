@@ -850,6 +850,8 @@ def render_tool_response(tool_response, output_id=None, full_output_path=None, a
     Args:
         tool_response: The tool response to render.
         output_id: Stable identifier used to avoid duplicate download-widget keys.
+    Returns:
+        True when the response was rendered as a dataframe, otherwise False.
     """
     if tool_response.startswith((
         'data:image/png;base64,',
@@ -858,20 +860,32 @@ def render_tool_response(tool_response, output_id=None, full_output_path=None, a
         'data:image/webp;base64,',
     )):
         st.image(tool_response)
-        return
+        return False
+
+    # On a rerun, ``tool_response`` can be a bounded preview while the full
+    # result remains in the retained file. Prefer that complete payload for
+    # table detection so a dataframe does not revert to partial JSON text.
+    full_tool_response = None
+    if full_output_path:
+        try:
+            full_tool_response = Path(full_output_path).read_text(encoding="utf-8")
+        except OSError:
+            logging.warning("Unable to read retained tool output for rendering")
+
+    renderable_response = full_tool_response or tool_response
 
     # Parse tabular JSON before applying the text-size fallback. A dataframe
     # remains usable in Streamlit's virtualized table UI even when its JSON
     # serialization would be too large to show as plain text in a chat message.
     parsed_response = None
-    stripped_response = tool_response.lstrip()
+    stripped_response = renderable_response.lstrip()
     looks_like_tabular_json = (
         stripped_response.startswith('{"')
         or stripped_response.startswith('[{')
     )
-    if len(tool_response) <= MAX_RENDERED_TOOL_RESPONSE_CHARS or looks_like_tabular_json:
+    if len(renderable_response) <= MAX_RENDERED_TOOL_RESPONSE_CHARS or looks_like_tabular_json:
         try:
-            parsed_response = json.loads(tool_response)
+            parsed_response = json.loads(renderable_response)
 
             # Handle double-encoded JSON.
             if isinstance(parsed_response, str):
@@ -883,7 +897,7 @@ def render_tool_response(tool_response, output_id=None, full_output_path=None, a
             dataframe = try_convert_to_dataframe(parsed_response)
             if dataframe is not None:
                 st.dataframe(dataframe, width="stretch")
-                return
+                return True
         except json.JSONDecodeError:
             pass
 
@@ -908,19 +922,20 @@ def render_tool_response(tool_response, output_id=None, full_output_path=None, a
             )
         else:
             st.warning("The complete tool output exceeds the retention limit and cannot be downloaded.")
-        return
+        return False
 
     if tool_response.startswith('Error'):
         # Keep failed-tool details available without interrupting the analysis flow.
         with st.expander('⚠️ Tool execution failed — see details', expanded=False):
             st.error(tool_response)
-        return
+        return False
 
     if parsed_response is not None:
         st.write(parsed_response)
     else:
         # Not JSON, display as plain text.
         st.write(tool_response)
+    return False
 
 def is_dev_environment():
     try:

@@ -70,7 +70,24 @@ def test_render_tool_response_renders_large_dataframe_json_as_a_table(monkeypatc
     monkeypatch.setattr(helpers.st, "dataframe", lambda dataframe, **_kwargs: rendered_dataframes.append(dataframe))
     monkeypatch.setattr(helpers.st, "code", lambda *_args, **_kwargs: pytest.fail("table JSON must not use text preview"))
 
-    helpers.render_tool_response(tool_response)
+    assert helpers.render_tool_response(tool_response) is True
+
+    assert rendered_dataframes[0].shape == (100, 1)
+
+
+def test_render_tool_response_replays_retained_dataframe_instead_of_partial_json(monkeypatch, tmp_path):
+    rendered_dataframes = []
+    full_response = pd.DataFrame({"text": ["x" * 1_000] * 100}).to_json(orient="index")
+    retained_path = tmp_path / "retained-output.json"
+    retained_path.write_text(full_response, encoding="utf-8")
+
+    monkeypatch.setattr(helpers.st, "dataframe", lambda dataframe, **_kwargs: rendered_dataframes.append(dataframe))
+    monkeypatch.setattr(helpers.st, "code", lambda *_args, **_kwargs: pytest.fail("retained table JSON must not use text preview"))
+
+    assert helpers.render_tool_response(
+        full_response[:helpers.MAX_RENDERED_TOOL_RESPONSE_CHARS],
+        full_output_path=str(retained_path),
+    ) is True
 
     assert rendered_dataframes[0].shape == (100, 1)
 
