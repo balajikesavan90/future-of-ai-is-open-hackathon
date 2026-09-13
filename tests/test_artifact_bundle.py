@@ -176,6 +176,19 @@ def test_research_bundle_writes_full_display_output_when_model_output_is_compact
     assert output["display_output"] == full_output
 
 
+def test_research_bundle_does_not_write_empty_marker_when_only_raw_outputs_exist(tmp_path):
+    session = ResearchSession(
+        analysis_trace=AnalysisTrace({"outputs": []}),
+        context_bundle=ContextBundle({}),
+        raw_outputs=[{"type": "function_call_output", "output": "full raw output"}],
+    )
+
+    bundle = write_research_bundle(session, tmp_path / "bundle")
+
+    assert (bundle.output_dir / "outputs" / "001_output.json").exists()
+    assert not (bundle.output_dir / "outputs" / "outputs_empty.md").exists()
+
+
 def test_research_bundle_zip_uses_posix_archive_names(monkeypatch):
     arcnames = []
 

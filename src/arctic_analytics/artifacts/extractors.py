@@ -88,7 +88,17 @@ def write_outputs_and_figures(
 
     outputs = trace.get("outputs", [])
     figure_outputs = raw_outputs or outputs
-    output_records = raw_outputs or outputs
+    if raw_outputs and outputs:
+        # Preserve normal trace-safe records, but replace compact model-facing
+        # records with their full user-visible counterpart when one was kept.
+        output_records = [
+            raw_output
+            if isinstance(raw_output, dict) and "display_output" in raw_output
+            else output
+            for output, raw_output in zip(outputs, raw_outputs)
+        ]
+    else:
+        output_records = raw_outputs or outputs
 
     written_figure_indexes = set()
     for index, output in enumerate(figure_outputs, start=1):
@@ -106,7 +116,7 @@ def write_outputs_and_figures(
         path.write_text(json.dumps(json_safe(output), indent=2, default=str) + "\n")
         written.append(path)
 
-    if not outputs:
+    if not output_records:
         path = outputs_dir / "outputs_empty.md"
         path.write_text("The analysis trace did not contain exported tool outputs.\n")
         written.append(path)

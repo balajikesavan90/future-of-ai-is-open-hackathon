@@ -24,6 +24,7 @@ from arctic_analytics.core.trace_resume import MAX_TRACE_BYTES, messages_for_res
 
 MAX_TRACE_STRING_CHARS = 10000
 TRACE_STRING_PREVIEW_CHARS = 1000
+MAX_RENDERED_TOOL_RESPONSE_CHARS = 50_000
 REDACTED_SECRET_VALUE = "[redacted]"
 SENSITIVE_SESSION_KEY_MARKERS = ("api_key", "token", "password", "secret")
 RESEARCHER_NOTES_WIDGET_KEY = "researcher_notes_widget"
@@ -374,9 +375,19 @@ def serialize_analysis_trace(trace):
     """Serialize a trace only when it meets the resume import size limit."""
     payload = json.dumps(trace, separators=(",", ":"), default=str).encode("utf-8")
     if len(payload) > MAX_TRACE_BYTES:
+        retained_output_hint = (
+            " Retained full tool output may be contributing to the size; export a research bundle "
+            "to preserve it."
+            if any(
+                isinstance(message, dict) and "display_output" in message
+                for message in trace.get("resume", {}).get("messages", [])
+            )
+            else ""
+        )
         raise TraceExportError(
             "This trace is larger than 10 MiB and cannot be resumed. "
             "Reduce the analysis history or chart outputs, then export again."
+            + retained_output_hint
         )
     return payload.decode("utf-8")
 
@@ -766,6 +777,24 @@ def render_tool_response(tool_response):
     Args:
         tool_response: The tool response to render
     """
+    if len(tool_response) > MAX_RENDERED_TOOL_RESPONSE_CHARS:
+        preview = tool_response[:MAX_RENDERED_TOOL_RESPONSE_CHARS]
+        st.warning(
+            f"Tool output is {len(tool_response):,} characters. Showing the first "
+            f"{MAX_RENDERED_TOOL_RESPONSE_CHARS:,} characters to keep the app responsive."
+        )
+        st.code(preview, language="json" if preview.lstrip().startswith(("{", "[")) else None)
+        st.download_button(
+            "Download full tool output",
+            data=tool_response,
+            file_name="tool-output.txt",
+            mime="text/plain",
+            key=f"tool-output-{hashlib.sha256(tool_response.encode('utf-8')).hexdigest()}",
+            icon=":material/download:",
+            on_click="ignore",
+        )
+        return
+
     if tool_response.startswith((
         'data:image/png;base64,',
         'data:image/jpeg;base64,',

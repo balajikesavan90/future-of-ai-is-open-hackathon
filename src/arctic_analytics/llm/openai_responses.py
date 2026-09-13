@@ -27,6 +27,7 @@ from arctic_analytics.llm.tokenization import safe_encoding_for_model
 
 class OpenAIResponsesUtility:
     _MAX_MODEL_TOOL_OUTPUT_TOKENS = 5_000
+    _MAX_MODEL_ERROR_DIAGNOSTIC_CHARS = 4_000
     _IMAGE_PATCH_SIZE = 32
     _GPT_56_IMAGE_TOKEN_MULTIPLIER = 1.2
     _MAX_IMAGE_PATCHES = 30_000
@@ -263,10 +264,18 @@ class OpenAIResponsesUtility:
         if token_count < self._MAX_MODEL_TOOL_OUTPUT_TOKENS:
             return None
 
+        if tool_response.startswith('Error executing code:'):
+            diagnostic = tool_response[:self._MAX_MODEL_ERROR_DIAGNOSTIC_CHARS]
+            return (
+                'Tool execution failed. The complete error output was shown to the user. '
+                f'Diagnostic excerpt (truncated to {self._MAX_MODEL_ERROR_DIAGNOSTIC_CHARS:,} characters):\n'
+                f'{diagnostic}'
+            )
+
         return (
             f'Code execution returned a result of {token_count:,} tokens, meeting or exceeding '
-            f'the {self._MAX_MODEL_TOOL_OUTPUT_TOKENS:,}-token context limit. The complete output '
-            'was shown to the user. Proceed with the analysis and run smaller cuts only as needed.'
+            f'the {self._MAX_MODEL_TOOL_OUTPUT_TOKENS:,}-token model-output threshold. The complete '
+            'output was shown to the user. Proceed with the analysis and run smaller cuts only as needed.'
         )
     
 

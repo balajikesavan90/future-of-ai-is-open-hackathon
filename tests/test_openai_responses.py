@@ -170,6 +170,23 @@ def test_oversized_tool_output_is_visible_but_not_sent_to_model(monkeypatch):
     assert "display_output" not in captured_requests[0]["input"][-1]
 
 
+def test_oversized_execution_error_keeps_a_bounded_diagnostic_for_the_model(monkeypatch):
+    client = OpenAIResponsesUtility()
+    monkeypatch.setattr(
+        openai_responses,
+        "st",
+        SimpleNamespace(session_state={"session_id": "test-session"}),
+    )
+    error_output = "Error executing code: " + ("details " * 5_000)
+
+    notice = client._oversized_tool_output_notice("run_python_expression", error_output)
+
+    assert notice.startswith("Tool execution failed.")
+    assert "Diagnostic excerpt" in notice
+    assert error_output not in notice
+    assert len(notice) <= client._MAX_MODEL_ERROR_DIAGNOSTIC_CHARS + 200
+
+
 def test_image_dimensions_skips_oversized_base64_before_decoding(monkeypatch):
     client = OpenAIResponsesUtility()
     client._MAX_IMAGE_BASE64_CHARACTERS = 4
