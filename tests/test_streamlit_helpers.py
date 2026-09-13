@@ -1,4 +1,5 @@
 import pytest
+import pandas as pd
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -59,6 +60,19 @@ def test_render_tool_response_uses_output_id_for_large_download_key(monkeypatch)
     helpers.render_tool_response(tool_response, output_id="call_2")
 
     assert keys == ["tool-output-call_1", "tool-output-call_2"]
+
+
+def test_render_tool_response_renders_large_dataframe_json_as_a_table(monkeypatch):
+    rendered_dataframes = []
+    tool_response = pd.DataFrame({"text": ["x" * 1_000] * 100}).to_json(orient="index")
+    assert len(tool_response) > helpers.MAX_RENDERED_TOOL_RESPONSE_CHARS
+
+    monkeypatch.setattr(helpers.st, "dataframe", lambda dataframe, **_kwargs: rendered_dataframes.append(dataframe))
+    monkeypatch.setattr(helpers.st, "code", lambda *_args, **_kwargs: pytest.fail("table JSON must not use text preview"))
+
+    helpers.render_tool_response(tool_response)
+
+    assert rendered_dataframes[0].shape == (100, 1)
 
 
 def test_render_tool_response_reads_retained_file_for_download(monkeypatch, tmp_path):

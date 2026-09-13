@@ -860,6 +860,33 @@ def render_tool_response(tool_response, output_id=None, full_output_path=None, a
         st.image(tool_response)
         return
 
+    # Parse tabular JSON before applying the text-size fallback. A dataframe
+    # remains usable in Streamlit's virtualized table UI even when its JSON
+    # serialization would be too large to show as plain text in a chat message.
+    parsed_response = None
+    stripped_response = tool_response.lstrip()
+    looks_like_tabular_json = (
+        stripped_response.startswith('{"')
+        or stripped_response.startswith('[{')
+    )
+    if len(tool_response) <= MAX_RENDERED_TOOL_RESPONSE_CHARS or looks_like_tabular_json:
+        try:
+            parsed_response = json.loads(tool_response)
+
+            # Handle double-encoded JSON.
+            if isinstance(parsed_response, str):
+                try:
+                    parsed_response = json.loads(parsed_response)
+                except json.JSONDecodeError:
+                    pass
+
+            dataframe = try_convert_to_dataframe(parsed_response)
+            if dataframe is not None:
+                st.dataframe(dataframe, width="stretch")
+                return
+        except json.JSONDecodeError:
+            pass
+
     if len(tool_response) > MAX_RENDERED_TOOL_RESPONSE_CHARS or full_output_path:
         preview = tool_response[:MAX_RENDERED_TOOL_RESPONSE_CHARS]
         if len(tool_response) > MAX_RENDERED_TOOL_RESPONSE_CHARS:
@@ -889,27 +916,10 @@ def render_tool_response(tool_response, output_id=None, full_output_path=None, a
             st.error(tool_response)
         return
 
-    try:
-        # Try parsing the response
-        data = json.loads(tool_response)
-
-        # Handle double-encoded JSON
-        if isinstance(data, str):
-            try:
-                data = json.loads(data)
-            except json.JSONDecodeError:
-                pass
-
-        # Try converting to DataFrame
-        df = try_convert_to_dataframe(data)
-
-        if df is not None:
-            st.dataframe(df, width='stretch')
-        else:
-            st.write(data)
-
-    except json.JSONDecodeError:
-        # Not JSON, display as plain text
+    if parsed_response is not None:
+        st.write(parsed_response)
+    else:
+        # Not JSON, display as plain text.
         st.write(tool_response)
 
 def is_dev_environment():
