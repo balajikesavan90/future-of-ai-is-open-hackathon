@@ -27,6 +27,8 @@ from arctic_analytics.core.trace_resume import MAX_TRACE_BYTES, messages_for_res
 MAX_TRACE_STRING_CHARS = 10000
 TRACE_STRING_PREVIEW_CHARS = 1000
 MAX_RENDERED_TOOL_RESPONSE_CHARS = 50_000
+MAX_RETAINED_TOOL_OUTPUT_BYTES = 10 * 1024 * 1024
+MAX_RETAINED_TOOL_OUTPUT_SESSION_BYTES = 25 * 1024 * 1024
 REDACTED_SECRET_VALUE = "[redacted]"
 SENSITIVE_SESSION_KEY_MARKERS = ("api_key", "token", "password", "secret")
 RESEARCHER_NOTES_WIDGET_KEY = "researcher_notes_widget"
@@ -391,7 +393,7 @@ def serialize_analysis_trace(trace):
             " A retained tool-output preview may be contributing to the size; the complete response "
             "was available from its original download control."
             if any(
-                isinstance(message, dict) and "display_output" in message
+                isinstance(message, dict) and message.get("display_output_truncated")
                 for message in resume_messages
             )
             else ""
@@ -784,16 +786,43 @@ def render_tool_call(tool_call):
 
 def retain_tool_output(output_id, tool_response):
     """Persist an oversized result outside conversation state for this session only."""
+    if not isinstance(output_id, str):
+        logging.warning("Refusing to retain tool output with a non-string ID")
+        return None
+
+    output_bytes = tool_response.encode("utf-8")
+    if len(output_bytes) > MAX_RETAINED_TOOL_OUTPUT_BYTES:
+        logging.warning("Tool output exceeds the per-output retention limit")
+        return None
+
     directory = st.session_state.get(RETAINED_TOOL_OUTPUT_DIRECTORY_KEY)
     if directory is None:
         directory = tempfile.TemporaryDirectory(prefix="arctic-analytics-tool-output-")
         st.session_state[RETAINED_TOOL_OUTPUT_DIRECTORY_KEY] = directory
-    path = Path(directory.name) / f"{output_id}.txt"
-    path.write_text(tool_response, encoding="utf-8")
-    st.session_state.setdefault(RETAINED_TOOL_OUTPUTS_KEY, {})[output_id] = str(path)
+
+    retained_outputs = st.session_state.setdefault(RETAINED_TOOL_OUTPUTS_KEY, {})
+    retained_bytes = 0
+    for retained_path in retained_outputs.values():
+        if not isinstance(retained_path, str):
+            continue
+        try:
+            retained_bytes += Path(retained_path).stat().st_size
+        except OSError:
+            continue
+    if retained_bytes + len(output_bytes) > MAX_RETAINED_TOOL_OUTPUT_SESSION_BYTES:
+        logging.warning("Tool output exceeds the session retention limit")
+        return None
+
+    # Never derive a filesystem path from the model/API-provided call ID.
+    path = Path(directory.name) / f"{uuid.uuid4().hex}.txt"
+    path.write_bytes(output_bytes)
+    retained_outputs[output_id] = str(path)
+    return str(path)
 
 
 def retained_tool_output_path(output_id):
+    if not isinstance(output_id, str):
+        return None
     path = st.session_state.get(RETAINED_TOOL_OUTPUTS_KEY, {}).get(output_id)
     return path if isinstance(path, str) and Path(path).is_file() else None
 
@@ -805,7 +834,7 @@ def clear_retained_tool_outputs():
     st.session_state.pop(RETAINED_TOOL_OUTPUTS_KEY, None)
 
 
-def render_tool_response(tool_response, output_id=None, full_output_path=None):
+def render_tool_response(tool_response, output_id=None, full_output_path=None, allow_full_download=True):
     """
     Renders a tool response in the Streamlit UI
     
@@ -827,19 +856,22 @@ def render_tool_response(tool_response, output_id=None, full_output_path=None):
         if len(tool_response) > MAX_RENDERED_TOOL_RESPONSE_CHARS:
             st.warning(f"Tool output is {len(tool_response):,} characters. Showing a preview to keep the app responsive.")
         st.code(preview, language="json" if preview.lstrip().startswith(("{", "[")) else None)
-        st.download_button(
-            "Download full tool output",
-            data=(lambda: open(full_output_path, "rb")) if full_output_path else tool_response,
-            file_name="tool-output.txt",
-            mime="text/plain",
-            key=(
-                f"tool-output-{output_id}"
-                if output_id is not None
-                else f"tool-output-{hashlib.sha256(tool_response.encode('utf-8')).hexdigest()}"
-            ),
-            icon=":material/download:",
-            on_click="ignore",
-        )
+        if allow_full_download:
+            st.download_button(
+                "Download full tool output",
+                data=Path(full_output_path).read_bytes() if full_output_path else tool_response,
+                file_name="tool-output.txt",
+                mime="text/plain",
+                key=(
+                    f"tool-output-{output_id}"
+                    if output_id is not None
+                    else f"tool-output-{hashlib.sha256(tool_response.encode('utf-8')).hexdigest()}"
+                ),
+                icon=":material/download:",
+                on_click="ignore",
+            )
+        else:
+            st.warning("The complete tool output exceeds the retention limit and cannot be downloaded.")
         return
 
     if tool_response.startswith('Error'):

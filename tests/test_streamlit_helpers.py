@@ -1,4 +1,6 @@
 import pytest
+from pathlib import Path
+from types import SimpleNamespace
 
 pytest.importorskip("streamlit")
 
@@ -57,3 +59,37 @@ def test_render_tool_response_uses_output_id_for_large_download_key(monkeypatch)
     helpers.render_tool_response(tool_response, output_id="call_2")
 
     assert keys == ["tool-output-call_1", "tool-output-call_2"]
+
+
+def test_render_tool_response_reads_retained_file_for_download(monkeypatch, tmp_path):
+    rendered = []
+    retained_path = tmp_path / "retained-output.txt"
+    retained_path.write_text("complete output", encoding="utf-8")
+
+    monkeypatch.setattr(helpers.st, "code", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(helpers.st, "download_button", lambda *args, **kwargs: rendered.append((args, kwargs)))
+
+    helpers.render_tool_response("preview", full_output_path=str(retained_path))
+
+    assert rendered[0][1]["data"] == b"complete output"
+
+
+def test_retained_tool_output_path_ignores_non_string_id():
+    assert helpers.retained_tool_output_path(["malformed"]) is None
+
+
+def test_retain_tool_output_uses_generated_filename_and_enforces_limit(monkeypatch):
+    session_state = {}
+    monkeypatch.setattr(helpers, "st", SimpleNamespace(session_state=session_state))
+    monkeypatch.setattr(helpers, "MAX_RETAINED_TOOL_OUTPUT_BYTES", 3)
+
+    retained_path = helpers.retain_tool_output("../../outside", "abc")
+
+    assert retained_path is not None
+    assert Path(retained_path).parent == Path(
+        session_state[helpers.RETAINED_TOOL_OUTPUT_DIRECTORY_KEY].name
+    )
+    assert Path(retained_path).name != "../../outside.txt"
+    assert helpers.retain_tool_output("second", "abcd") is None
+
+    helpers.clear_retained_tool_outputs()

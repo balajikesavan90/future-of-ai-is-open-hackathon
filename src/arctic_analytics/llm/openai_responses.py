@@ -388,20 +388,29 @@ class OpenAIResponsesUtility:
                             'call_id': tool_call['call_id'],
                             'output': model_tool_response or str(tool_response),
                         }
+                        retained_output_path = None
                         if model_tool_response:
                             display_output, display_output_truncated = self._retained_display_output(
                                 str(tool_response)
                             )
                             tool_output['display_output'] = display_output
                             if display_output_truncated:
-                                retain_tool_output(tool_call['call_id'], str(tool_response))
-                                tool_output['display_output_ref'] = tool_call['call_id']
+                                retained_output_path = retain_tool_output(
+                                    tool_call['call_id'], str(tool_response)
+                                )
+                                if retained_output_path:
+                                    tool_output['display_output_ref'] = tool_call['call_id']
                                 tool_output['display_output_truncated'] = True
                                 tool_output['display_output_length_chars'] = len(str(tool_response))
                         messages.append(tool_output)
                     with st.session_state['messages_container']:
                         with st.chat_message('assistant'):
-                            render_tool_response(tool_response, output_id=tool_call['call_id'], full_output_path=(st.session_state.get('retained_tool_outputs', {}).get(tool_call['call_id'])))
+                            render_tool_response(
+                                tool_response,
+                                output_id=tool_call['call_id'],
+                                full_output_path=retained_output_path,
+                                allow_full_download=not model_tool_response or retained_output_path is not None,
+                            )
                 except Exception as e:
                     error_message = f"Error executing tool {tool_call['name']}: {str(e)}"
                     logging.error(error_message)
