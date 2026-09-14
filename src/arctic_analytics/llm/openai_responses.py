@@ -22,9 +22,10 @@ from arctic_analytics.config import (
 from arctic_analytics.streamlit.helpers import (
     DISPLAY_OUTPUT_FIELDS,
     LARGE_PYTHON_OUTPUT_USER_NOTICE,
+    MAX_RENDERED_TOOL_RESPONSE_CHARS,
     MAX_RETAINED_TOOL_OUTPUT_BYTES,
-    MAX_RETAINED_TOOL_OUTPUT_SESSION_BYTES,
     TOOL_OUTPUT_NOT_RETAINED_NOTICE,
+    retain_tool_output,
     safely_escape_dollars,
     render_tool_call,
     render_tool_response,
@@ -258,20 +259,10 @@ class OpenAIResponsesUtility:
         ]
 
     def _retained_display_output(self, tool_response):
-        """Keep complete results that passed the 10 MiB retention limit."""
-        return tool_response, False
-
-    @staticmethod
-    def _can_retain_display_output(messages, tool_response):
-        """Keep full user-visible tool results within the session memory budget."""
-        retained_bytes = sum(
-            len(message["display_output"].encode("utf-8"))
-            for message in messages
-            if isinstance(message, dict) and isinstance(message.get("display_output"), str)
-        )
+        """Return a rerun-safe preview for a result retained outside message state."""
         return (
-            retained_bytes + len(tool_response.encode("utf-8"))
-            <= MAX_RETAINED_TOOL_OUTPUT_SESSION_BYTES
+            tool_response[:MAX_RENDERED_TOOL_RESPONSE_CHARS],
+            len(tool_response) > MAX_RENDERED_TOOL_RESPONSE_CHARS,
         )
 
     def _oversized_tool_output_notice(self, tool_name, tool_response):
@@ -431,11 +422,17 @@ class OpenAIResponsesUtility:
                         if model_tool_response:
                             if not str(tool_response).startswith('Error executing code:'):
                                 tool_output['display_output_agent_limited'] = True
-                            if self._can_retain_display_output(messages, str(tool_response)):
+                            retained_output_path = retain_tool_output(
+                                tool_call['call_id'], str(tool_response)
+                            )
+                            if retained_output_path is not None:
                                 display_output, display_output_truncated = self._retained_display_output(
                                     str(tool_response)
                                 )
                                 tool_output['display_output'] = display_output
+                                tool_output['display_output_truncated'] = display_output_truncated
+                                tool_output['display_output_length_chars'] = len(str(tool_response))
+                                tool_output['display_output_ref'] = tool_call['call_id']
                             else:
                                 tool_output['display_output_not_retained'] = True
                         messages.append(tool_output)

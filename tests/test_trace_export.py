@@ -327,7 +327,7 @@ def test_resume_trace_export_rejects_payloads_larger_than_import_limit():
         serialize_analysis_trace(trace)
 
 
-def test_trace_export_error_does_not_reference_removed_download_control(monkeypatch):
+def test_trace_export_error_identifies_retained_tool_output(monkeypatch):
     monkeypatch.setattr(helpers, "MAX_TRACE_BYTES", 1)
     trace = {
         "messages": [{
@@ -339,11 +339,13 @@ def test_trace_export_error_does_not_reference_removed_download_control(monkeypa
 
     with pytest.raises(TraceExportError, match="larger than 10 MiB and cannot be resumed") as exc:
         serialize_analysis_trace(trace)
+    assert "Retained tool output may be contributing" in str(exc.value)
     assert "download control" not in str(exc.value)
 
     trace["messages"][0].pop("display_output_ref")
     with pytest.raises(TraceExportError, match="larger than 10 MiB and cannot be resumed") as exc:
         serialize_analysis_trace(trace)
+    assert "Retained tool output may be contributing" not in str(exc.value)
     assert "original download control" not in str(exc.value)
 
 

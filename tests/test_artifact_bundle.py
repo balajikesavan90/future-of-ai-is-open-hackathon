@@ -176,6 +176,28 @@ def test_research_bundle_writes_full_display_output_when_model_output_is_compact
     assert output["display_output"] == full_output
 
 
+def test_research_bundle_copies_retained_output_without_display_output(tmp_path):
+    retained_output = tmp_path / "retained-output.txt"
+    retained_output.write_text("complete retained output", encoding="utf-8")
+    model_notice = "The complete output was shown to the user."
+    session = ResearchSession(
+        analysis_trace=AnalysisTrace(
+            {"outputs": [{"type": "function_call_output", "output": model_notice}]}
+        ),
+        context_bundle=ContextBundle({}),
+        raw_outputs=[{
+            "type": "function_call_output",
+            "output": model_notice,
+            "display_output_ref": "call_1",
+            "_retained_output_path": str(retained_output),
+        }],
+    )
+
+    bundle = write_research_bundle(session, tmp_path / "bundle")
+
+    assert (bundle.output_dir / "outputs" / "001_full_output.txt").read_text() == "complete retained output"
+
+
 def test_research_bundle_does_not_write_empty_marker_when_only_raw_outputs_exist(tmp_path):
     session = ResearchSession(
         analysis_trace=AnalysisTrace({"outputs": []}),

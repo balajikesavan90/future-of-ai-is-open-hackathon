@@ -96,7 +96,10 @@ def write_outputs_and_figures(
             raw_outputs[index]
             if index < len(raw_outputs)
             and isinstance(raw_outputs[index], dict)
-            and "display_output" in raw_outputs[index]
+            and (
+                "display_output" in raw_outputs[index]
+                or "_retained_output_path" in raw_outputs[index]
+            )
             else output
             for index, output in enumerate(outputs)
         ]

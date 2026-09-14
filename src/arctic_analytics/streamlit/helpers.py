@@ -419,11 +419,28 @@ def serialize_analysis_trace(trace):
     """Serialize a trace only when it meets the resume import size limit."""
     payload = json.dumps(trace, separators=(",", ":"), default=str).encode("utf-8")
     if len(payload) > MAX_TRACE_BYTES:
+        retained_output_guidance = ""
+        if _trace_has_retained_output_reference(trace):
+            retained_output_guidance = (
+                " Retained tool output may be contributing to the size; reduce it before exporting."
+            )
         raise TraceExportError(
             "This trace is larger than 10 MiB and cannot be resumed. "
             "Reduce the analysis history or chart outputs, then export again."
+            + retained_output_guidance
         )
     return payload.decode("utf-8")
+
+
+def _trace_has_retained_output_reference(value):
+    """Identify trace metadata pointing to session-retained tool output."""
+    if isinstance(value, dict):
+        if isinstance(value.get("display_output_ref"), str):
+            return True
+        return any(_trace_has_retained_output_reference(item) for item in value.values())
+    if isinstance(value, (list, tuple)):
+        return any(_trace_has_retained_output_reference(item) for item in value)
+    return False
 
 
 def _build_resume_manifest():
@@ -985,7 +1002,7 @@ def render_tool_response(tool_response, output_id=None, full_output_path=None, a
                 on_click="ignore",
             )
         else:
-            st.warning("The complete tool output exceeds the retention limit and cannot be downloaded.")
+            st.warning("The complete tool output was not retained and cannot be downloaded.")
         return False
 
     if tool_response.startswith('Error'):

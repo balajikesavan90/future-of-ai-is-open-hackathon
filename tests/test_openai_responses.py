@@ -257,6 +257,12 @@ def test_oversized_tool_output_is_visible_but_not_sent_to_model(monkeypatch):
         "render_tool_response",
         lambda response, **_kwargs: rendered.append(response),
     )
+    retained = []
+    monkeypatch.setattr(
+        openai_responses,
+        "retain_tool_output",
+        lambda output_id, response: retained.append((output_id, response)) or "/tmp/retained-output.txt",
+    )
     monkeypatch.setattr(
         client,
         "_responses_with_backoff",
@@ -278,6 +284,9 @@ def test_oversized_tool_output_is_visible_but_not_sent_to_model(monkeypatch):
 
     tool_message = messages[-1]
     assert tool_message["display_output"] == visible_output
+    assert tool_message["display_output_ref"] == "call_1"
+    assert tool_message["display_output_length_chars"] == len(visible_output)
+    assert tool_message["display_output_truncated"] is False
     assert tool_message["display_output_agent_limited"] is True
     assert f"{len(client.enc_gpt4.encode(visible_output)):,}" in tool_message["output"]
     assert "must inform the user" in tool_message["output"]
@@ -286,6 +295,7 @@ def test_oversized_tool_output_is_visible_but_not_sent_to_model(monkeypatch):
     assert captured_requests[0]["input"][-1]["output"] == tool_message["output"]
     assert "display_output" not in captured_requests[0]["input"][-1]
     assert "display_output_agent_limited" not in captured_requests[0]["input"][-1]
+    assert retained == [("call_1", visible_output)]
     assert user_notices == [openai_responses.LARGE_PYTHON_OUTPUT_USER_NOTICE]
 
 
@@ -298,7 +308,6 @@ def test_large_output_over_session_budget_is_visible_but_not_retained(monkeypatc
     warnings = []
     client = OpenAIResponsesUtility()
 
-    monkeypatch.setattr(openai_responses, "MAX_RETAINED_TOOL_OUTPUT_SESSION_BYTES", 3)
     monkeypatch.setattr(
         openai_responses,
         "st",
@@ -314,6 +323,7 @@ def test_large_output_over_session_budget_is_visible_but_not_retained(monkeypatc
         "render_tool_response",
         lambda response, **_kwargs: rendered.append(response),
     )
+    monkeypatch.setattr(openai_responses, "retain_tool_output", lambda *_args: None)
     monkeypatch.setattr(
         client,
         "_oversized_tool_output_notice",
@@ -358,14 +368,14 @@ def test_oversized_execution_error_keeps_a_bounded_diagnostic_for_the_model(monk
     assert len(notice) <= client._MAX_MODEL_ERROR_DIAGNOSTIC_CHARS + 200
 
 
-def test_retained_display_output_keeps_the_complete_result():
+def test_retained_display_output_keeps_a_bounded_preview():
     client = OpenAIResponsesUtility()
-    output = "x" * 100_000
+    output = "x" * (openai_responses.MAX_RENDERED_TOOL_RESPONSE_CHARS + 1)
 
     retained, truncated = client._retained_display_output(output)
 
-    assert truncated is False
-    assert retained == output
+    assert truncated is True
+    assert retained == output[:openai_responses.MAX_RENDERED_TOOL_RESPONSE_CHARS]
 
 
 def test_image_dimensions_skips_oversized_base64_before_decoding(monkeypatch):
