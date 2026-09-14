@@ -90,7 +90,7 @@ class OpenAIResponsesUtility:
         )
 
     def _calculate_context_window_usage(self, input_tokens, model):
-        """Return request-context usage against Python Data Analysis Agent'ss 128K limit."""
+        """Return request-context usage against Python Data Analysis Agent's 128K limit."""
         validate_openai_model(model)
         return min(input_tokens / MAX_MODEL_CONTEXT_TOKENS, 1.0)
 

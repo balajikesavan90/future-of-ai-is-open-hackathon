@@ -178,7 +178,7 @@ This project does not provide:
 
 Current implementation limits:
 
-- Traces are snapshots of Streamlit session state. They can restore conversation and metadata for continuation with re-uploaded CSVs, but are not deterministic execution replays. Trace-schema versions 0.3.0 and 0.4.0 exports with a resume manifest are resumable; those traces retain chart payloads. Trace exports larger than 10 MiB are not prepared because they cannot be imported for resume.
+- Traces are snapshots of Streamlit session state. They can restore conversation and metadata for continuation with re-uploaded CSVs, but are not deterministic execution replays. Trace-schema version 0.3.0 exports with a resume manifest are resumable; those traces retain chart payloads. Trace exports larger than 10 MiB are not prepared because they cannot be imported for resume.
 - Research bundles package artifacts for review; they are not replayable runs.
 - Execution restrictions are not isolation.
 - Examples may require external APIs when regenerating traces.
@@ -283,7 +283,7 @@ Suggested wording:
 Analyses were performed using Python Data Analysis Agent v0.1.0 (DOI: 10.5281/zenodo.18514535).
 ```
 
-Before citing a newer release, verify that the README, `CITATION.cff`, package version, and Zenodo record refer to the same version. See [docs/citing.md](docs/citing.md).
+Before citing this release, verify that the README, `CITATION.cff`, package version, and Zenodo record refer to the same version. See [docs/citing.md](docs/citing.md).
 
 ## Documentation
 

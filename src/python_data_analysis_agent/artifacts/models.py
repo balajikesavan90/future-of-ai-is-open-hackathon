@@ -23,7 +23,7 @@ class AnalysisTrace:
 
 @dataclass
 class ContextBundle:
-    """Context and metadata supplied to a Python Data Analysis Agent agent workflow."""
+    """Context and metadata supplied to a Python Data Analysis Agent workflow."""
 
     data: JsonDict
 

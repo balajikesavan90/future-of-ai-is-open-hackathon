@@ -116,7 +116,7 @@ def test_build_analysis_trace_is_json_safe_and_truncates_large_payloads():
     validate_trace_schema(trace)
 
     assert dumped
-    assert trace["trace_schema_version"] == "0.4.0"
+    assert trace["trace_schema_version"] == "0.3.0"
     assert trace["package_version"]
     assert trace["timestamp"]
     assert "model" not in trace

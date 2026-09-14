@@ -4,7 +4,7 @@ Python Data Analysis Agent is research software. If it supports an analysis, dat
 
 ## Software Citation
 
-Use the repository `CITATION.cff` file as the source of citation metadata. The current DOI is:
+Use the repository `CITATION.cff` file as the source of citation metadata. The Zenodo concept DOI is:
 
 ```text
 10.5281/zenodo.18514535
