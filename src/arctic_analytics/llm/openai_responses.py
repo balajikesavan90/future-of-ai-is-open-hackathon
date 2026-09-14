@@ -20,7 +20,6 @@ from arctic_analytics.config import (
     validate_openai_model,
 )
 from arctic_analytics.streamlit.helpers import (
-    DISPLAY_OUTPUT_FIELDS,
     LARGE_PYTHON_OUTPUT_USER_NOTICE,
     MAX_RENDERED_TOOL_RESPONSE_CHARS,
     MAX_RETAINED_TOOL_OUTPUT_BYTES,
@@ -30,6 +29,7 @@ from arctic_analytics.streamlit.helpers import (
     render_tool_call,
     render_tool_response,
 )
+from arctic_analytics.core.output_metadata import DISPLAY_OUTPUT_FIELDS
 from arctic_analytics.core.security import safely_execute_code
 from arctic_analytics.llm.tokenization import safe_encoding_for_model
 
@@ -267,7 +267,7 @@ class OpenAIResponsesUtility:
 
     def _oversized_tool_output_notice(self, tool_name, tool_response):
         """Return a compact model-facing notice for oversized Python outputs."""
-        if tool_name not in {'run_python_expression', 'run_python_function'}:
+        if tool_name not in {'run_python_expression', 'run_python_function', 'generate_plot'}:
             return None
         if not isinstance(tool_response, str) or tool_response.startswith('data:image/'):
             return None
@@ -294,6 +294,19 @@ class OpenAIResponsesUtility:
             f'the {self._MAX_MODEL_TOOL_OUTPUT_TOKENS:,}-token model-output threshold. The complete '
             'output was omitted from model context. You must inform the user that you cannot see or reason '
             'about this tool result because of its size. Proceed with the analysis and run smaller cuts only as needed.'
+        )
+
+    @staticmethod
+    def _retention_limit_error(tool_name, output_mib, limit_mib, tool_response):
+        """Explain how to reduce a result that cannot be rendered or retained."""
+        if tool_name == "generate_plot" and tool_response.startswith("data:image/"):
+            guidance = "Reduce the figure dimensions, DPI, or resolution before returning it."
+        else:
+            guidance = "Return a smaller dataframe or aggregate the results before returning them."
+        return (
+            "Error executing code: Tool output is "
+            f"{output_mib:.2f} MiB, exceeding the {limit_mib:.0f} MiB output limit. "
+            f"The result was not rendered or retained. {guidance}"
         )
     
 
@@ -379,11 +392,11 @@ class OpenAIResponsesUtility:
                     ):
                         limit_mib = MAX_RETAINED_TOOL_OUTPUT_BYTES / (1024 * 1024)
                         output_mib = len(tool_response.encode("utf-8")) / (1024 * 1024)
-                        error_message = (
-                            "Error executing code: Tool output is "
-                            f"{output_mib:.2f} MiB, exceeding the {limit_mib:.0f} MiB output limit. "
-                            "The result was not rendered or retained. Return a smaller dataframe or aggregate "
-                            "the results before returning them."
+                        error_message = self._retention_limit_error(
+                            tool_name,
+                            output_mib,
+                            limit_mib,
+                            tool_response,
                         )
                         logging.warning(error_message)
                         messages.append({

@@ -23,6 +23,7 @@ from arctic_analytics.artifacts import (
     build_research_bundle_zip,
 )
 from arctic_analytics.core.trace_resume import MAX_TRACE_BYTES, messages_for_resume
+from arctic_analytics.core.output_metadata import DISPLAY_OUTPUT_FIELDS
 
 MAX_TRACE_STRING_CHARS = 10000
 TRACE_STRING_PREVIEW_CHARS = 1000
@@ -42,16 +43,6 @@ SENSITIVE_SESSION_KEY_MARKERS = ("api_key", "token", "password", "secret")
 RESEARCHER_NOTES_WIDGET_KEY = "researcher_notes_widget"
 RETAINED_TOOL_OUTPUTS_KEY = "retained_tool_outputs"
 RETAINED_TOOL_OUTPUT_DIRECTORY_KEY = "retained_tool_output_directory"
-DISPLAY_OUTPUT_FIELDS = frozenset({
-    "display_output",
-    "display_output_truncated",
-    "display_output_length_chars",
-    "display_output_ref",
-    "display_output_agent_limited",
-    "display_output_not_retained",
-})
-
-
 class TraceExportError(ValueError):
     """Raised when an exported trace cannot be imported by the resume flow."""
 
@@ -515,6 +506,7 @@ def _resume_json_safe(value):
 def restore_trace_session(trace, preparation):
     """Replace analysis state with an explicitly selected subset of an imported trace."""
     api_key = st.session_state.get("OPENAI_API_KEY")
+    clear_retained_tool_outputs()
     for key in list(st.session_state.keys()):
         del st.session_state[key]
     if api_key:

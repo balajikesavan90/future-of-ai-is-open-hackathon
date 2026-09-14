@@ -9,16 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from arctic_analytics.artifacts.models import ResearchSession
-
-
-DISPLAY_OUTPUT_METADATA_FIELDS = frozenset({
-    "display_output",
-    "display_output_truncated",
-    "display_output_length_chars",
-    "display_output_ref",
-    "display_output_agent_limited",
-    "display_output_not_retained",
-})
+from arctic_analytics.core.output_metadata import DISPLAY_OUTPUT_FIELDS
 
 
 def json_safe(value: Any) -> Any:
@@ -106,7 +97,7 @@ def write_outputs_and_figures(
             raw_outputs[index]
             if index < len(raw_outputs)
             and isinstance(raw_outputs[index], dict)
-            and any(field in raw_outputs[index] for field in DISPLAY_OUTPUT_METADATA_FIELDS)
+            and any(field in raw_outputs[index] for field in DISPLAY_OUTPUT_FIELDS)
             else output
             for index, output in enumerate(outputs)
         ]

@@ -8,7 +8,10 @@ import pytest
 from PIL import Image
 
 import arctic_analytics.llm.openai_responses as openai_responses
+import arctic_analytics.artifacts.extractors as artifact_extractors
 from arctic_analytics.config import MAX_MODEL_CONTEXT_TOKENS
+from arctic_analytics.core.output_metadata import DISPLAY_OUTPUT_FIELDS
+from arctic_analytics.streamlit import helpers
 from arctic_analytics.llm.openai_responses import OpenAIResponsesUtility
 
 
@@ -102,6 +105,12 @@ def test_messages_for_model_excludes_all_display_metadata():
     }]
 
 
+def test_display_output_metadata_contract_is_shared_across_consumers():
+    assert helpers.DISPLAY_OUTPUT_FIELDS is DISPLAY_OUTPUT_FIELDS
+    assert openai_responses.DISPLAY_OUTPUT_FIELDS is DISPLAY_OUTPUT_FIELDS
+    assert artifact_extractors.DISPLAY_OUTPUT_FIELDS is DISPLAY_OUTPUT_FIELDS
+
+
 def test_tool_call_follow_up_keeps_system_message_out_of_input(monkeypatch):
     system_message = {"role": "system", "content": [{"text": "System instructions."}]}
     user_message = {"role": "user", "content": [{"text": "Analyze the data."}]}
@@ -185,6 +194,15 @@ def test_tool_call_rejects_output_larger_than_retention_limit(monkeypatch):
     assert "display_output" not in messages[-1]
     assert rendered == [messages[-1]["output"]]
     assert captured_requests[0]["input"][-1] == messages[-1]
+
+
+def test_oversized_plot_limit_error_recommends_reducing_image_size():
+    error_message = OpenAIResponsesUtility._retention_limit_error(
+        "generate_plot", 12.5, 10, "data:image/png;base64," + ("a" * 10)
+    )
+
+    assert "figure dimensions, DPI, or resolution" in error_message
+    assert "dataframe" not in error_message
 
 
 def test_tool_call_renders_png_without_unbound_local_error(monkeypatch):
@@ -367,6 +385,32 @@ def test_oversized_execution_error_keeps_a_bounded_diagnostic_for_the_model(monk
     assert "Diagnostic excerpt" in notice
     assert error_output not in notice
     assert len(notice) <= client._MAX_MODEL_ERROR_DIAGNOSTIC_CHARS + 200
+
+
+def test_oversized_plot_error_keeps_a_bounded_diagnostic_for_the_model(monkeypatch):
+    client = OpenAIResponsesUtility()
+    monkeypatch.setattr(
+        openai_responses,
+        "st",
+        SimpleNamespace(session_state={"session_id": "test-session"}),
+    )
+    error_output = "Error executing code: " + ("details " * 5_000)
+
+    notice = client._oversized_tool_output_notice("generate_plot", error_output)
+
+    assert notice is not None
+    assert error_output not in notice
+
+
+def test_oversized_plot_image_is_not_compacted_for_model(monkeypatch):
+    client = OpenAIResponsesUtility()
+    monkeypatch.setattr(
+        openai_responses,
+        "st",
+        SimpleNamespace(session_state={"session_id": "test-session"}),
+    )
+
+    assert client._oversized_tool_output_notice("generate_plot", "data:image/png;base64,AAAA") is None
 
 
 def test_retained_display_output_keeps_a_bounded_preview():

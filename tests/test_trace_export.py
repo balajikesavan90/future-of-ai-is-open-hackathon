@@ -655,6 +655,23 @@ def test_restore_trace_session_preserves_api_key_but_not_imported_session_state(
     assert "Historical outputs and charts" in st.session_state["resume_warning"]
 
 
+def test_restore_trace_session_cleans_retained_tool_output_directory(monkeypatch):
+    cleaned = []
+
+    class RetainedDirectory:
+        def cleanup(self):
+            cleaned.append(True)
+
+    st.session_state.clear()
+    st.session_state[helpers.RETAINED_TOOL_OUTPUT_DIRECTORY_KEY] = RetainedDirectory()
+    st.session_state[helpers.RETAINED_TOOL_OUTPUTS_KEY] = {"call_1": "/tmp/output.txt"}
+
+    restore_trace_session({"messages": []}, ResumePreparation(vetted_files={}))
+
+    assert cleaned == [True]
+    assert helpers.RETAINED_TOOL_OUTPUTS_KEY not in st.session_state
+
+
 def test_restore_trace_session_rejects_boolean_cost():
     st.session_state.clear()
 
