@@ -303,11 +303,9 @@ def _extract_raw_outputs(messages):
             continue
         if message.get("type") == "function_call_output":
             output = dict(message)
-            # Only a path created and tracked by the current session is trusted.
+            # Paths are session-local implementation details. The artifact API
+            # receives retained bytes separately, never a caller-provided path.
             output.pop("_retained_output_path", None)
-            retained_path = retained_tool_output_path(output.get("display_output_ref"))
-            if retained_path:
-                output["_retained_output_path"] = retained_path
             outputs.append(output)
             continue
         if "output" in message:
@@ -319,6 +317,22 @@ def _extract_raw_outputs(messages):
                 }
             )
     return outputs
+
+
+def _extract_retained_output_bytes(messages):
+    retained_outputs = {}
+    for message in messages:
+        if not isinstance(message, dict) or message.get("type") != "function_call_output":
+            continue
+        output_ref = message.get("display_output_ref")
+        retained_path = retained_tool_output_path(output_ref)
+        if not retained_path:
+            continue
+        try:
+            retained_outputs[output_ref] = Path(retained_path).read_bytes()
+        except OSError:
+            logging.warning("Unable to read retained tool output for artifact export")
+    return retained_outputs
 
 def _uploaded_file_names():
     uploaded_files = st.session_state.get("uploaded_files", [])
@@ -767,6 +781,7 @@ def build_research_session_from_streamlit(trace=None):
         assumptions=[],
         command="streamlit research bundle export",
         raw_outputs=_extract_raw_outputs(st.session_state.get("messages", [])),
+        retained_output_bytes=_extract_retained_output_bytes(st.session_state.get("messages", [])),
     )
 
 def safely_escape_dollars(text):
@@ -988,7 +1003,9 @@ def render_tool_response(tool_response, output_id=None, full_output_path=None, a
         dataframe = try_convert_to_dataframe(parsed_response)
         if dataframe is not None:
             st.dataframe(dataframe, width="stretch")
-            if allow_full_download and full_output_bytes is not None:
+            if full_output_path and full_output_bytes is None:
+                st.warning("The complete tool output was not retained and cannot be downloaded.")
+            elif allow_full_download and full_output_bytes is not None:
                 st.download_button(
                     "Download full tool output",
                     data=full_output_bytes,

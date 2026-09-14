@@ -300,6 +300,9 @@ def _sanitize_resumed_message(message: Any) -> Any:
     restored.pop("_retained_output_path", None)
     if restored.get("type") != "function_call_output":
         return restored
+    # References identify files held only by the prior Streamlit session.
+    # Keep a valid preview, but never allow it to point at future session data.
+    restored.pop("display_output_ref", None)
     display_output = restored.get("display_output")
     supported_image_prefixes = (
         "data:image/png;base64,",

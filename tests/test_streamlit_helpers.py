@@ -161,6 +161,24 @@ def test_render_tool_response_handles_unreadable_retained_file(monkeypatch, tmp_
     assert "cannot be downloaded" in warnings[-1]
 
 
+def test_render_tool_response_warns_for_partial_dataframe_when_retained_file_is_unreadable(monkeypatch, tmp_path):
+    retained_path = tmp_path / "retained-output.json"
+    retained_path.write_text("unreadable", encoding="utf-8")
+    preview = pd.DataFrame({"value": [1, 2]}).to_json(orient="index")
+    warnings = []
+
+    monkeypatch.setattr(
+        Path,
+        "read_bytes",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError("unreadable")),
+    )
+    monkeypatch.setattr(helpers.st, "dataframe", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(helpers.st, "warning", warnings.append)
+
+    assert helpers.render_tool_response(preview, full_output_path=str(retained_path)) is True
+    assert "cannot be downloaded" in warnings[-1]
+
+
 def test_retained_tool_output_path_ignores_non_string_id():
     assert helpers.retained_tool_output_path(["malformed"]) is None
 

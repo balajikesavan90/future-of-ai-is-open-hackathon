@@ -5,11 +5,20 @@ from __future__ import annotations
 import base64
 import binascii
 import json
-import shutil
 from pathlib import Path
 from typing import Any
 
 from arctic_analytics.artifacts.models import ResearchSession
+
+
+DISPLAY_OUTPUT_METADATA_FIELDS = frozenset({
+    "display_output",
+    "display_output_truncated",
+    "display_output_length_chars",
+    "display_output_ref",
+    "display_output_agent_limited",
+    "display_output_not_retained",
+})
 
 
 def json_safe(value: Any) -> Any:
@@ -77,6 +86,7 @@ def write_outputs_and_figures(
     outputs_dir: Path,
     figures_dir: Path,
     raw_outputs: list[Any] | None = None,
+    retained_output_bytes: dict[str, bytes] | None = None,
 ) -> list[Path]:
     written = []
     outputs_dir.mkdir(parents=True, exist_ok=True)
@@ -96,10 +106,7 @@ def write_outputs_and_figures(
             raw_outputs[index]
             if index < len(raw_outputs)
             and isinstance(raw_outputs[index], dict)
-            and (
-                "display_output" in raw_outputs[index]
-                or "_retained_output_path" in raw_outputs[index]
-            )
+            and any(field in raw_outputs[index] for field in DISPLAY_OUTPUT_METADATA_FIELDS)
             else output
             for index, output in enumerate(outputs)
         ]
@@ -120,12 +127,24 @@ def write_outputs_and_figures(
 
         path = outputs_dir / f"{index:03d}_output.json"
         serialized_output = dict(output) if isinstance(output, dict) else output
-        retained_path = serialized_output.pop("_retained_output_path", None) if isinstance(serialized_output, dict) else None
+        # Paths in raw artifact inputs are untrusted. Retained payloads are
+        # captured as bytes from Streamlit's session-tracked files before this
+        # public artifact API is invoked.
+        if isinstance(serialized_output, dict):
+            serialized_output.pop("_retained_output_path", None)
+            output_ref = serialized_output.get("display_output_ref")
+        else:
+            output_ref = None
         path.write_text(json.dumps(json_safe(serialized_output), indent=2, default=str) + "\n")
         written.append(path)
-        if isinstance(retained_path, str) and Path(retained_path).is_file():
+        retained_bytes = (
+            retained_output_bytes.get(output_ref)
+            if isinstance(output_ref, str) and isinstance(retained_output_bytes, dict)
+            else None
+        )
+        if isinstance(retained_bytes, bytes):
             full_output_path = outputs_dir / f"{index:03d}_full_output.txt"
-            shutil.copyfile(retained_path, full_output_path)
+            full_output_path.write_bytes(retained_bytes)
             written.append(full_output_path)
 
     if not output_records:

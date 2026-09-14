@@ -105,10 +105,12 @@ def test_sanitize_resumed_message_discards_imported_retained_path_with_valid_pre
         "call_id": "call_1",
         "output": "Model-facing output.",
         "display_output": "Valid preview.",
+        "display_output_ref": "call_1",
         "_retained_output_path": "/etc/passwd",
     })
 
     assert restored["display_output"] == "Valid preview."
+    assert "display_output_ref" not in restored
     assert "_retained_output_path" not in restored
 
 

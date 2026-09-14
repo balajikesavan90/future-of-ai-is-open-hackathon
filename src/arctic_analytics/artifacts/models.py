@@ -41,6 +41,7 @@ class ResearchSession:
     command: str | None = None
     raw_outputs: list[Any] = field(default_factory=list)
     model: str | None = None
+    retained_output_bytes: dict[str, bytes] = field(default_factory=dict)
 
 
 @dataclass
