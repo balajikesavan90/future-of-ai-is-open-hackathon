@@ -85,6 +85,23 @@ def test_prepare_api_args_excludes_user_visible_tool_output_from_model_context()
     assert messages[-1]["display_output"] == "Full user-visible result."
 
 
+def test_messages_for_model_excludes_all_display_metadata():
+    message = {
+        "type": "function_call_output",
+        "call_id": "call_1",
+        "output": "Model-facing output.",
+        **{field: "UI-only value" for field in openai_responses.DISPLAY_OUTPUT_FIELDS},
+    }
+
+    sanitized = OpenAIResponsesUtility._messages_for_model([message])
+
+    assert sanitized == [{
+        "type": "function_call_output",
+        "call_id": "call_1",
+        "output": "Model-facing output.",
+    }]
+
+
 def test_tool_call_follow_up_keeps_system_message_out_of_input(monkeypatch):
     system_message = {"role": "system", "content": [{"text": "System instructions."}]}
     user_message = {"role": "user", "content": [{"text": "Analyze the data."}]}
@@ -270,6 +287,58 @@ def test_oversized_tool_output_is_visible_but_not_sent_to_model(monkeypatch):
     assert "display_output" not in captured_requests[0]["input"][-1]
     assert "display_output_agent_limited" not in captured_requests[0]["input"][-1]
     assert user_notices == [openai_responses.LARGE_PYTHON_OUTPUT_USER_NOTICE]
+
+
+def test_large_output_over_session_budget_is_visible_but_not_retained(monkeypatch):
+    messages = [
+        {"role": "system", "content": [{"text": "System instructions."}]},
+        {"type": "function_call_output", "call_id": "existing", "output": "notice", "display_output": "abc"},
+    ]
+    rendered = []
+    warnings = []
+    client = OpenAIResponsesUtility()
+
+    monkeypatch.setattr(openai_responses, "MAX_RETAINED_TOOL_OUTPUT_SESSION_BYTES", 3)
+    monkeypatch.setattr(
+        openai_responses,
+        "st",
+        SimpleNamespace(
+            session_state={"messages_container": nullcontext()},
+            chat_message=lambda _role: nullcontext(),
+            info=lambda _message: None,
+            warning=warnings.append,
+        ),
+    )
+    monkeypatch.setattr(
+        openai_responses,
+        "render_tool_response",
+        lambda response, **_kwargs: rendered.append(response),
+    )
+    monkeypatch.setattr(
+        client,
+        "_oversized_tool_output_notice",
+        lambda _tool_name, _response: "Compact model-facing notice.",
+    )
+    monkeypatch.setattr(client, "_responses_with_backoff", lambda **_kwargs: object())
+    monkeypatch.setattr(
+        client,
+        "_process_api_response",
+        lambda _response, updated_messages, _model: ([], 0, updated_messages, 0, 0),
+    )
+
+    client._process_tool_call_loop(
+        tool_calls=[{"name": "run_python_expression", "arguments": "{}", "call_id": "call_1"}],
+        messages=messages,
+        tool_handlers={"run_python_expression": lambda _arguments: "new output"},
+        args={"instructions": "System instructions.", "input": []},
+        model="gpt-5.6-luna",
+    )
+
+    tool_message = messages[-1]
+    assert "display_output" not in tool_message
+    assert tool_message["display_output_not_retained"] is True
+    assert rendered == ["new output"]
+    assert warnings == [openai_responses.TOOL_OUTPUT_NOT_RETAINED_NOTICE]
 
 
 def test_oversized_execution_error_keeps_a_bounded_diagnostic_for_the_model(monkeypatch):

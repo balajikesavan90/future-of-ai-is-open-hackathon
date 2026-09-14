@@ -20,12 +20,14 @@ from arctic_analytics.config import (
     validate_openai_model,
 )
 from arctic_analytics.streamlit.helpers import (
+    DISPLAY_OUTPUT_FIELDS,
     LARGE_PYTHON_OUTPUT_USER_NOTICE,
     MAX_RETAINED_TOOL_OUTPUT_BYTES,
+    MAX_RETAINED_TOOL_OUTPUT_SESSION_BYTES,
+    TOOL_OUTPUT_NOT_RETAINED_NOTICE,
     safely_escape_dollars,
     render_tool_call,
     render_tool_response,
-    retain_tool_output,
 )
 from arctic_analytics.core.security import safely_execute_code
 from arctic_analytics.llm.tokenization import safe_encoding_for_model
@@ -249,15 +251,8 @@ class OpenAIResponsesUtility:
     @staticmethod
     def _messages_for_model(messages):
         """Remove UI-only payloads before sending conversation history to the API."""
-        ui_only_fields = {
-            'display_output',
-            'display_output_truncated',
-            'display_output_length_chars',
-            'display_output_ref',
-            'display_output_agent_limited',
-        }
         return [
-            {key: value for key, value in message.items() if key not in ui_only_fields}
+            {key: value for key, value in message.items() if key not in DISPLAY_OUTPUT_FIELDS}
             if isinstance(message, dict) else message
             for message in messages
         ]
@@ -265,6 +260,19 @@ class OpenAIResponsesUtility:
     def _retained_display_output(self, tool_response):
         """Keep complete results that passed the 10 MiB retention limit."""
         return tool_response, False
+
+    @staticmethod
+    def _can_retain_display_output(messages, tool_response):
+        """Keep full user-visible tool results within the session memory budget."""
+        retained_bytes = sum(
+            len(message["display_output"].encode("utf-8"))
+            for message in messages
+            if isinstance(message, dict) and isinstance(message.get("display_output"), str)
+        )
+        return (
+            retained_bytes + len(tool_response.encode("utf-8"))
+            <= MAX_RETAINED_TOOL_OUTPUT_SESSION_BYTES
+        )
 
     def _oversized_tool_output_notice(self, tool_name, tool_response):
         """Return a compact model-facing notice for oversized Python outputs."""
@@ -421,20 +429,15 @@ class OpenAIResponsesUtility:
                             'output': model_tool_response or str(tool_response),
                         }
                         if model_tool_response:
-                            display_output, display_output_truncated = self._retained_display_output(
-                                str(tool_response)
-                            )
-                            tool_output['display_output'] = display_output
                             if not str(tool_response).startswith('Error executing code:'):
                                 tool_output['display_output_agent_limited'] = True
-                            if display_output_truncated:
-                                retained_output_path = retain_tool_output(
-                                    tool_call['call_id'], str(tool_response)
+                            if self._can_retain_display_output(messages, str(tool_response)):
+                                display_output, display_output_truncated = self._retained_display_output(
+                                    str(tool_response)
                                 )
-                                if retained_output_path:
-                                    tool_output['display_output_ref'] = tool_call['call_id']
-                                tool_output['display_output_truncated'] = True
-                                tool_output['display_output_length_chars'] = len(str(tool_response))
+                                tool_output['display_output'] = display_output
+                            else:
+                                tool_output['display_output_not_retained'] = True
                         messages.append(tool_output)
                     with st.session_state['messages_container']:
                         with st.chat_message('assistant'):
@@ -446,6 +449,8 @@ class OpenAIResponsesUtility:
                             )
                             if tool_output.get('display_output_agent_limited'):
                                 st.info(LARGE_PYTHON_OUTPUT_USER_NOTICE)
+                            if tool_output.get('display_output_not_retained'):
+                                st.warning(TOOL_OUTPUT_NOT_RETAINED_NOTICE)
                 except Exception as e:
                     error_message = f"Error executing tool {tool_call['name']}: {str(e)}"
                     logging.error(error_message)

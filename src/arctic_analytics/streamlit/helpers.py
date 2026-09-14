@@ -33,11 +33,23 @@ LARGE_PYTHON_OUTPUT_USER_NOTICE = (
     "Unlike other Python execution outputs, this result is too large for the agent to see "
     "and reason about. The agent cannot reason about this table in its final response."
 )
+TOOL_OUTPUT_NOT_RETAINED_NOTICE = (
+    "This large tool result was displayed live but was not retained because the session's "
+    "25 MiB output budget was reached. It will not appear after a rerun or in an exported trace."
+)
 REDACTED_SECRET_VALUE = "[redacted]"
 SENSITIVE_SESSION_KEY_MARKERS = ("api_key", "token", "password", "secret")
 RESEARCHER_NOTES_WIDGET_KEY = "researcher_notes_widget"
 RETAINED_TOOL_OUTPUTS_KEY = "retained_tool_outputs"
 RETAINED_TOOL_OUTPUT_DIRECTORY_KEY = "retained_tool_output_directory"
+DISPLAY_OUTPUT_FIELDS = frozenset({
+    "display_output",
+    "display_output_truncated",
+    "display_output_length_chars",
+    "display_output_ref",
+    "display_output_agent_limited",
+    "display_output_not_retained",
+})
 
 
 class TraceExportError(ValueError):
@@ -362,7 +374,11 @@ def build_analysis_trace():
     # The resumable manifest is the only copy that needs user-visible tool
     # output. Keeping those payloads out of the top-level audit summaries
     # avoids spending the 10 MiB import budget on duplicate data.
-    trace_messages = _messages_without_display_output(messages)
+    trace_messages = (
+        _messages_without_display_output(messages)
+        if st.session_state.get("source") == "uploader"
+        else messages
+    )
     trace = {
         "trace_schema_version": "0.3.0",
         "package_version": __version__,
@@ -392,15 +408,8 @@ def build_analysis_trace():
 
 
 def _messages_without_display_output(messages):
-    display_fields = {
-        "display_output",
-        "display_output_truncated",
-        "display_output_length_chars",
-        "display_output_ref",
-        "display_output_agent_limited",
-    }
     return [
-        {key: value for key, value in message.items() if key not in display_fields}
+        {key: value for key, value in message.items() if key not in DISPLAY_OUTPUT_FIELDS}
         if isinstance(message, dict) else message
         for message in messages
     ]
@@ -410,22 +419,9 @@ def serialize_analysis_trace(trace):
     """Serialize a trace only when it meets the resume import size limit."""
     payload = json.dumps(trace, separators=(",", ":"), default=str).encode("utf-8")
     if len(payload) > MAX_TRACE_BYTES:
-        messages = trace.get("messages", [])
-        retained_output_hint = (
-            " A retained tool-output preview may be contributing to the size; the complete response "
-            "was available from its original download control."
-            if any(
-                isinstance(message, dict)
-                and message.get("display_output_truncated")
-                and isinstance(message.get("display_output_ref"), str)
-                for message in messages
-            )
-            else ""
-        )
         raise TraceExportError(
             "This trace is larger than 10 MiB and cannot be resumed. "
             "Reduce the analysis history or chart outputs, then export again."
-            + retained_output_hint
         )
     return payload.decode("utf-8")
 

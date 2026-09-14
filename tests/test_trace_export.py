@@ -284,6 +284,28 @@ def test_resume_trace_preserves_full_display_output_without_duplicate_export_cop
     assert messages_for_resume(exported_trace)[-1]["display_output"] == full_output
 
 
+def test_non_uploader_trace_preserves_user_visible_display_output():
+    st.session_state.clear()
+    display_output = '{"0":{"value":1}}'
+    st.session_state.update({
+        "session_id": "sample-output-export-session",
+        "source": "sample",
+        "messages": [{
+            "type": "function_call_output",
+            "call_id": "call_1",
+            "output": "Compact model-facing notice.",
+            "display_output": display_output,
+        }],
+        "vetted_files": {},
+    })
+
+    trace = build_analysis_trace()
+
+    assert "resume" not in trace
+    assert trace["messages"][-1]["display_output"] == display_output
+    assert trace["outputs"][-1]["display_output"] == display_output
+
+
 def test_resume_trace_export_rejects_payloads_larger_than_import_limit():
     st.session_state.clear()
     st.session_state.update({
@@ -305,7 +327,7 @@ def test_resume_trace_export_rejects_payloads_larger_than_import_limit():
         serialize_analysis_trace(trace)
 
 
-def test_trace_export_retained_output_hint_requires_a_download_reference(monkeypatch):
+def test_trace_export_error_does_not_reference_removed_download_control(monkeypatch):
     monkeypatch.setattr(helpers, "MAX_TRACE_BYTES", 1)
     trace = {
         "messages": [{
@@ -315,8 +337,9 @@ def test_trace_export_retained_output_hint_requires_a_download_reference(monkeyp
         }],
     }
 
-    with pytest.raises(TraceExportError, match="available from its original download control"):
+    with pytest.raises(TraceExportError, match="larger than 10 MiB and cannot be resumed") as exc:
         serialize_analysis_trace(trace)
+    assert "download control" not in str(exc.value)
 
     trace["messages"][0].pop("display_output_ref")
     with pytest.raises(TraceExportError, match="larger than 10 MiB and cannot be resumed") as exc:

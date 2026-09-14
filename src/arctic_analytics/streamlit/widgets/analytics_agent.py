@@ -9,7 +9,7 @@ from arctic_analytics.core.system_messages import construct_system_message
 from arctic_analytics.core.trace_resume import replace_resumed_system_message
 
 from arctic_analytics.streamlit.widgets.prompt_guide import render_tool_calling_analysis_prompt_guide
-from arctic_analytics.streamlit.helpers import LARGE_PYTHON_OUTPUT_USER_NOTICE, render_ai_prompt, render_researcher_notes, safely_escape_dollars, render_tool_call, render_tool_response, select_sample_prompt, retained_tool_output_path
+from arctic_analytics.streamlit.helpers import LARGE_PYTHON_OUTPUT_USER_NOTICE, TOOL_OUTPUT_NOT_RETAINED_NOTICE, render_ai_prompt, render_researcher_notes, safely_escape_dollars, render_tool_call, render_tool_response, select_sample_prompt, retained_tool_output_path
 from arctic_analytics.streamlit.helpers import is_dev_environment
 
 
@@ -145,6 +145,8 @@ def render_analytics_agent():
                         )
                         if msg.get('display_output_agent_limited'):
                             st.info(LARGE_PYTHON_OUTPUT_USER_NOTICE)
+                        if msg.get('display_output_not_retained'):
+                            st.warning(TOOL_OUTPUT_NOT_RETAINED_NOTICE)
                     elif isinstance(display_output, list):
                         for output_item in display_output:
                             image_url = output_item.get('image_url') if isinstance(output_item, dict) else None
