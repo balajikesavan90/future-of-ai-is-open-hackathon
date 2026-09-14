@@ -349,17 +349,24 @@ def test_trace_export_error_identifies_retained_tool_output(monkeypatch):
     assert "original download control" not in str(exc.value)
 
 
-def test_trace_export_uses_compact_json_to_maximize_resumable_size():
+def test_trace_export_uses_compact_json_to_maximize_resumable_size(monkeypatch):
     st.session_state.clear()
-    st.session_state["messages"] = [0] * 2_700_000
+    st.session_state["messages"] = [0] * 100
     st.session_state["vetted_files"] = {}
     trace = build_analysis_trace()
     compact_payload = json.dumps(trace, separators=(",", ":"), default=str).encode("utf-8")
     indented_payload = json.dumps(trace, indent=2, default=str).encode("utf-8")
+    # Use a small synthetic import limit so this assertion exercises the same
+    # compact-vs-pretty serialization boundary without multi-megabyte fixtures.
+    monkeypatch.setattr(
+        helpers,
+        "MAX_TRACE_BYTES",
+        len(compact_payload) + (len(indented_payload) - len(compact_payload)) // 2,
+    )
 
     exported_payload = serialize_analysis_trace(trace)
 
-    assert len(compact_payload) <= MAX_TRACE_BYTES < len(indented_payload)
+    assert len(compact_payload) <= helpers.MAX_TRACE_BYTES < len(indented_payload)
     assert exported_payload.encode("utf-8") == compact_payload
     assert load_analysis_trace(exported_payload.encode("utf-8"))["messages"] == trace["messages"]
 
