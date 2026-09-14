@@ -8,7 +8,10 @@ import pytest
 from PIL import Image
 
 import arctic_analytics.llm.openai_responses as openai_responses
+import arctic_analytics.artifacts.extractors as artifact_extractors
 from arctic_analytics.config import MAX_MODEL_CONTEXT_TOKENS
+from arctic_analytics.core.output_metadata import DISPLAY_OUTPUT_FIELDS
+from arctic_analytics.streamlit import helpers
 from arctic_analytics.llm.openai_responses import OpenAIResponsesUtility
 
 
@@ -54,6 +57,60 @@ def test_prepare_api_args_uses_system_message_only_as_instructions():
     assert args["input"] == [user_message]
 
 
+def test_prepare_api_args_excludes_user_visible_tool_output_from_model_context():
+    client = OpenAIResponsesUtility()
+    messages = [
+        {"role": "system", "content": [{"text": "System instructions."}]},
+        {"role": "user", "content": [{"text": "Analyze the data."}]},
+        {
+            "type": "function_call_output",
+            "call_id": "call_1",
+            "output": "Compact model-facing notice.",
+            "display_output": "Full user-visible result.",
+        },
+    ]
+
+    args = client._prepare_api_args(
+        messages=messages,
+        model="gpt-5.6-luna",
+        response_format=None,
+        reasoning_effort=None,
+        tools=[],
+        tool_choice="auto",
+        include=[],
+    )
+
+    assert args["input"][-1] == {
+        "type": "function_call_output",
+        "call_id": "call_1",
+        "output": "Compact model-facing notice.",
+    }
+    assert messages[-1]["display_output"] == "Full user-visible result."
+
+
+def test_messages_for_model_excludes_all_display_metadata():
+    message = {
+        "type": "function_call_output",
+        "call_id": "call_1",
+        "output": "Model-facing output.",
+        **{field: "UI-only value" for field in openai_responses.DISPLAY_OUTPUT_FIELDS},
+    }
+
+    sanitized = OpenAIResponsesUtility._messages_for_model([message])
+
+    assert sanitized == [{
+        "type": "function_call_output",
+        "call_id": "call_1",
+        "output": "Model-facing output.",
+    }]
+
+
+def test_display_output_metadata_contract_is_shared_across_consumers():
+    assert helpers.DISPLAY_OUTPUT_FIELDS is DISPLAY_OUTPUT_FIELDS
+    assert openai_responses.DISPLAY_OUTPUT_FIELDS is DISPLAY_OUTPUT_FIELDS
+    assert artifact_extractors.DISPLAY_OUTPUT_FIELDS is DISPLAY_OUTPUT_FIELDS
+
+
 def test_tool_call_follow_up_keeps_system_message_out_of_input(monkeypatch):
     system_message = {"role": "system", "content": [{"text": "System instructions."}]}
     user_message = {"role": "user", "content": [{"text": "Analyze the data."}]}
@@ -69,7 +126,7 @@ def test_tool_call_follow_up_keeps_system_message_out_of_input(monkeypatch):
             chat_message=lambda _role: nullcontext(),
         ),
     )
-    monkeypatch.setattr(openai_responses, "render_tool_response", lambda _response: None)
+    monkeypatch.setattr(openai_responses, "render_tool_response", lambda _response, **_kwargs: None)
     monkeypatch.setattr(
         client,
         "_responses_with_backoff",
@@ -91,6 +148,279 @@ def test_tool_call_follow_up_keeps_system_message_out_of_input(monkeypatch):
 
     assert captured_requests[0]["input"] == messages[1:]
     assert system_message not in captured_requests[0]["input"]
+
+
+def test_tool_call_rejects_output_larger_than_retention_limit(monkeypatch):
+    messages = [{"role": "system", "content": [{"text": "System instructions."}]}]
+    captured_requests = []
+    rendered = []
+    client = OpenAIResponsesUtility()
+
+    output_limit = 1024 * 1024
+    monkeypatch.setattr(openai_responses, "MAX_RETAINED_TOOL_OUTPUT_BYTES", output_limit)
+    monkeypatch.setattr(
+        openai_responses,
+        "st",
+        SimpleNamespace(
+            session_state={"messages_container": nullcontext()},
+            chat_message=lambda _role: nullcontext(),
+        ),
+    )
+    monkeypatch.setattr(
+        openai_responses,
+        "render_tool_response",
+        lambda response, **_kwargs: rendered.append(response),
+    )
+    monkeypatch.setattr(
+        client,
+        "_responses_with_backoff",
+        lambda **kwargs: captured_requests.append(kwargs) or object(),
+    )
+    monkeypatch.setattr(
+        client,
+        "_process_api_response",
+        lambda _response, updated_messages, _model: ([], 0, updated_messages, 0, 0),
+    )
+
+    client._process_tool_call_loop(
+        tool_calls=[{"name": "lookup", "arguments": "{}", "call_id": "call_1"}],
+        messages=messages,
+        tool_handlers={"lookup": lambda _arguments: "x" * (output_limit + 1)},
+        args={"instructions": "System instructions.", "input": []},
+        model="gpt-5.6-luna",
+    )
+
+    assert "exceeding the 1 MiB output limit" in messages[-1]["output"]
+    assert "display_output" not in messages[-1]
+    assert rendered == [messages[-1]["output"]]
+    assert captured_requests[0]["input"][-1] == messages[-1]
+
+
+def test_oversized_plot_limit_error_recommends_reducing_image_size():
+    error_message = OpenAIResponsesUtility._retention_limit_error(
+        "generate_plot", 12.5, 10, "data:image/png;base64," + ("a" * 10)
+    )
+
+    assert "figure dimensions, DPI, or resolution" in error_message
+    assert "dataframe" not in error_message
+
+
+def test_tool_call_renders_png_without_unbound_local_error(monkeypatch):
+    messages = [{"role": "system", "content": [{"text": "System instructions."}]}]
+    captured_requests = []
+    rendered = []
+    client = OpenAIResponsesUtility()
+    image_output = "data:image/png;base64,AAAA"
+
+    monkeypatch.setattr(
+        openai_responses,
+        "st",
+        SimpleNamespace(
+            session_state={"messages_container": nullcontext()},
+            chat_message=lambda _role: nullcontext(),
+        ),
+    )
+    monkeypatch.setattr(
+        openai_responses,
+        "render_tool_response",
+        lambda response, **kwargs: rendered.append((response, kwargs)),
+    )
+    monkeypatch.setattr(
+        client,
+        "_responses_with_backoff",
+        lambda **kwargs: captured_requests.append(kwargs) or object(),
+    )
+    monkeypatch.setattr(
+        client,
+        "_process_api_response",
+        lambda _response, updated_messages, _model: ([], 0, updated_messages, 0, 0),
+    )
+
+    client._process_tool_call_loop(
+        tool_calls=[{"name": "run_python_code", "arguments": "{}", "call_id": "call_1"}],
+        messages=messages,
+        tool_handlers={"run_python_code": lambda _arguments: image_output},
+        args={"instructions": "System instructions.", "input": []},
+        model="gpt-5.6-luna",
+    )
+
+    assert messages[-1]["output"] == [{"type": "input_image", "image_url": image_output}]
+    assert rendered == [
+        (image_output, {"output_id": "call_1", "full_output_path": None, "allow_full_download": True})
+    ]
+    assert captured_requests[0]["input"][-1] == messages[-1]
+
+
+def test_oversized_tool_output_is_visible_but_not_sent_to_model(monkeypatch):
+    system_message = {"role": "system", "content": [{"text": "System instructions."}]}
+    user_message = {"role": "user", "content": [{"text": "Analyze the data."}]}
+    messages = [system_message, user_message]
+    captured_requests = []
+    rendered = []
+    user_notices = []
+    visible_output = "row " * 5_000
+    client = OpenAIResponsesUtility()
+
+    monkeypatch.setattr(
+        openai_responses,
+        "st",
+        SimpleNamespace(
+            session_state={"messages_container": nullcontext(), "session_id": "test-session"},
+            chat_message=lambda _role: nullcontext(),
+            info=user_notices.append,
+        ),
+    )
+    monkeypatch.setattr(
+        openai_responses,
+        "render_tool_response",
+        lambda response, **_kwargs: rendered.append(response),
+    )
+    retained = []
+    monkeypatch.setattr(
+        openai_responses,
+        "retain_tool_output",
+        lambda output_id, response: retained.append((output_id, response)) or "/tmp/retained-output.txt",
+    )
+    monkeypatch.setattr(
+        client,
+        "_responses_with_backoff",
+        lambda **kwargs: captured_requests.append(kwargs) or object(),
+    )
+    monkeypatch.setattr(
+        client,
+        "_process_api_response",
+        lambda _response, updated_messages, _model: ([], 0, updated_messages, 0, 0),
+    )
+
+    client._process_tool_call_loop(
+        tool_calls=[{"name": "run_python_expression", "arguments": "{}", "call_id": "call_1"}],
+        messages=messages,
+        tool_handlers={"run_python_expression": lambda _arguments: visible_output},
+        args={"instructions": "System instructions.", "input": [user_message]},
+        model="gpt-5.6-luna",
+    )
+
+    tool_message = messages[-1]
+    assert tool_message["display_output"] == visible_output
+    assert tool_message["display_output_ref"] == "call_1"
+    assert tool_message["display_output_length_chars"] == len(visible_output)
+    assert tool_message["display_output_truncated"] is False
+    assert tool_message["display_output_agent_limited"] is True
+    assert f"{len(client.enc_gpt4.encode(visible_output)):,}" in tool_message["output"]
+    assert "must inform the user" in tool_message["output"]
+    assert visible_output not in tool_message["output"]
+    assert rendered == [visible_output]
+    assert captured_requests[0]["input"][-1]["output"] == tool_message["output"]
+    assert "display_output" not in captured_requests[0]["input"][-1]
+    assert "display_output_agent_limited" not in captured_requests[0]["input"][-1]
+    assert retained == [("call_1", visible_output)]
+    assert user_notices == [openai_responses.LARGE_PYTHON_OUTPUT_USER_NOTICE]
+
+
+def test_large_output_over_session_budget_is_visible_but_not_retained(monkeypatch):
+    messages = [
+        {"role": "system", "content": [{"text": "System instructions."}]},
+        {"type": "function_call_output", "call_id": "existing", "output": "notice", "display_output": "abc"},
+    ]
+    rendered = []
+    warnings = []
+    client = OpenAIResponsesUtility()
+
+    monkeypatch.setattr(
+        openai_responses,
+        "st",
+        SimpleNamespace(
+            session_state={"messages_container": nullcontext()},
+            chat_message=lambda _role: nullcontext(),
+            info=lambda _message: None,
+            warning=warnings.append,
+        ),
+    )
+    monkeypatch.setattr(
+        openai_responses,
+        "render_tool_response",
+        lambda response, **_kwargs: rendered.append(response),
+    )
+    monkeypatch.setattr(openai_responses, "retain_tool_output", lambda *_args: None)
+    monkeypatch.setattr(
+        client,
+        "_oversized_tool_output_notice",
+        lambda _tool_name, _response: "Compact model-facing notice.",
+    )
+    monkeypatch.setattr(client, "_responses_with_backoff", lambda **_kwargs: object())
+    monkeypatch.setattr(
+        client,
+        "_process_api_response",
+        lambda _response, updated_messages, _model: ([], 0, updated_messages, 0, 0),
+    )
+
+    client._process_tool_call_loop(
+        tool_calls=[{"name": "run_python_expression", "arguments": "{}", "call_id": "call_1"}],
+        messages=messages,
+        tool_handlers={"run_python_expression": lambda _arguments: "new output"},
+        args={"instructions": "System instructions.", "input": []},
+        model="gpt-5.6-luna",
+    )
+
+    tool_message = messages[-1]
+    assert "display_output" not in tool_message
+    assert tool_message["display_output_not_retained"] is True
+    assert rendered == ["new output"]
+    assert warnings == [openai_responses.TOOL_OUTPUT_NOT_RETAINED_NOTICE]
+    assert "budget was reached" not in warnings[0]
+
+
+def test_oversized_execution_error_keeps_a_bounded_diagnostic_for_the_model(monkeypatch):
+    client = OpenAIResponsesUtility()
+    monkeypatch.setattr(
+        openai_responses,
+        "st",
+        SimpleNamespace(session_state={"session_id": "test-session"}),
+    )
+    error_output = "Error executing code: " + ("details " * 5_000)
+
+    notice = client._oversized_tool_output_notice("run_python_expression", error_output)
+
+    assert notice.startswith("Tool execution failed.")
+    assert "Diagnostic excerpt" in notice
+    assert error_output not in notice
+    assert len(notice) <= client._MAX_MODEL_ERROR_DIAGNOSTIC_CHARS + 200
+
+
+def test_oversized_plot_error_keeps_a_bounded_diagnostic_for_the_model(monkeypatch):
+    client = OpenAIResponsesUtility()
+    monkeypatch.setattr(
+        openai_responses,
+        "st",
+        SimpleNamespace(session_state={"session_id": "test-session"}),
+    )
+    error_output = "Error executing code: " + ("details " * 5_000)
+
+    notice = client._oversized_tool_output_notice("generate_plot", error_output)
+
+    assert notice is not None
+    assert error_output not in notice
+
+
+def test_oversized_plot_image_is_not_compacted_for_model(monkeypatch):
+    client = OpenAIResponsesUtility()
+    monkeypatch.setattr(
+        openai_responses,
+        "st",
+        SimpleNamespace(session_state={"session_id": "test-session"}),
+    )
+
+    assert client._oversized_tool_output_notice("generate_plot", "data:image/png;base64,AAAA") is None
+
+
+def test_retained_display_output_keeps_a_bounded_preview():
+    client = OpenAIResponsesUtility()
+    output = "x" * (openai_responses.MAX_RENDERED_TOOL_RESPONSE_CHARS + 1)
+
+    retained, truncated = client._retained_display_output(output)
+
+    assert truncated is True
+    assert retained == output[:openai_responses.MAX_RENDERED_TOOL_RESPONSE_CHARS]
 
 
 def test_image_dimensions_skips_oversized_base64_before_decoding(monkeypatch):

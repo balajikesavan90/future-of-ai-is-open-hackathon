@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from arctic_analytics.artifacts.models import ResearchSession
+from arctic_analytics.core.output_metadata import DISPLAY_OUTPUT_FIELDS
 
 
 def json_safe(value: Any) -> Any:
@@ -76,6 +77,7 @@ def write_outputs_and_figures(
     outputs_dir: Path,
     figures_dir: Path,
     raw_outputs: list[Any] | None = None,
+    retained_output_bytes: dict[str, bytes] | None = None,
 ) -> list[Path]:
     written = []
     outputs_dir.mkdir(parents=True, exist_ok=True)
@@ -88,6 +90,19 @@ def write_outputs_and_figures(
 
     outputs = trace.get("outputs", [])
     figure_outputs = raw_outputs or outputs
+    if raw_outputs and outputs:
+        # Preserve normal trace-safe records, but replace compact model-facing
+        # records with their full user-visible counterpart when one was kept.
+        output_records = [
+            raw_outputs[index]
+            if index < len(raw_outputs)
+            and isinstance(raw_outputs[index], dict)
+            and any(field in raw_outputs[index] for field in DISPLAY_OUTPUT_FIELDS)
+            else output
+            for index, output in enumerate(outputs)
+        ]
+    else:
+        output_records = raw_outputs or outputs
 
     written_figure_indexes = set()
     for index, output in enumerate(figure_outputs, start=1):
@@ -97,15 +112,33 @@ def write_outputs_and_figures(
             written.append(image_path)
             written_figure_indexes.add(index)
 
-    for index, output in enumerate(outputs, start=1):
+    for index, output in enumerate(output_records, start=1):
         if index in written_figure_indexes:
             continue
 
         path = outputs_dir / f"{index:03d}_output.json"
-        path.write_text(json.dumps(json_safe(output), indent=2, default=str) + "\n")
+        serialized_output = dict(output) if isinstance(output, dict) else output
+        # Paths in raw artifact inputs are untrusted. Retained payloads are
+        # captured as bytes from Streamlit's session-tracked files before this
+        # public artifact API is invoked.
+        if isinstance(serialized_output, dict):
+            serialized_output.pop("_retained_output_path", None)
+            output_ref = serialized_output.get("display_output_ref")
+        else:
+            output_ref = None
+        path.write_text(json.dumps(json_safe(serialized_output), indent=2, default=str) + "\n")
         written.append(path)
+        retained_bytes = (
+            retained_output_bytes.get(output_ref)
+            if isinstance(output_ref, str) and isinstance(retained_output_bytes, dict)
+            else None
+        )
+        if isinstance(retained_bytes, bytes):
+            full_output_path = outputs_dir / f"{index:03d}_full_output.txt"
+            full_output_path.write_bytes(retained_bytes)
+            written.append(full_output_path)
 
-    if not outputs:
+    if not output_records:
         path = outputs_dir / "outputs_empty.md"
         path.write_text("The analysis trace did not contain exported tool outputs.\n")
         written.append(path)

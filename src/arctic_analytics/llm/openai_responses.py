@@ -19,13 +19,25 @@ from arctic_analytics.config import (
     get_openai_api_key,
     validate_openai_model,
 )
-from arctic_analytics.streamlit.helpers import safely_escape_dollars, render_tool_call, render_tool_response
+from arctic_analytics.streamlit.helpers import (
+    LARGE_PYTHON_OUTPUT_USER_NOTICE,
+    MAX_RENDERED_TOOL_RESPONSE_CHARS,
+    MAX_RETAINED_TOOL_OUTPUT_BYTES,
+    TOOL_OUTPUT_NOT_RETAINED_NOTICE,
+    retain_tool_output,
+    safely_escape_dollars,
+    render_tool_call,
+    render_tool_response,
+)
+from arctic_analytics.core.output_metadata import DISPLAY_OUTPUT_FIELDS
 from arctic_analytics.core.security import safely_execute_code
 from arctic_analytics.llm.tokenization import safe_encoding_for_model
 
 
 
 class OpenAIResponsesUtility:
+    _MAX_MODEL_TOOL_OUTPUT_TOKENS = 5_000
+    _MAX_MODEL_ERROR_DIAGNOSTIC_CHARS = 4_000
     _IMAGE_PATCH_SIZE = 32
     _GPT_56_IMAGE_TOKEN_MULTIPLIER = 1.2
     _MAX_IMAGE_PATCHES = 30_000
@@ -214,7 +226,7 @@ class OpenAIResponsesUtility:
             # The initial system message is represented by the Responses API's
             # dedicated ``instructions`` field.  Keeping it in ``input`` as
             # well duplicates it in both the request and local context check.
-            'input': messages[1:],
+            'input': self._messages_for_model(messages[1:]),
             'instructions': messages[0]['content'][0]['text'],
             'model': model,
             'include': include
@@ -236,6 +248,66 @@ class OpenAIResponsesUtility:
 
 
         return args
+
+    @staticmethod
+    def _messages_for_model(messages):
+        """Remove UI-only payloads before sending conversation history to the API."""
+        return [
+            {key: value for key, value in message.items() if key not in DISPLAY_OUTPUT_FIELDS}
+            if isinstance(message, dict) else message
+            for message in messages
+        ]
+
+    def _retained_display_output(self, tool_response):
+        """Return a rerun-safe preview for a result retained outside message state."""
+        return (
+            tool_response[:MAX_RENDERED_TOOL_RESPONSE_CHARS],
+            len(tool_response) > MAX_RENDERED_TOOL_RESPONSE_CHARS,
+        )
+
+    def _oversized_tool_output_notice(self, tool_name, tool_response):
+        """Return a compact model-facing notice for oversized Python outputs."""
+        if tool_name not in {'run_python_expression', 'run_python_function', 'generate_plot'}:
+            return None
+        if not isinstance(tool_response, str) or tool_response.startswith('data:image/'):
+            return None
+
+        token_count = len(self.enc_gpt4.encode(tool_response))
+        logging.info(
+            'Token count for tool response - %s - %s',
+            token_count,
+            st.session_state['session_id'],
+        )
+        if token_count < self._MAX_MODEL_TOOL_OUTPUT_TOKENS:
+            return None
+
+        if tool_response.startswith('Error executing code:'):
+            diagnostic = tool_response[:self._MAX_MODEL_ERROR_DIAGNOSTIC_CHARS]
+            return (
+                'Tool execution failed. The complete error output was omitted from model context. '
+                f'Diagnostic excerpt (truncated to {self._MAX_MODEL_ERROR_DIAGNOSTIC_CHARS:,} characters):\n'
+                f'{diagnostic}'
+            )
+
+        return (
+            f'Code execution returned a result of {token_count:,} tokens, meeting or exceeding '
+            f'the {self._MAX_MODEL_TOOL_OUTPUT_TOKENS:,}-token model-output threshold. The complete '
+            'output was omitted from model context. You must inform the user that you cannot see or reason '
+            'about this tool result because of its size. Proceed with the analysis and run smaller cuts only as needed.'
+        )
+
+    @staticmethod
+    def _retention_limit_error(tool_name, output_mib, limit_mib, tool_response):
+        """Explain how to reduce a result that cannot be rendered or retained."""
+        if tool_name == "generate_plot" and tool_response.startswith("data:image/"):
+            guidance = "Reduce the figure dimensions, DPI, or resolution before returning it."
+        else:
+            guidance = "Return a smaller dataframe or aggregate the results before returning them."
+        return (
+            "Error executing code: Tool output is "
+            f"{output_mib:.2f} MiB, exceeding the {limit_mib:.0f} MiB output limit. "
+            f"The result was not rendered or retained. {guidance}"
+        )
     
 
     def _process_api_response(self, response, messages, model):
@@ -314,6 +386,32 @@ class OpenAIResponsesUtility:
                     else:
                         tool_response = f"Tool '{tool_name}' not implemented or not available."
 
+                    if (
+                        isinstance(tool_response, str)
+                        and len(tool_response.encode("utf-8")) > MAX_RETAINED_TOOL_OUTPUT_BYTES
+                    ):
+                        limit_mib = MAX_RETAINED_TOOL_OUTPUT_BYTES / (1024 * 1024)
+                        output_mib = len(tool_response.encode("utf-8")) / (1024 * 1024)
+                        error_message = self._retention_limit_error(
+                            tool_name,
+                            output_mib,
+                            limit_mib,
+                            tool_response,
+                        )
+                        logging.warning(error_message)
+                        messages.append({
+                            'type': 'function_call_output',
+                            'call_id': tool_call['call_id'],
+                            'output': error_message,
+                        })
+                        with st.session_state['messages_container']:
+                            with st.chat_message('assistant'):
+                                render_tool_response(error_message, output_id=tool_call['call_id'])
+                        continue
+
+                    model_tool_response = None
+                    retained_output_path = None
+                    tool_output = {}
                     if tool_response.startswith('data:image/png;base64,'): 
                         messages.append({
                             'type': 'function_call_output',
@@ -325,15 +423,44 @@ class OpenAIResponsesUtility:
                                 }
                             ],
                         })
-                    else:                           
-                        messages.append({
+                    else:
+                        model_tool_response = self._oversized_tool_output_notice(
+                            tool_name, str(tool_response)
+                        )
+                        tool_output = {
                             'type': 'function_call_output',
                             'call_id': tool_call['call_id'],
-                            'output': str(tool_response),
-                        })
+                            'output': model_tool_response or str(tool_response),
+                        }
+                        if model_tool_response:
+                            if not str(tool_response).startswith('Error executing code:'):
+                                tool_output['display_output_agent_limited'] = True
+                            retained_output_path = retain_tool_output(
+                                tool_call['call_id'], str(tool_response)
+                            )
+                            if retained_output_path is not None:
+                                display_output, display_output_truncated = self._retained_display_output(
+                                    str(tool_response)
+                                )
+                                tool_output['display_output'] = display_output
+                                tool_output['display_output_truncated'] = display_output_truncated
+                                tool_output['display_output_length_chars'] = len(str(tool_response))
+                                tool_output['display_output_ref'] = tool_call['call_id']
+                            else:
+                                tool_output['display_output_not_retained'] = True
+                        messages.append(tool_output)
                     with st.session_state['messages_container']:
                         with st.chat_message('assistant'):
-                            render_tool_response(tool_response)
+                            render_tool_response(
+                                tool_response,
+                                output_id=tool_call['call_id'],
+                                full_output_path=retained_output_path,
+                                allow_full_download=not model_tool_response or retained_output_path is not None,
+                            )
+                            if tool_output.get('display_output_agent_limited'):
+                                st.info(LARGE_PYTHON_OUTPUT_USER_NOTICE)
+                            if tool_output.get('display_output_not_retained'):
+                                st.warning(TOOL_OUTPUT_NOT_RETAINED_NOTICE)
                 except Exception as e:
                     error_message = f"Error executing tool {tool_call['name']}: {str(e)}"
                     logging.error(error_message)
@@ -344,12 +471,12 @@ class OpenAIResponsesUtility:
                     })
                     with st.session_state['messages_container']:
                         with st.chat_message('assistant'):
-                            render_tool_response(error_message)
+                            render_tool_response(error_message, output_id=tool_call['call_id'])
         
 
             # Keep the system message solely in ``instructions``, as on the
             # initial request. It must not be duplicated in follow-up input.
-            args['input'] = messages[1:]
+            args['input'] = self._messages_for_model(messages[1:])
             args['tool_choice'] = 'auto'
             response = self._responses_with_backoff(**args)
 
@@ -506,14 +633,6 @@ class OpenAIResponsesUtility:
 
         logging.info(f'Final execution result - {result[:100]}... - {st.session_state["session_id"]}' 
                     if len(str(result)) > 100 else f'Final execution result - {result} - {st.session_state["session_id"]}')
-
-        # calculate token count for the result
-        token_count = len(self.enc_gpt4.encode(str(result)))
-        logging.info(f'Token count for tool response - {token_count} - {st.session_state["session_id"]}')
-
-        if token_count >= 5000 and report_function != 'generate_plot':
-            logging.error(f"Code execution returned a result of {token_count} tokens. Please refactor the code to keep the result under 5000 tokens.")
-            result = f"Code execution returned a result of {token_count} tokens. Please refactor the code to keep the result under 5000 tokens."
 
         return result
 

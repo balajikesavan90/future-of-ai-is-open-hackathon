@@ -27,8 +27,9 @@ from arctic_analytics.streamlit.helpers import (
     serialize_analysis_trace,
     TraceExportError,
 )
+from arctic_analytics.streamlit import helpers
 from arctic_analytics.config import MAX_MODEL_CONTEXT_TOKENS
-from arctic_analytics.core.trace_resume import MAX_TRACE_BYTES, ResumePreparation, load_analysis_trace
+from arctic_analytics.core.trace_resume import MAX_TRACE_BYTES, ResumePreparation, load_analysis_trace, messages_for_resume
 from arctic_analytics.artifacts import build_research_bundle_zip
 
 
@@ -250,6 +251,61 @@ def test_resume_manifest_preserves_chart_data_urls():
     assert trace["resume"]["messages"][0]["output"][0]["image_url"] == chart_url
 
 
+def test_resume_trace_preserves_full_display_output_without_duplicate_export_copies():
+    st.session_state.clear()
+    full_output = pd.DataFrame({"text": ["x" * 1_000] * 100}).to_json(orient="index")
+    system_message = {
+        "type": "message",
+        "role": "system",
+        "content": [{"type": "input_text", "text": "System prompt"}],
+    }
+    st.session_state.update({
+        "session_id": "full-output-export-session",
+        "source": "uploader",
+        "messages": [
+            system_message,
+            {"type": "function_call", "call_id": "call_1", "name": "run_python_expression", "arguments": "{}"},
+            {
+                "type": "function_call_output",
+                "call_id": "call_1",
+                "output": "Compact model-facing notice.",
+                "display_output": full_output,
+                "display_output_agent_limited": True,
+            },
+        ],
+        "vetted_files": {"sales": {"source_filename": "sales.csv", "columns_names": pd.Index(["amount"])}},
+    })
+
+    trace = build_analysis_trace()
+    exported_trace = load_analysis_trace(serialize_analysis_trace(trace).encode("utf-8"))
+
+    assert "display_output" not in trace["messages"][-1]
+    assert "display_output" not in trace["outputs"][-1]
+    assert messages_for_resume(exported_trace)[-1]["display_output"] == full_output
+
+
+def test_non_uploader_trace_preserves_user_visible_display_output():
+    st.session_state.clear()
+    display_output = '{"0":{"value":1}}'
+    st.session_state.update({
+        "session_id": "sample-output-export-session",
+        "source": "sample",
+        "messages": [{
+            "type": "function_call_output",
+            "call_id": "call_1",
+            "output": "Compact model-facing notice.",
+            "display_output": display_output,
+        }],
+        "vetted_files": {},
+    })
+
+    trace = build_analysis_trace()
+
+    assert "resume" not in trace
+    assert trace["messages"][-1]["display_output"] == display_output
+    assert trace["outputs"][-1]["display_output"] == display_output
+
+
 def test_resume_trace_export_rejects_payloads_larger_than_import_limit():
     st.session_state.clear()
     st.session_state.update({
@@ -271,17 +327,46 @@ def test_resume_trace_export_rejects_payloads_larger_than_import_limit():
         serialize_analysis_trace(trace)
 
 
-def test_trace_export_uses_compact_json_to_maximize_resumable_size():
+def test_trace_export_error_identifies_retained_tool_output(monkeypatch):
+    monkeypatch.setattr(helpers, "MAX_TRACE_BYTES", 1)
+    trace = {
+        "messages": [{
+            "type": "function_call_output",
+            "display_output_truncated": True,
+            "display_output_ref": "call_1",
+        }],
+    }
+
+    with pytest.raises(TraceExportError, match="larger than 10 MiB and cannot be resumed") as exc:
+        serialize_analysis_trace(trace)
+    assert "Retained tool output may be contributing" in str(exc.value)
+    assert "download control" not in str(exc.value)
+
+    trace["messages"][0].pop("display_output_ref")
+    with pytest.raises(TraceExportError, match="larger than 10 MiB and cannot be resumed") as exc:
+        serialize_analysis_trace(trace)
+    assert "Retained tool output may be contributing" not in str(exc.value)
+    assert "original download control" not in str(exc.value)
+
+
+def test_trace_export_uses_compact_json_to_maximize_resumable_size(monkeypatch):
     st.session_state.clear()
-    st.session_state["messages"] = [0] * 2_700_000
+    st.session_state["messages"] = [0] * 100
     st.session_state["vetted_files"] = {}
     trace = build_analysis_trace()
     compact_payload = json.dumps(trace, separators=(",", ":"), default=str).encode("utf-8")
     indented_payload = json.dumps(trace, indent=2, default=str).encode("utf-8")
+    # Use a small synthetic import limit so this assertion exercises the same
+    # compact-vs-pretty serialization boundary without multi-megabyte fixtures.
+    monkeypatch.setattr(
+        helpers,
+        "MAX_TRACE_BYTES",
+        len(compact_payload) + (len(indented_payload) - len(compact_payload)) // 2,
+    )
 
     exported_payload = serialize_analysis_trace(trace)
 
-    assert len(compact_payload) <= MAX_TRACE_BYTES < len(indented_payload)
+    assert len(compact_payload) <= helpers.MAX_TRACE_BYTES < len(indented_payload)
     assert exported_payload.encode("utf-8") == compact_payload
     assert load_analysis_trace(exported_payload.encode("utf-8"))["messages"] == trace["messages"]
 
@@ -575,6 +660,23 @@ def test_restore_trace_session_preserves_api_key_but_not_imported_session_state(
     assert st.session_state["researcher_notes"] == "Review the July outliers before publishing."
     assert st.session_state["researcher_notes_widget"] == "Review the July outliers before publishing."
     assert "Historical outputs and charts" in st.session_state["resume_warning"]
+
+
+def test_restore_trace_session_cleans_retained_tool_output_directory(monkeypatch):
+    cleaned = []
+
+    class RetainedDirectory:
+        def cleanup(self):
+            cleaned.append(True)
+
+    st.session_state.clear()
+    st.session_state[helpers.RETAINED_TOOL_OUTPUT_DIRECTORY_KEY] = RetainedDirectory()
+    st.session_state[helpers.RETAINED_TOOL_OUTPUTS_KEY] = {"call_1": "/tmp/output.txt"}
+
+    restore_trace_session({"messages": []}, ResumePreparation(vetted_files={}))
+
+    assert cleaned == [True]
+    assert helpers.RETAINED_TOOL_OUTPUTS_KEY not in st.session_state
 
 
 def test_restore_trace_session_rejects_boolean_cost():

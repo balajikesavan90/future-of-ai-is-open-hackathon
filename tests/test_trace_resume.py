@@ -78,6 +78,42 @@ def test_load_analysis_trace_rejects_invalid_json_and_unknown_versions():
     assert load_analysis_trace(json.dumps(resumable_trace()).encode())["session_id"] == "original-session"
 
 
+def test_sanitize_resumed_message_removes_ref_when_preview_is_invalid():
+    restored = trace_resume._sanitize_resumed_message({
+        "type": "function_call_output",
+        "call_id": "call_1",
+        "output": "Model-facing output.",
+        "display_output": ["not text"],
+        "display_output_truncated": True,
+        "display_output_length_chars": 100,
+        "display_output_ref": "call_1",
+        "display_output_agent_limited": True,
+        "display_output_not_retained": True,
+        "_retained_output_path": "/etc/passwd",
+    })
+
+    assert "display_output" not in restored
+    assert "display_output_ref" not in restored
+    assert "display_output_agent_limited" not in restored
+    assert "display_output_not_retained" not in restored
+    assert "_retained_output_path" not in restored
+
+
+def test_sanitize_resumed_message_discards_imported_retained_path_with_valid_preview():
+    restored = trace_resume._sanitize_resumed_message({
+        "type": "function_call_output",
+        "call_id": "call_1",
+        "output": "Model-facing output.",
+        "display_output": "Valid preview.",
+        "display_output_ref": "call_1",
+        "_retained_output_path": "/etc/passwd",
+    })
+
+    assert restored["display_output"] == "Valid preview."
+    assert "display_output_ref" not in restored
+    assert "_retained_output_path" not in restored
+
+
 def test_load_analysis_trace_converts_excessive_nesting_to_trace_resume_error():
     with pytest.raises(TraceResumeError, match="valid UTF-8"):
         load_analysis_trace(b'{"nested":' * 2_000 + b"0" + b"}" * 2_000)
@@ -259,6 +295,81 @@ def test_messages_for_resume_uses_full_fidelity_messages_and_sanitizes_old_chart
         "output": [{"type": "input_image", "image_url": VALID_PNG_DATA_URL}],
     }]
     assert messages_for_resume(trace)[2]["output"][0]["image_url"] == VALID_PNG_DATA_URL
+
+
+def test_messages_for_resume_preserves_user_visible_display_output():
+    trace = resumable_trace()
+    system_message = {
+        "type": "message",
+        "role": "system",
+        "content": [{"type": "input_text", "text": "System prompt"}],
+    }
+    trace["resume"]["messages"] = [system_message, {
+        "type": "function_call",
+        "call_id": "call_1",
+        "name": "run_python_expression",
+        "arguments": "{}",
+    }, {
+        "type": "function_call_output",
+        "call_id": "call_1",
+        "output": "Compact model-facing notice.",
+        "display_output": "Full user-visible result.",
+    }]
+
+    restored = messages_for_resume(trace)
+
+    assert restored[-1]["output"] == "Compact model-facing notice."
+    assert restored[-1]["display_output"] == "Full user-visible result."
+
+
+def test_messages_for_resume_discards_non_text_display_output():
+    trace = resumable_trace()
+    system_message = {
+        "type": "message",
+        "role": "system",
+        "content": [{"type": "input_text", "text": "System prompt"}],
+    }
+    trace["resume"]["messages"] = [system_message, {
+        "type": "function_call",
+        "call_id": "call_1",
+        "name": "run_python_expression",
+        "arguments": "{}",
+    }, {
+        "type": "function_call_output",
+        "call_id": "call_1",
+        "output": "Compact model-facing notice.",
+        "display_output": "data:image/png;base64,not-valid-base64",
+        "display_output_truncated": True,
+        "display_output_length_chars": 123,
+    }]
+
+    restored = messages_for_resume(trace)
+
+    assert "display_output" not in restored[-1]
+    assert "display_output_truncated" not in restored[-1]
+    assert "display_output_length_chars" not in restored[-1]
+
+
+def test_messages_for_resume_preserves_text_that_starts_with_data():
+    trace = resumable_trace()
+    system_message = {
+        "type": "message",
+        "role": "system",
+        "content": [{"type": "input_text", "text": "System prompt"}],
+    }
+    trace["resume"]["messages"] = [system_message, {
+        "type": "function_call",
+        "call_id": "call_1",
+        "name": "run_python_expression",
+        "arguments": "{}",
+    }, {
+        "type": "function_call_output",
+        "call_id": "call_1",
+        "output": "Compact model-facing notice.",
+        "display_output": "data: a textual value",
+    }]
+
+    assert messages_for_resume(trace)[-1]["display_output"] == "data: a textual value"
 
 
 def test_messages_for_resume_discards_non_dict_history_items():

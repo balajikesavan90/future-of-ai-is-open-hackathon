@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 import pandas as pd
 import matplotlib.figure as mfigure
 import os
+import tempfile
+from pathlib import Path
 
 from arctic_analytics import __version__
 from arctic_analytics.config import (
@@ -21,14 +23,26 @@ from arctic_analytics.artifacts import (
     build_research_bundle_zip,
 )
 from arctic_analytics.core.trace_resume import MAX_TRACE_BYTES, messages_for_resume
+from arctic_analytics.core.output_metadata import DISPLAY_OUTPUT_FIELDS
 
 MAX_TRACE_STRING_CHARS = 10000
 TRACE_STRING_PREVIEW_CHARS = 1000
+MAX_RENDERED_TOOL_RESPONSE_CHARS = 50_000
+MAX_RETAINED_TOOL_OUTPUT_BYTES = 10 * 1024 * 1024
+MAX_RETAINED_TOOL_OUTPUT_SESSION_BYTES = 25 * 1024 * 1024
+LARGE_PYTHON_OUTPUT_USER_NOTICE = (
+    "Unlike other Python execution outputs, this result is too large for the agent to see "
+    "and reason about. The agent cannot reason about this table in its final response."
+)
+TOOL_OUTPUT_NOT_RETAINED_NOTICE = (
+    "This large tool result was displayed live but could not be retained. "
+    "It will not appear after a rerun or in an exported trace."
+)
 REDACTED_SECRET_VALUE = "[redacted]"
 SENSITIVE_SESSION_KEY_MARKERS = ("api_key", "token", "password", "secret")
 RESEARCHER_NOTES_WIDGET_KEY = "researcher_notes_widget"
-
-
+RETAINED_TOOL_OUTPUTS_KEY = "retained_tool_outputs"
+RETAINED_TOOL_OUTPUT_DIRECTORY_KEY = "retained_tool_output_directory"
 class TraceExportError(ValueError):
     """Raised when an exported trace cannot be imported by the resume flow."""
 
@@ -42,6 +56,7 @@ def setup_session_state():
 
 def reset_app():
     logging.info(f'reset_app - {st.session_state["session_id"]}')
+    clear_retained_tool_outputs()
     # Clear all keys in st.session_state
     for key in list(st.session_state.keys()):
         del st.session_state[key]
@@ -64,6 +79,7 @@ def goto_data_analysis_widget():
 
 def reset_analysis():
     logging.info(f'reset_analysis - {st.session_state["session_id"]}')
+    clear_retained_tool_outputs()
     st.session_state['messages'] = []
     st.session_state['count'] = 0
     st.session_state['cost'] = 0
@@ -131,7 +147,9 @@ def render_ai_prompt():
             st.write(st.session_state['system_message'])
         if 'messages' in st.session_state.keys():
             st.subheader(':blue[Messages]')
-            messages_wo_system_message = st.session_state['messages'][1:]
+            messages_wo_system_message = _messages_without_display_output(
+                st.session_state['messages'][1:]
+            )
             st.write(messages_wo_system_message)
 
 
@@ -275,7 +293,11 @@ def _extract_raw_outputs(messages):
         if not isinstance(message, dict):
             continue
         if message.get("type") == "function_call_output":
-            outputs.append(message)
+            output = dict(message)
+            # Paths are session-local implementation details. The artifact API
+            # receives retained bytes separately, never a caller-provided path.
+            output.pop("_retained_output_path", None)
+            outputs.append(output)
             continue
         if "output" in message:
             outputs.append(
@@ -286,6 +308,22 @@ def _extract_raw_outputs(messages):
                 }
             )
     return outputs
+
+
+def _extract_retained_output_bytes(messages):
+    retained_outputs = {}
+    for message in messages:
+        if not isinstance(message, dict) or message.get("type") != "function_call_output":
+            continue
+        output_ref = message.get("display_output_ref")
+        retained_path = retained_tool_output_path(output_ref)
+        if not retained_path:
+            continue
+        try:
+            retained_outputs[output_ref] = Path(retained_path).read_bytes()
+        except OSError:
+            logging.warning("Unable to read retained tool output for artifact export")
+    return retained_outputs
 
 def _uploaded_file_names():
     uploaded_files = st.session_state.get("uploaded_files", [])
@@ -342,6 +380,14 @@ def _latest_user_prompt(messages):
 
 def build_analysis_trace():
     messages = st.session_state.get("messages", [])
+    # The resumable manifest is the only copy that needs user-visible tool
+    # output. Keeping those payloads out of the top-level audit summaries
+    # avoids spending the 10 MiB import budget on duplicate data.
+    trace_messages = (
+        _messages_without_display_output(messages)
+        if st.session_state.get("source") == "uploader"
+        else messages
+    )
     trace = {
         "trace_schema_version": "0.3.0",
         "package_version": __version__,
@@ -353,10 +399,10 @@ def build_analysis_trace():
         if isinstance(st.session_state.get("researcher_notes", ""), str) else "",
         "system_message": _json_safe(_system_message_from_messages(messages)),
         "prompt_str": _json_safe(st.session_state.get("prompt_str") or _latest_user_prompt(messages)),
-        "messages": _json_safe(messages),
+        "messages": _json_safe(trace_messages),
         "events": _readable_events(messages),
         "tool_calls": _extract_tool_calls(messages),
-        "outputs": _extract_outputs(messages),
+        "outputs": _extract_outputs(trace_messages),
         "dataset_metadata": _dataset_metadata_for_trace(),
         "errors": _extract_errors(messages),
         "limitations": [
@@ -370,15 +416,40 @@ def build_analysis_trace():
     return trace
 
 
+def _messages_without_display_output(messages):
+    return [
+        {key: value for key, value in message.items() if key not in DISPLAY_OUTPUT_FIELDS}
+        if isinstance(message, dict) else message
+        for message in messages
+    ]
+
+
 def serialize_analysis_trace(trace):
     """Serialize a trace only when it meets the resume import size limit."""
     payload = json.dumps(trace, separators=(",", ":"), default=str).encode("utf-8")
     if len(payload) > MAX_TRACE_BYTES:
+        retained_output_guidance = ""
+        if _trace_has_retained_output_reference(trace):
+            retained_output_guidance = (
+                " Retained tool output may be contributing to the size; reduce it before exporting."
+            )
         raise TraceExportError(
             "This trace is larger than 10 MiB and cannot be resumed. "
             "Reduce the analysis history or chart outputs, then export again."
+            + retained_output_guidance
         )
     return payload.decode("utf-8")
+
+
+def _trace_has_retained_output_reference(value):
+    """Identify trace metadata pointing to session-retained tool output."""
+    if isinstance(value, dict):
+        if isinstance(value.get("display_output_ref"), str):
+            return True
+        return any(_trace_has_retained_output_reference(item) for item in value.values())
+    if isinstance(value, (list, tuple)):
+        return any(_trace_has_retained_output_reference(item) for item in value)
+    return False
 
 
 def _build_resume_manifest():
@@ -435,6 +506,7 @@ def _resume_json_safe(value):
 def restore_trace_session(trace, preparation):
     """Replace analysis state with an explicitly selected subset of an imported trace."""
     api_key = st.session_state.get("OPENAI_API_KEY")
+    clear_retained_tool_outputs()
     for key in list(st.session_state.keys()):
         del st.session_state[key]
     if api_key:
@@ -701,6 +773,7 @@ def build_research_session_from_streamlit(trace=None):
         assumptions=[],
         command="streamlit research bundle export",
         raw_outputs=_extract_raw_outputs(st.session_state.get("messages", [])),
+        retained_output_bytes=_extract_retained_output_bytes(st.session_state.get("messages", [])),
     )
 
 def safely_escape_dollars(text):
@@ -724,6 +797,49 @@ def try_convert_to_dataframe(data):
         return None
     except Exception:
         return None
+
+
+def _parse_truncated_table_json(value):
+    """Recover complete rows from a truncated pandas ``orient='index'`` payload."""
+    if not isinstance(value, str):
+        return None
+    payload = value.lstrip()
+    if not payload.startswith("{"):
+        return None
+
+    decoder = json.JSONDecoder()
+    position = 1
+    rows = {}
+
+    def skip_whitespace(index):
+        while index < len(payload) and payload[index].isspace():
+            index += 1
+        return index
+
+    while True:
+        position = skip_whitespace(position)
+        if position >= len(payload) or payload[position] == "}":
+            break
+        try:
+            key, position = decoder.raw_decode(payload, position)
+            position = skip_whitespace(position)
+            if not isinstance(key, str) or position >= len(payload) or payload[position] != ":":
+                return None
+            row, position = decoder.raw_decode(payload, skip_whitespace(position + 1))
+        except json.JSONDecodeError:
+            break
+        if not isinstance(row, dict):
+            return None
+        rows[key] = row
+        position = skip_whitespace(position)
+        if position >= len(payload) or payload[position] == "}":
+            break
+        if payload[position] != ",":
+            return None
+        position += 1
+
+    return rows or None
+
 
 def render_tool_call(tool_call):
     """
@@ -759,12 +875,77 @@ def render_tool_call(tool_call):
         if not arguments:
             st.code(str(raw_arguments), language='json')
 
-def render_tool_response(tool_response):
+def retain_tool_output(output_id, tool_response):
+    """Persist an oversized result outside conversation state for this session only."""
+    if not isinstance(output_id, str):
+        logging.warning("Refusing to retain tool output with a non-string ID")
+        return None
+
+    output_bytes = tool_response.encode("utf-8")
+    if len(output_bytes) > MAX_RETAINED_TOOL_OUTPUT_BYTES:
+        logging.warning("Tool output exceeds the per-output retention limit")
+        return None
+
+    directory = st.session_state.get(RETAINED_TOOL_OUTPUT_DIRECTORY_KEY)
+    if directory is None:
+        try:
+            directory = tempfile.TemporaryDirectory(prefix="arctic-analytics-tool-output-")
+        except OSError:
+            logging.exception("Unable to create temporary storage for tool output")
+            return None
+        st.session_state[RETAINED_TOOL_OUTPUT_DIRECTORY_KEY] = directory
+
+    retained_outputs = st.session_state.setdefault(RETAINED_TOOL_OUTPUTS_KEY, {})
+    retained_bytes = 0
+    for retained_path in retained_outputs.values():
+        if not isinstance(retained_path, str):
+            continue
+        try:
+            retained_bytes += Path(retained_path).stat().st_size
+        except OSError:
+            continue
+    if retained_bytes + len(output_bytes) > MAX_RETAINED_TOOL_OUTPUT_SESSION_BYTES:
+        logging.warning("Tool output exceeds the session retention limit")
+        return None
+
+    # Never derive a filesystem path from the model/API-provided call ID.
+    path = Path(directory.name) / f"{uuid.uuid4().hex}.txt"
+    try:
+        path.write_bytes(output_bytes)
+    except OSError:
+        logging.exception("Unable to retain tool output")
+        try:
+            path.unlink(missing_ok=True)
+        except OSError:
+            pass
+        return None
+    retained_outputs[output_id] = str(path)
+    return str(path)
+
+
+def retained_tool_output_path(output_id):
+    if not isinstance(output_id, str):
+        return None
+    path = st.session_state.get(RETAINED_TOOL_OUTPUTS_KEY, {}).get(output_id)
+    return path if isinstance(path, str) and Path(path).is_file() else None
+
+
+def clear_retained_tool_outputs():
+    directory = st.session_state.pop(RETAINED_TOOL_OUTPUT_DIRECTORY_KEY, None)
+    if directory is not None:
+        directory.cleanup()
+    st.session_state.pop(RETAINED_TOOL_OUTPUTS_KEY, None)
+
+
+def render_tool_response(tool_response, output_id=None, full_output_path=None, allow_full_download=True):
     """
     Renders a tool response in the Streamlit UI
     
     Args:
-        tool_response: The tool response to render
+        tool_response: The tool response to render.
+        output_id: Stable identifier used to avoid duplicate download-widget keys.
+    Returns:
+        True when the response was rendered as a dataframe, otherwise False.
     """
     if tool_response.startswith((
         'data:image/png;base64,',
@@ -773,36 +954,103 @@ def render_tool_response(tool_response):
         'data:image/webp;base64,',
     )):
         st.image(tool_response)
-        return
+        return False
+
+    # On a rerun, ``tool_response`` can be a bounded preview while the full
+    # result remains in the retained file. Prefer that complete payload for
+    # table detection so a dataframe does not revert to partial JSON text.
+    full_tool_response = None
+    full_output_bytes = None
+    if full_output_path:
+        try:
+            full_output_bytes = Path(full_output_path).read_bytes()
+            full_tool_response = full_output_bytes.decode("utf-8")
+        except (OSError, UnicodeDecodeError):
+            logging.warning("Unable to read retained tool output for rendering")
+
+    renderable_response = full_tool_response or tool_response
+
+    # Parse tabular JSON before applying the text-size fallback. A dataframe
+    # remains usable in Streamlit's virtualized table UI even when its JSON
+    # serialization would be too large to show as plain text in a chat message.
+    parsed_response = None
+    stripped_response = renderable_response.lstrip()
+    looks_like_tabular_json = (
+        stripped_response.startswith('{"')
+        or stripped_response.startswith('[{')
+    )
+    if len(renderable_response) <= MAX_RENDERED_TOOL_RESPONSE_CHARS or looks_like_tabular_json:
+        try:
+            parsed_response = json.loads(renderable_response)
+
+            # Handle double-encoded JSON.
+            if isinstance(parsed_response, str):
+                try:
+                    parsed_response = json.loads(parsed_response)
+                except json.JSONDecodeError:
+                    pass
+        except json.JSONDecodeError:
+            parsed_response = _parse_truncated_table_json(renderable_response)
+
+        dataframe = try_convert_to_dataframe(parsed_response)
+        if dataframe is not None:
+            st.dataframe(dataframe, width="stretch")
+            if full_output_path and full_output_bytes is None:
+                st.warning("The complete tool output was not retained and cannot be downloaded.")
+            elif allow_full_download and full_output_bytes is not None:
+                st.download_button(
+                    "Download full tool output",
+                    data=full_output_bytes,
+                    file_name="tool-output.txt",
+                    mime="text/plain",
+                    key=(
+                        f"tool-output-{output_id}"
+                        if output_id is not None
+                        else f"tool-output-{hashlib.sha256(tool_response.encode('utf-8')).hexdigest()}"
+                    ),
+                    icon=":material/download:",
+                    on_click="ignore",
+                )
+            return True
+
+    if len(tool_response) > MAX_RENDERED_TOOL_RESPONSE_CHARS or full_output_path:
+        preview = tool_response[:MAX_RENDERED_TOOL_RESPONSE_CHARS]
+        if len(renderable_response) > MAX_RENDERED_TOOL_RESPONSE_CHARS:
+            st.warning(
+                f"Tool output is {len(renderable_response):,} characters. "
+                "Showing a preview to keep the app responsive."
+            )
+        st.code(preview, language="json" if preview.lstrip().startswith(("{", "[")) else None)
+        if allow_full_download and (not full_output_path or full_output_bytes is not None):
+            st.download_button(
+                "Download full tool output",
+                data=full_output_bytes if full_output_path else tool_response,
+                file_name="tool-output.txt",
+                mime="text/plain",
+                key=(
+                    f"tool-output-{output_id}"
+                    if output_id is not None
+                    else f"tool-output-{hashlib.sha256(tool_response.encode('utf-8')).hexdigest()}"
+                ),
+                icon=":material/download:",
+                on_click="ignore",
+            )
+        else:
+            st.warning("The complete tool output was not retained and cannot be downloaded.")
+        return False
 
     if tool_response.startswith('Error'):
         # Keep failed-tool details available without interrupting the analysis flow.
         with st.expander('⚠️ Tool execution failed — see details', expanded=False):
             st.error(tool_response)
-        return
+        return False
 
-    try:
-        # Try parsing the response
-        data = json.loads(tool_response)
-
-        # Handle double-encoded JSON
-        if isinstance(data, str):
-            try:
-                data = json.loads(data)
-            except json.JSONDecodeError:
-                pass
-
-        # Try converting to DataFrame
-        df = try_convert_to_dataframe(data)
-
-        if df is not None:
-            st.dataframe(df, width='stretch')
-        else:
-            st.write(data)
-
-    except json.JSONDecodeError:
-        # Not JSON, display as plain text
+    if parsed_response is not None:
+        st.write(parsed_response)
+    else:
+        # Not JSON, display as plain text.
         st.write(tool_response)
+    return False
 
 def is_dev_environment():
     try:

@@ -154,6 +154,99 @@ def test_research_bundle_writes_raw_image_outputs_from_sanitized_trace(tmp_path)
         assert "research_bundle/figures/001_figure.png" in archive.namelist()
 
 
+def test_research_bundle_writes_full_display_output_when_model_output_is_compact(tmp_path):
+    full_output = '{"0":{"value":0},"1":{"value":1}}'
+    model_notice = "The complete output was shown to the user."
+    session = ResearchSession(
+        analysis_trace=AnalysisTrace(
+            {"outputs": [{"type": "function_call_output", "output": model_notice}]}
+        ),
+        context_bundle=ContextBundle({}),
+        raw_outputs=[{
+            "type": "function_call_output",
+            "output": model_notice,
+            "display_output": full_output,
+        }],
+    )
+
+    bundle = write_research_bundle(session, tmp_path / "bundle")
+
+    output = json.loads((bundle.output_dir / "outputs" / "001_output.json").read_text())
+    assert output["output"] == model_notice
+    assert output["display_output"] == full_output
+
+
+def test_research_bundle_writes_session_captured_retained_output_without_display_output(tmp_path):
+    model_notice = "The complete output was shown to the user."
+    session = ResearchSession(
+        analysis_trace=AnalysisTrace(
+            {"outputs": [{"type": "function_call_output", "output": model_notice}]}
+        ),
+        context_bundle=ContextBundle({}),
+        raw_outputs=[{
+            "type": "function_call_output",
+            "output": model_notice,
+            "display_output_ref": "call_1",
+        }],
+        retained_output_bytes={"call_1": b"complete retained output"},
+    )
+
+    bundle = write_research_bundle(session, tmp_path / "bundle")
+
+    assert (bundle.output_dir / "outputs" / "001_full_output.txt").read_text() == "complete retained output"
+
+
+def test_research_bundle_ignores_untrusted_retained_output_path(tmp_path):
+    external_file = tmp_path / "external.txt"
+    external_file.write_text("must not be exported", encoding="utf-8")
+    session = ResearchSession(
+        analysis_trace=AnalysisTrace({"outputs": [{"output": "model-facing"}]}),
+        context_bundle=ContextBundle({}),
+        raw_outputs=[{
+            "output": "model-facing",
+            "display_output_ref": "call_1",
+            "_retained_output_path": str(external_file),
+        }],
+    )
+
+    bundle = write_research_bundle(session, tmp_path / "bundle")
+
+    assert not (bundle.output_dir / "outputs" / "001_full_output.txt").exists()
+    output = json.loads((bundle.output_dir / "outputs" / "001_output.json").read_text())
+    assert "_retained_output_path" not in output
+
+
+def test_research_bundle_preserves_not_retained_display_metadata(tmp_path):
+    session = ResearchSession(
+        analysis_trace=AnalysisTrace({"outputs": [{"output": "model-facing"}]}),
+        context_bundle=ContextBundle({}),
+        raw_outputs=[{
+            "output": "model-facing",
+            "display_output_agent_limited": True,
+            "display_output_not_retained": True,
+        }],
+    )
+
+    bundle = write_research_bundle(session, tmp_path / "bundle")
+
+    output = json.loads((bundle.output_dir / "outputs" / "001_output.json").read_text())
+    assert output["display_output_agent_limited"] is True
+    assert output["display_output_not_retained"] is True
+
+
+def test_research_bundle_does_not_write_empty_marker_when_only_raw_outputs_exist(tmp_path):
+    session = ResearchSession(
+        analysis_trace=AnalysisTrace({"outputs": []}),
+        context_bundle=ContextBundle({}),
+        raw_outputs=[{"type": "function_call_output", "output": "full raw output"}],
+    )
+
+    bundle = write_research_bundle(session, tmp_path / "bundle")
+
+    assert (bundle.output_dir / "outputs" / "001_output.json").exists()
+    assert not (bundle.output_dir / "outputs" / "outputs_empty.md").exists()
+
+
 def test_research_bundle_zip_uses_posix_archive_names(monkeypatch):
     arcnames = []
 

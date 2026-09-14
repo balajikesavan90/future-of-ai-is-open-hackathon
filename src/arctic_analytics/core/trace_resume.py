@@ -295,8 +295,37 @@ def _sanitize_resumed_message(message: Any) -> Any:
     if not isinstance(message, dict):
         return message
     restored = dict(message)
+    # Retained paths are created by this session and must never be accepted
+    # from an imported trace.
+    restored.pop("_retained_output_path", None)
     if restored.get("type") != "function_call_output":
         return restored
+    # References identify files held only by the prior Streamlit session.
+    # Keep a valid preview, but never allow it to point at future session data.
+    restored.pop("display_output_ref", None)
+    display_output = restored.get("display_output")
+    supported_image_prefixes = (
+        "data:image/png;base64,",
+        "data:image/jpeg;base64,",
+        "data:image/gif;base64,",
+        "data:image/webp;base64,",
+    )
+    if display_output is not None and (
+        not isinstance(display_output, str)
+        or (
+            display_output.lower().startswith(supported_image_prefixes)
+            and not _is_valid_base64_image_data_url(display_output)
+        )
+    ):
+        for key in (
+            "display_output",
+            "display_output_truncated",
+            "display_output_length_chars",
+            "display_output_ref",
+            "display_output_agent_limited",
+            "display_output_not_retained",
+        ):
+            restored.pop(key, None)
     output = restored.get("output")
     if isinstance(output, dict) and output.get("type") == "image_base64":
         restored["output"] = "Historical chart output is unavailable in this exported trace."
