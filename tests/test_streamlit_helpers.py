@@ -1,5 +1,6 @@
 import pytest
 import pandas as pd
+from contextlib import nullcontext
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -75,6 +76,24 @@ def test_render_tool_response_renders_large_dataframe_json_as_a_table(monkeypatc
     assert rendered_dataframes[0].shape == (100, 1)
 
 
+def test_render_tool_response_offers_retained_raw_download_for_dataframe(monkeypatch, tmp_path):
+    rendered = []
+    full_response = pd.DataFrame({"value": [1, 2]}).to_json(orient="index")
+    retained_path = tmp_path / "retained-output.json"
+    retained_path.write_text(full_response, encoding="utf-8")
+
+    monkeypatch.setattr(helpers.st, "dataframe", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        helpers.st,
+        "download_button",
+        lambda *args, **kwargs: rendered.append((args, kwargs)),
+    )
+
+    assert helpers.render_tool_response("preview", full_output_path=str(retained_path)) is True
+    assert rendered[0][0] == ("Download full tool output",)
+    assert rendered[0][1]["data"] == full_response.encode("utf-8")
+
+
 def test_render_tool_response_renders_complete_rows_from_truncated_dataframe_json(monkeypatch):
     rendered_dataframes = []
     full_response = pd.DataFrame({"text": ["x" * 1_000] * 100}).to_json(orient="index")
@@ -117,6 +136,29 @@ def test_render_tool_response_reads_retained_file_for_download(monkeypatch, tmp_
     helpers.render_tool_response("preview", full_output_path=str(retained_path))
 
     assert rendered[0][1]["data"] == b"complete output"
+
+
+def test_render_tool_response_handles_unreadable_retained_file(monkeypatch, tmp_path):
+    retained_path = tmp_path / "retained-output.txt"
+    retained_path.write_text("complete output", encoding="utf-8")
+    warnings = []
+
+    monkeypatch.setattr(
+        Path,
+        "read_bytes",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError("unreadable")),
+    )
+    monkeypatch.setattr(helpers.st, "code", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(helpers.st, "warning", warnings.append)
+    monkeypatch.setattr(
+        helpers.st,
+        "download_button",
+        lambda *_args, **_kwargs: pytest.fail("unreadable output must not offer a download"),
+    )
+
+    helpers.render_tool_response("preview", full_output_path=str(retained_path))
+
+    assert "cannot be downloaded" in warnings[-1]
 
 
 def test_retained_tool_output_path_ignores_non_string_id():
@@ -162,3 +204,42 @@ def test_retain_tool_output_falls_back_when_temp_storage_write_fails(monkeypatch
     assert session_state[helpers.RETAINED_TOOL_OUTPUTS_KEY] == {}
 
     helpers.clear_retained_tool_outputs()
+
+
+def test_retain_tool_output_falls_back_when_temp_storage_creation_fails(monkeypatch):
+    session_state = {}
+    monkeypatch.setattr(helpers, "st", SimpleNamespace(session_state=session_state))
+    monkeypatch.setattr(
+        helpers.tempfile,
+        "TemporaryDirectory",
+        lambda **_kwargs: (_ for _ in ()).throw(OSError("unavailable")),
+    )
+
+    assert helpers.retain_tool_output("call_1", "output") is None
+    assert helpers.RETAINED_TOOL_OUTPUT_DIRECTORY_KEY not in session_state
+
+
+def test_render_ai_prompt_hides_user_visible_tool_output(monkeypatch):
+    rendered = []
+    fake_streamlit = SimpleNamespace(
+        session_state={
+            "session_id": "test-session",
+            "messages": [
+                {"role": "system", "content": [{"text": "System instructions."}]},
+                {
+                    "type": "function_call_output",
+                    "output": "Model-facing output.",
+                    "display_output": "User-visible output.",
+                },
+            ],
+        },
+        sidebar=SimpleNamespace(expander=lambda *_args, **_kwargs: nullcontext()),
+        subheader=lambda *_args, **_kwargs: None,
+        write=rendered.append,
+    )
+    monkeypatch.setattr(helpers, "st", fake_streamlit)
+    monkeypatch.setattr(helpers, "render_trace_export", lambda: None)
+
+    helpers.render_ai_prompt()
+
+    assert rendered == [[{"type": "function_call_output", "output": "Model-facing output."}]]

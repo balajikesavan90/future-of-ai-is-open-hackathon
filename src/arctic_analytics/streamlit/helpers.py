@@ -156,7 +156,9 @@ def render_ai_prompt():
             st.write(st.session_state['system_message'])
         if 'messages' in st.session_state.keys():
             st.subheader(':blue[Messages]')
-            messages_wo_system_message = st.session_state['messages'][1:]
+            messages_wo_system_message = _messages_without_display_output(
+                st.session_state['messages'][1:]
+            )
             st.write(messages_wo_system_message)
 
 
@@ -879,7 +881,11 @@ def retain_tool_output(output_id, tool_response):
 
     directory = st.session_state.get(RETAINED_TOOL_OUTPUT_DIRECTORY_KEY)
     if directory is None:
-        directory = tempfile.TemporaryDirectory(prefix="arctic-analytics-tool-output-")
+        try:
+            directory = tempfile.TemporaryDirectory(prefix="arctic-analytics-tool-output-")
+        except OSError:
+            logging.exception("Unable to create temporary storage for tool output")
+            return None
         st.session_state[RETAINED_TOOL_OUTPUT_DIRECTORY_KEY] = directory
 
     retained_outputs = st.session_state.setdefault(RETAINED_TOOL_OUTPUTS_KEY, {})
@@ -947,10 +953,12 @@ def render_tool_response(tool_response, output_id=None, full_output_path=None, a
     # result remains in the retained file. Prefer that complete payload for
     # table detection so a dataframe does not revert to partial JSON text.
     full_tool_response = None
+    full_output_bytes = None
     if full_output_path:
         try:
-            full_tool_response = Path(full_output_path).read_text(encoding="utf-8")
-        except OSError:
+            full_output_bytes = Path(full_output_path).read_bytes()
+            full_tool_response = full_output_bytes.decode("utf-8")
+        except (OSError, UnicodeDecodeError):
             logging.warning("Unable to read retained tool output for rendering")
 
     renderable_response = full_tool_response or tool_response
@@ -979,9 +987,21 @@ def render_tool_response(tool_response, output_id=None, full_output_path=None, a
 
         dataframe = try_convert_to_dataframe(parsed_response)
         if dataframe is not None:
-            # Streamlit's native dataframe toolbar lets users download the
-            # displayed data as CSV, so no separate raw-output button is needed.
             st.dataframe(dataframe, width="stretch")
+            if allow_full_download and full_output_bytes is not None:
+                st.download_button(
+                    "Download full tool output",
+                    data=full_output_bytes,
+                    file_name="tool-output.txt",
+                    mime="text/plain",
+                    key=(
+                        f"tool-output-{output_id}"
+                        if output_id is not None
+                        else f"tool-output-{hashlib.sha256(tool_response.encode('utf-8')).hexdigest()}"
+                    ),
+                    icon=":material/download:",
+                    on_click="ignore",
+                )
             return True
 
     if len(tool_response) > MAX_RENDERED_TOOL_RESPONSE_CHARS or full_output_path:
@@ -989,10 +1009,10 @@ def render_tool_response(tool_response, output_id=None, full_output_path=None, a
         if len(tool_response) > MAX_RENDERED_TOOL_RESPONSE_CHARS:
             st.warning(f"Tool output is {len(tool_response):,} characters. Showing a preview to keep the app responsive.")
         st.code(preview, language="json" if preview.lstrip().startswith(("{", "[")) else None)
-        if allow_full_download:
+        if allow_full_download and (not full_output_path or full_output_bytes is not None):
             st.download_button(
                 "Download full tool output",
-                data=Path(full_output_path).read_bytes() if full_output_path else tool_response,
+                data=full_output_bytes if full_output_path else tool_response,
                 file_name="tool-output.txt",
                 mime="text/plain",
                 key=(
