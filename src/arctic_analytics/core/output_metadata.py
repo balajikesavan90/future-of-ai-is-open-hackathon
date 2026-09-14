@@ -7,4 +7,5 @@ DISPLAY_OUTPUT_FIELDS = frozenset({
     "display_output_ref",
     "display_output_agent_limited",
     "display_output_not_retained",
+    "_retained_output_path",
 })

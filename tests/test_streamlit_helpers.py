@@ -138,6 +138,26 @@ def test_render_tool_response_reads_retained_file_for_download(monkeypatch, tmp_
     assert rendered[0][1]["data"] == b"complete output"
 
 
+def test_render_tool_response_warns_when_retained_full_text_exceeds_preview_limit(monkeypatch, tmp_path):
+    full_response = "x" * (helpers.MAX_RENDERED_TOOL_RESPONSE_CHARS + 1)
+    retained_path = tmp_path / "retained-output.txt"
+    retained_path.write_text(full_response, encoding="utf-8")
+    warnings = []
+
+    monkeypatch.setattr(helpers.st, "code", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(helpers.st, "warning", warnings.append)
+    monkeypatch.setattr(helpers.st, "download_button", lambda *_args, **_kwargs: None)
+
+    helpers.render_tool_response(
+        full_response[:helpers.MAX_RENDERED_TOOL_RESPONSE_CHARS],
+        full_output_path=str(retained_path),
+    )
+
+    assert warnings == [
+        f"Tool output is {len(full_response):,} characters. Showing a preview to keep the app responsive."
+    ]
+
+
 def test_render_tool_response_handles_unreadable_retained_file(monkeypatch, tmp_path):
     retained_path = tmp_path / "retained-output.txt"
     retained_path.write_text("complete output", encoding="utf-8")

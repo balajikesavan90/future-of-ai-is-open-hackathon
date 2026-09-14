@@ -1015,8 +1015,11 @@ def render_tool_response(tool_response, output_id=None, full_output_path=None, a
 
     if len(tool_response) > MAX_RENDERED_TOOL_RESPONSE_CHARS or full_output_path:
         preview = tool_response[:MAX_RENDERED_TOOL_RESPONSE_CHARS]
-        if len(tool_response) > MAX_RENDERED_TOOL_RESPONSE_CHARS:
-            st.warning(f"Tool output is {len(tool_response):,} characters. Showing a preview to keep the app responsive.")
+        if len(renderable_response) > MAX_RENDERED_TOOL_RESPONSE_CHARS:
+            st.warning(
+                f"Tool output is {len(renderable_response):,} characters. "
+                "Showing a preview to keep the app responsive."
+            )
         st.code(preview, language="json" if preview.lstrip().startswith(("{", "[")) else None)
         if allow_full_download and (not full_output_path or full_output_bytes is not None):
             st.download_button(
