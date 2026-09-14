@@ -88,11 +88,28 @@ def test_sanitize_resumed_message_removes_ref_when_preview_is_invalid():
         "display_output_length_chars": 100,
         "display_output_ref": "call_1",
         "display_output_agent_limited": True,
+        "display_output_not_retained": True,
+        "_retained_output_path": "/etc/passwd",
     })
 
     assert "display_output" not in restored
     assert "display_output_ref" not in restored
     assert "display_output_agent_limited" not in restored
+    assert "display_output_not_retained" not in restored
+    assert "_retained_output_path" not in restored
+
+
+def test_sanitize_resumed_message_discards_imported_retained_path_with_valid_preview():
+    restored = trace_resume._sanitize_resumed_message({
+        "type": "function_call_output",
+        "call_id": "call_1",
+        "output": "Model-facing output.",
+        "display_output": "Valid preview.",
+        "_retained_output_path": "/etc/passwd",
+    })
+
+    assert restored["display_output"] == "Valid preview."
+    assert "_retained_output_path" not in restored
 
 
 def test_load_analysis_trace_converts_excessive_nesting_to_trace_resume_error():

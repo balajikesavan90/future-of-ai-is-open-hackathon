@@ -295,6 +295,9 @@ def _sanitize_resumed_message(message: Any) -> Any:
     if not isinstance(message, dict):
         return message
     restored = dict(message)
+    # Retained paths are created by this session and must never be accepted
+    # from an imported trace.
+    restored.pop("_retained_output_path", None)
     if restored.get("type") != "function_call_output":
         return restored
     display_output = restored.get("display_output")
@@ -317,6 +320,7 @@ def _sanitize_resumed_message(message: Any) -> Any:
             "display_output_length_chars",
             "display_output_ref",
             "display_output_agent_limited",
+            "display_output_not_retained",
         ):
             restored.pop(key, None)
     output = restored.get("output")

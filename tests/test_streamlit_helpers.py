@@ -123,6 +123,19 @@ def test_retained_tool_output_path_ignores_non_string_id():
     assert helpers.retained_tool_output_path(["malformed"]) is None
 
 
+def test_extract_raw_outputs_discards_imported_retained_file_path(monkeypatch):
+    monkeypatch.setattr(helpers, "retained_tool_output_path", lambda _output_id: None)
+
+    outputs = helpers._extract_raw_outputs([{
+        "type": "function_call_output",
+        "call_id": "call_1",
+        "output": "Model-facing output.",
+        "_retained_output_path": "/etc/passwd",
+    }])
+
+    assert "_retained_output_path" not in outputs[0]
+
+
 def test_retain_tool_output_uses_generated_filename_and_enforces_limit(monkeypatch):
     session_state = {}
     monkeypatch.setattr(helpers, "st", SimpleNamespace(session_state=session_state))

@@ -34,8 +34,8 @@ LARGE_PYTHON_OUTPUT_USER_NOTICE = (
     "and reason about. The agent cannot reason about this table in its final response."
 )
 TOOL_OUTPUT_NOT_RETAINED_NOTICE = (
-    "This large tool result was displayed live but was not retained because the session's "
-    "25 MiB output budget was reached. It will not appear after a rerun or in an exported trace."
+    "This large tool result was displayed live but could not be retained. "
+    "It will not appear after a rerun or in an exported trace."
 )
 REDACTED_SECRET_VALUE = "[redacted]"
 SENSITIVE_SESSION_KEY_MARKERS = ("api_key", "token", "password", "secret")
@@ -301,6 +301,8 @@ def _extract_raw_outputs(messages):
             continue
         if message.get("type") == "function_call_output":
             output = dict(message)
+            # Only a path created and tracked by the current session is trusted.
+            output.pop("_retained_output_path", None)
             retained_path = retained_tool_output_path(output.get("display_output_ref"))
             if retained_path:
                 output["_retained_output_path"] = retained_path

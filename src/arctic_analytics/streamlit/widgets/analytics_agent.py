@@ -143,6 +143,10 @@ def render_analytics_agent():
                             output_id=msg.get('call_id'),
                             full_output_path=full_output_path,
                         )
+                        if msg.get('display_output_truncated') and not full_output_path:
+                            st.warning(
+                                "This exported trace contains only a preview of the complete tool output."
+                            )
                         if msg.get('display_output_agent_limited'):
                             st.info(LARGE_PYTHON_OUTPUT_USER_NOTICE)
                         if msg.get('display_output_not_retained'):

@@ -349,6 +349,7 @@ def test_large_output_over_session_budget_is_visible_but_not_retained(monkeypatc
     assert tool_message["display_output_not_retained"] is True
     assert rendered == ["new output"]
     assert warnings == [openai_responses.TOOL_OUTPUT_NOT_RETAINED_NOTICE]
+    assert "budget was reached" not in warnings[0]
 
 
 def test_oversized_execution_error_keeps_a_bounded_diagnostic_for_the_model(monkeypatch):
