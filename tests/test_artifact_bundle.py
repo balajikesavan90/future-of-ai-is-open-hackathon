@@ -4,10 +4,10 @@ from io import BytesIO
 import re
 from pathlib import Path
 
-import arctic_analytics.artifacts.citation as citation_module
-import arctic_analytics.artifacts.bundle as bundle_module
-from arctic_analytics.artifacts.text import render_software_citation
-from arctic_analytics.artifacts import (
+import python_data_analysis_agent.artifacts.citation as citation_module
+import python_data_analysis_agent.artifacts.bundle as bundle_module
+from python_data_analysis_agent.artifacts.text import render_software_citation
+from python_data_analysis_agent.artifacts import (
     AnalysisTrace,
     ContextBundle,
     ResearchSession,
@@ -80,7 +80,7 @@ def test_write_research_bundle_from_minimal_session(tmp_path):
     assert manifest["model"] == "gpt-test"
     assert manifest["provider"] == "openai"
     assert manifest["trace_present"] is True
-    assert manifest["generated_by"] == "arctic analytics research bundle export"
+    assert manifest["generated_by"] == "python data analysis agent research bundle export"
     assert manifest["hash_algorithm"] == "sha256"
     assert manifest["dataset_content_sha256"] is None
     assert SHA256_PATTERN.match(manifest["metadata_or_context_sha256"])
@@ -293,7 +293,7 @@ def test_research_bundle_writes_valid_fallback_citation_cff(tmp_path, monkeypatc
 
     assert citation.startswith("cff-version: 1.2.0\n")
     assert 'message: "If you use this software, please cite it as below."' in citation
-    assert "title: \"Arctic Analytics\"" in citation
+    assert "title: \"Python Data Analysis Agent\"" in citation
     assert "doi: 10.5281/zenodo.18514535" in citation
 
 
@@ -315,7 +315,7 @@ def test_software_citation_uses_doi_from_citation_cff(monkeypatch):
 
 
 def test_root_and_packaged_citation_cff_match():
-    assert (ROOT / "CITATION.cff").read_text() == (ROOT / "src" / "arctic_analytics" / "CITATION.cff").read_text()
+    assert (ROOT / "CITATION.cff").read_text() == (ROOT / "src" / "python_data_analysis_agent" / "CITATION.cff").read_text()
 
 
 def test_research_bundle_skips_invalid_raw_image_payloads(tmp_path):

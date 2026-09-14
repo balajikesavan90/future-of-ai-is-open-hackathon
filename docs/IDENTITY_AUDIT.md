@@ -1,10 +1,10 @@
 # Identity Audit
 
-This audit covers repository wording related to Arctic Analytics positioning as an experimental open-source framework for metadata-aware, inspectable, constrained AI-assisted analysis over structured data.
+This audit covers repository wording related to Python Data Analysis Agent positioning as an experimental open-source framework for metadata-aware, inspectable, constrained AI-assisted analysis over structured data.
 
 | Term | Current wording | Recommended wording | Reason | Severity |
 | --- | --- | --- | --- | --- |
-| sandbox / sandboxed | "Run a python function in a sandboxed environment" in `src/arctic_analytics/llm/openai_responses.py` | "Run a python function with application-level execution restrictions." | Avoids implying security isolation. | High |
+| sandbox / sandboxed | "Run a python function in a sandboxed environment" in `src/python_data_analysis_agent/llm/openai_responses.py` | "Run a python function with application-level execution restrictions." | Avoids implying security isolation. | High |
 | sandbox / sandboxed | README and security docs distinguish Python restrictions from OS/container sandboxing. | Keep or rewrite to "security isolation" where clearer. | Limitation language is appropriate, but repeated "sandbox" can blur claims. | Medium |
 | assistant | OpenAI message roles and tests use `assistant`. | Keep for API semantics. | Required OpenAI message role terminology. | Low |
 | assistant | Design docs referred to opaque assistant behavior. | "Opaque model behavior." | Narrows the project away from generic AI assistant framing. | Medium |
@@ -27,6 +27,6 @@ This audit covers repository wording related to Arctic Analytics positioning as 
 
 ## Second-Pass Consistency Notes
 
-- Removed inactive image-generation response handling from `src/arctic_analytics/llm/openai_responses.py`.
-- Removed inactive embedding helper code from `src/arctic_analytics/llm/openai_responses.py`.
+- Removed inactive image-generation response handling from `src/python_data_analysis_agent/llm/openai_responses.py`.
+- Removed inactive embedding helper code from `src/python_data_analysis_agent/llm/openai_responses.py`.
 - Added `docs/archive/REMOVED_FEATURES.md` to record removed implementation remnants without keeping them in active source.

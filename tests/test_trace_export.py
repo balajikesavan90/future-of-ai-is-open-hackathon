@@ -12,7 +12,7 @@ import streamlit as st
 from jsonschema import Draft202012Validator, FormatChecker, ValidationError
 from streamlit.testing.v1 import AppTest
 
-from arctic_analytics.streamlit.helpers import (
+from python_data_analysis_agent.streamlit.helpers import (
     _clear_trace_export_cache,
     _clear_research_bundle_cache,
     _research_bundle_cache_is_current,
@@ -27,10 +27,10 @@ from arctic_analytics.streamlit.helpers import (
     serialize_analysis_trace,
     TraceExportError,
 )
-from arctic_analytics.streamlit import helpers
-from arctic_analytics.config import MAX_MODEL_CONTEXT_TOKENS
-from arctic_analytics.core.trace_resume import MAX_TRACE_BYTES, ResumePreparation, load_analysis_trace, messages_for_resume
-from arctic_analytics.artifacts import build_research_bundle_zip
+from python_data_analysis_agent.streamlit import helpers
+from python_data_analysis_agent.config import MAX_MODEL_CONTEXT_TOKENS
+from python_data_analysis_agent.core.trace_resume import MAX_TRACE_BYTES, ResumePreparation, load_analysis_trace, messages_for_resume
+from python_data_analysis_agent.artifacts import build_research_bundle_zip
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -116,7 +116,7 @@ def test_build_analysis_trace_is_json_safe_and_truncates_large_payloads():
     validate_trace_schema(trace)
 
     assert dumped
-    assert trace["trace_schema_version"] == "0.3.0"
+    assert trace["trace_schema_version"] == "0.4.0"
     assert trace["package_version"]
     assert trace["timestamp"]
     assert "model" not in trace
@@ -713,7 +713,7 @@ def test_researcher_notes_textarea_displays_restored_value_and_saves_edits():
     def script():
         import streamlit as st
 
-        from arctic_analytics.streamlit.helpers import render_researcher_notes
+        from python_data_analysis_agent.streamlit.helpers import render_researcher_notes
 
         st.session_state.setdefault("researcher_notes", "Restored research context.")
         render_researcher_notes()
@@ -733,7 +733,7 @@ def test_researcher_notes_textarea_is_disabled_during_an_agent_turn():
     def script():
         import streamlit as st
 
-        from arctic_analytics.streamlit.helpers import render_researcher_notes
+        from python_data_analysis_agent.streamlit.helpers import render_researcher_notes
 
         st.session_state.setdefault("researcher_notes", "Keep this context.")
         st.session_state.setdefault("agent_turn_state", "idle")
@@ -756,7 +756,7 @@ def test_export_preparation_buttons_are_disabled_during_an_agent_turn():
     def script():
         import streamlit as st
 
-        from arctic_analytics.streamlit.helpers import render_trace_export
+        from python_data_analysis_agent.streamlit.helpers import render_trace_export
 
         st.session_state["messages"] = []
         st.session_state["vetted_files"] = {}

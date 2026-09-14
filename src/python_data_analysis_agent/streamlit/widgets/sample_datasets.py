@@ -1,13 +1,13 @@
 import streamlit as st
 import logging
 
-from arctic_analytics.core.data_import import gather_metadata
+from python_data_analysis_agent.core.data_import import gather_metadata
 
 def render_sample_datasets():
     logging.info(f'render_sample_datasets - {st.session_state["session_id"]}')
 
     with st.container(border=True):
-        st.write(':blue[Check out Arctic Analytics\' capabilities with these sample datasets!]')
+        st.write(':blue[Check out Python Data Analysis Agent\' capabilities with these sample datasets!]')
         col1, col2 = st.columns(2)
         with col1:
             if st.button(

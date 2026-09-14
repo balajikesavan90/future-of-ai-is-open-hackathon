@@ -3,13 +3,13 @@ import pytest
 
 import streamlit as st
 
-from arctic_analytics.core.security import (
+from python_data_analysis_agent.core.security import (
     SecurityError,
     execute_with_timeout,
     safely_execute_code,
     validate_code_security,
 )
-from arctic_analytics.llm.openai_responses import OpenAIResponsesUtility
+from python_data_analysis_agent.llm.openai_responses import OpenAIResponsesUtility
 
 
 def test_validate_code_security_rejects_unsafe_import():

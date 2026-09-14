@@ -1,18 +1,18 @@
-# Arctic Analytics
+# Python Data Analysis Agent
 
-Arctic Analytics is experimental open-source research software for AI-assisted structured-data research workflows. It is intended to help researchers inspect agent-generated analyses, preserve research artifacts, and support downstream publications, datasets, and methods rather than function as a standalone analytics product.
+Python Data Analysis Agent is experimental open-source research software for AI-assisted structured-data research workflows. It is intended to help researchers inspect agent-generated analyses, preserve research artifacts, and support downstream publications, datasets, and methods rather than function as a standalone analytics product.
 
-Arctic Analytics currently supports metadata-aware agent analysis over tabular data. Researchers can upload or select CSV data, review and edit data dictionaries, inject metadata before inference, inspect generated code and tool calls, execute Python with application-level restrictions, export traces, and package research bundles for review.
+Python Data Analysis Agent currently supports metadata-aware agent analysis over tabular data. Researchers can upload or select CSV data, review and edit data dictionaries, inject metadata before inference, inspect generated code and tool calls, execute Python with application-level restrictions, export traces, and package research bundles for review.
 
-> Packaging note: the app is available as the `arctic-analytics` distribution with the `arctic_analytics` import package.
+> Packaging note: the app is available as the `python-data-analysis-agent` distribution with the `python_data_analysis_agent` import package.
 
 ## Start Here: Local Research Run
 
 Fastest local path for researchers who want to run the Streamlit workbench:
 
 ```bash
-git clone https://github.com/balajikesavan90/arctic-analytics.git
-cd arctic-analytics
+git clone https://github.com/balajikesavan90/python-data-analysis-agent.git
+cd python-data-analysis-agent
 uv venv --python 3.12
 source .venv/bin/activate
 uv pip install -e .
@@ -87,7 +87,7 @@ The sample bundle does not run a new analysis. It lets you inspect a completed a
 
 ## Intended Usage Model
 
-Arctic Analytics supports two paths:
+Python Data Analysis Agent supports two paths:
 
 Demo path:
 
@@ -150,7 +150,7 @@ Review the checked-in example format at [examples/sample_research_bundle](exampl
 
 ### Context Before Inference
 
-Structured-data research depends on context. Arctic Analytics prioritizes editable metadata, dataset descriptions, data dictionaries, dataframe shape, summary statistics, missing values, and row samples as first-class context inputs.
+Structured-data research depends on context. Python Data Analysis Agent prioritizes editable metadata, dataset descriptions, data dictionaries, dataframe shape, summary statistics, missing values, and row samples as first-class context inputs.
 
 ### Inspectability Over Magic
 
@@ -158,13 +158,13 @@ Generated analysis should be inspectable. The UI and exported artifacts expose t
 
 ### Constraints Over Unrestricted Execution
 
-Generated code should not run with unrestricted access by default. Arctic Analytics applies Python-level validation, import/function restrictions, output-type checks, and runtime limits before returning results.
+Generated code should not run with unrestricted access by default. Python Data Analysis Agent applies Python-level validation, import/function restrictions, output-type checks, and runtime limits before returning results.
 
 Important limitation: these are Python-level restrictions and runtime constraints. They are not isolated container or OS-level sandboxing.
 
 ### Human Accountability
 
-Arctic Analytics is designed for human review. Outputs should be checked against the source data, metadata, generated code, visible intermediate steps, and exported artifacts before they are trusted or cited.
+Python Data Analysis Agent is designed for human review. Outputs should be checked against the source data, metadata, generated code, visible intermediate steps, and exported artifacts before they are trusted or cited.
 
 ## Current Limitations
 
@@ -178,7 +178,7 @@ This project does not provide:
 
 Current implementation limits:
 
-- Traces are snapshots of Streamlit session state. They can restore conversation and metadata for continuation with re-uploaded CSVs, but are not deterministic execution replays. Only trace-schema version 0.3.0 exports with a resume manifest are resumable; those traces retain chart payloads. Trace exports larger than 10 MiB are not prepared because they cannot be imported for resume.
+- Traces are snapshots of Streamlit session state. They can restore conversation and metadata for continuation with re-uploaded CSVs, but are not deterministic execution replays. Trace-schema versions 0.3.0 and 0.4.0 exports with a resume manifest are resumable; those traces retain chart payloads. Trace exports larger than 10 MiB are not prepared because they cannot be imported for resume.
 - Research bundles package artifacts for review; they are not replayable runs.
 - Execution restrictions are not isolation.
 - Examples may require external APIs when regenerating traces.
@@ -197,8 +197,8 @@ Current implementation limits:
 ### Installation
 
 ```bash
-git clone https://github.com/balajikesavan90/arctic-analytics.git
-cd arctic-analytics
+git clone https://github.com/balajikesavan90/python-data-analysis-agent.git
+cd python-data-analysis-agent
 uv venv --python 3.12
 source .venv/bin/activate
 uv pip install -e .
@@ -207,7 +207,7 @@ uv pip install -e .
 ### Installing As A Package
 
 ```bash
-pip install arctic-analytics
+pip install python-data-analysis-agent
 
 # Or, during local development
 poetry install
@@ -255,32 +255,32 @@ Then run:
 streamlit run app.py
 
 # Installed console script
-poetry run arctic-analytics-app
+poetry run python-data-analysis-agent-app
 
 # Console entrypoint
-poetry run arctic-analytics app
+poetry run python-data-analysis-agent app
 
 # Compatibility entrypoint
 poetry run streamlit run app.py
 
 # Package-native Streamlit entrypoint
-poetry run streamlit run src/arctic_analytics/streamlit_app.py
+poetry run streamlit run src/python_data_analysis_agent/streamlit_app.py
 ```
 
 For the full 15-minute local walkthrough, including sample data, generated code inspection, trace export, and research bundle export, use [quickstart_local.md](quickstart_local.md).
 
 To inspect the evidence format without an API key, open [examples/sample_research_bundle](examples/sample_research_bundle).
 
-## Citing Arctic Analytics
+## Citing Python Data Analysis Agent
 
-If Arctic Analytics supports work that appears in a paper, dataset, appendix, or methods section, cite the software using [CITATION.cff](CITATION.cff).
+If Python Data Analysis Agent supports work that appears in a paper, dataset, appendix, or methods section, cite the software using [CITATION.cff](CITATION.cff).
 
 DOI: `10.5281/zenodo.18514535`
 
 Suggested wording:
 
 ```text
-Analyses were performed using Arctic Analytics v0.1.0 (DOI: 10.5281/zenodo.18514535).
+Analyses were performed using Python Data Analysis Agent v0.1.0 (DOI: 10.5281/zenodo.18514535).
 ```
 
 Before citing a newer release, verify that the README, `CITATION.cff`, package version, and Zenodo record refer to the same version. See [docs/citing.md](docs/citing.md).

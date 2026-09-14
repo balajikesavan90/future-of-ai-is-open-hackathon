@@ -1,19 +1,19 @@
 # Architecture Debt
 
-Arctic Analytics is positioned as an experimental framework, but the current implementation is still primarily a Streamlit application with reusable pieces inside it. This document maps the coupling points that prevent the project from being a clean reusable framework today.
+Python Data Analysis Agent is positioned as an experimental framework, but the current implementation is still primarily a Streamlit application with reusable pieces inside it. This document maps the coupling points that prevent the project from being a clean reusable framework today.
 
 ## Current Boundaries
 
 | Area | Current modules | Coupling |
 | --- | --- | --- |
-| Context ingestion | `src/arctic_analytics/core/data_import.py`, `src/arctic_analytics/streamlit/widgets/uploader.py`, `src/arctic_analytics/streamlit/widgets/sample_datasets.py` | Ingestion writes directly to `st.session_state` and expects Streamlit-selected sources. |
-| Metadata editing | `src/arctic_analytics/streamlit/widgets/data_dictionary.py` | Metadata editing is UI-native and stores edited data dictionaries in Streamlit state. |
-| Context construction | `src/arctic_analytics/core/system_messages.py` | Prompt construction accepts `vetted_files`, but logs through `st.session_state["session_id"]` and returns a prompt string rather than a structured context bundle. |
-| LLM dispatch | `src/arctic_analytics/llm/ai.py`, `src/arctic_analytics/llm/openai_responses.py` | Dispatch reads and mutates `st.session_state["messages"]`, `cost`, and `context_window_usage`. |
-| Tool rendering | `src/arctic_analytics/llm/openai_responses.py`, `src/arctic_analytics/streamlit/helpers.py` | LLM response processing directly renders Streamlit expanders while processing tool calls. |
-| Execution | `src/arctic_analytics/core/security.py`, `src/arctic_analytics/llm/openai_responses.py` | Low-level execution is mostly separable, but output normalization and token-size checks live in the OpenAI/Streamlit-adjacent class. |
-| Trace generation | `src/arctic_analytics/streamlit/helpers.py` | Trace builder reads directly from Streamlit session state instead of accepting a run object. |
-| Artifact generation | `src/arctic_analytics/artifacts/` | Bundle generation is pure Python, but Streamlit still owns most live session construction. |
+| Context ingestion | `src/python_data_analysis_agent/core/data_import.py`, `src/python_data_analysis_agent/streamlit/widgets/uploader.py`, `src/python_data_analysis_agent/streamlit/widgets/sample_datasets.py` | Ingestion writes directly to `st.session_state` and expects Streamlit-selected sources. |
+| Metadata editing | `src/python_data_analysis_agent/streamlit/widgets/data_dictionary.py` | Metadata editing is UI-native and stores edited data dictionaries in Streamlit state. |
+| Context construction | `src/python_data_analysis_agent/core/system_messages.py` | Prompt construction accepts `vetted_files`, but logs through `st.session_state["session_id"]` and returns a prompt string rather than a structured context bundle. |
+| LLM dispatch | `src/python_data_analysis_agent/llm/ai.py`, `src/python_data_analysis_agent/llm/openai_responses.py` | Dispatch reads and mutates `st.session_state["messages"]`, `cost`, and `context_window_usage`. |
+| Tool rendering | `src/python_data_analysis_agent/llm/openai_responses.py`, `src/python_data_analysis_agent/streamlit/helpers.py` | LLM response processing directly renders Streamlit expanders while processing tool calls. |
+| Execution | `src/python_data_analysis_agent/core/security.py`, `src/python_data_analysis_agent/llm/openai_responses.py` | Low-level execution is mostly separable, but output normalization and token-size checks live in the OpenAI/Streamlit-adjacent class. |
+| Trace generation | `src/python_data_analysis_agent/streamlit/helpers.py` | Trace builder reads directly from Streamlit session state instead of accepting a run object. |
+| Artifact generation | `src/python_data_analysis_agent/artifacts/` | Bundle generation is pure Python, but Streamlit still owns most live session construction. |
 
 ## What Prevents Reuse
 

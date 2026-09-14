@@ -1,6 +1,6 @@
 # Draft Methods
 
-Analyses were supported by Arctic Analytics v0.1.0, experimental open-source research software for metadata-aware, inspectable, constrained AI-assisted analysis over structured data.
+Analyses were supported by Python Data Analysis Agent v0.1.0, experimental open-source research software for metadata-aware, inspectable, constrained AI-assisted analysis over structured data.
 
 The analysis workflow used an agent to review structured-data context before producing inspectable Python tool calls. The context supplied to the agent included dataset metadata, data dictionary information, summary statistics when available, and a researcher-provided prompt.
 

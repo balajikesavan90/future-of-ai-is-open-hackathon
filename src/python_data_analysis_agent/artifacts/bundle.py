@@ -1,4 +1,4 @@
-"""Build local-first Arctic Analytics research artifact bundles."""
+"""Build local-first Python Data Analysis Agent research artifact bundles."""
 
 from __future__ import annotations
 
@@ -14,17 +14,17 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from arctic_analytics import __version__
-from arctic_analytics.artifacts.citation import citation_cff_text
-from arctic_analytics.artifacts.extractors import (
+from python_data_analysis_agent import __version__
+from python_data_analysis_agent.artifacts.citation import citation_cff_text
+from python_data_analysis_agent.artifacts.extractors import (
     extract_generated_code,
     extract_prompts,
     final_answer_markdown,
     json_safe,
     write_outputs_and_figures,
 )
-from arctic_analytics.artifacts.models import BundleValidationResult, ResearchArtifactBundle, ResearchSession
-from arctic_analytics.artifacts.text import (
+from python_data_analysis_agent.artifacts.models import BundleValidationResult, ResearchArtifactBundle, ResearchSession
+from python_data_analysis_agent.artifacts.text import (
     render_bundle_readme,
     render_limitations,
     render_methods,
@@ -149,7 +149,7 @@ def _run_manifest_payload(session: ResearchSession) -> dict[str, Any]:
     return {
         "run_id": trace.get("session_id") or str(uuid4()),
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "arctic_analytics_version": __version__,
+        "python_data_analysis_agent_version": __version__,
         "python_version": sys.version,
         "platform": platform.platform(),
         "model": model,
@@ -161,7 +161,7 @@ def _run_manifest_payload(session: ResearchSession) -> dict[str, Any]:
         "metadata_or_context_sha256": _metadata_or_context_sha256(session, metadata_filename),
         "analysis_trace_sha256": _trace_sha256(session),
         "trace_present": session.analysis_trace.available,
-        "generated_by": session.command or "arctic analytics research bundle export",
+        "generated_by": session.command or "python data analysis agent research bundle export",
         "limitations": [
             "This manifest is a lightweight review aid, not a deterministic replay record.",
             "Source data and metadata filenames and hashes are recorded only when available from the active session.",
@@ -172,7 +172,7 @@ def _run_manifest_payload(session: ResearchSession) -> dict[str, Any]:
 
 def _environment_payload(session: ResearchSession) -> dict[str, Any]:
     return {
-        "arctic_analytics_version": __version__,
+        "python_data_analysis_agent_version": __version__,
         "python_version": sys.version,
         "platform": platform.platform(),
         "timestamp": datetime.now(timezone.utc).isoformat(),

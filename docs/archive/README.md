@@ -1,6 +1,6 @@
 # Archive
 
-This directory stores historical notes that are not part of the active Arctic Analytics workflow.
+This directory stores historical notes that are not part of the active Python Data Analysis Agent workflow.
 
 Archived material is retained for migration context and publication traceability. It should not be treated as current product scope, supported behavior, or evidence of active integrations.
 

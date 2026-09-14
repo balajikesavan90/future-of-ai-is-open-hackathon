@@ -3,14 +3,14 @@ import logging
 import time
 import os
 
-from arctic_analytics.config import DEFAULT_OPENAI_MODEL, MAX_MODEL_CONTEXT_TOKENS, has_openai_api_key
-from arctic_analytics.llm.ai import construct_welcome_message, generate_ai_response
-from arctic_analytics.core.system_messages import construct_system_message
-from arctic_analytics.core.trace_resume import replace_resumed_system_message
+from python_data_analysis_agent.config import DEFAULT_OPENAI_MODEL, MAX_MODEL_CONTEXT_TOKENS, has_openai_api_key
+from python_data_analysis_agent.llm.ai import construct_welcome_message, generate_ai_response
+from python_data_analysis_agent.core.system_messages import construct_system_message
+from python_data_analysis_agent.core.trace_resume import replace_resumed_system_message
 
-from arctic_analytics.streamlit.widgets.prompt_guide import render_tool_calling_analysis_prompt_guide
-from arctic_analytics.streamlit.helpers import LARGE_PYTHON_OUTPUT_USER_NOTICE, TOOL_OUTPUT_NOT_RETAINED_NOTICE, render_ai_prompt, render_researcher_notes, safely_escape_dollars, render_tool_call, render_tool_response, select_sample_prompt, retained_tool_output_path
-from arctic_analytics.streamlit.helpers import is_dev_environment
+from python_data_analysis_agent.streamlit.widgets.prompt_guide import render_tool_calling_analysis_prompt_guide
+from python_data_analysis_agent.streamlit.helpers import LARGE_PYTHON_OUTPUT_USER_NOTICE, TOOL_OUTPUT_NOT_RETAINED_NOTICE, render_ai_prompt, render_researcher_notes, safely_escape_dollars, render_tool_call, render_tool_response, select_sample_prompt, retained_tool_output_path
+from python_data_analysis_agent.streamlit.helpers import is_dev_environment
 
 
 def stream_text(text):

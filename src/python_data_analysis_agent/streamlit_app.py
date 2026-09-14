@@ -5,24 +5,24 @@ import os
 
 import streamlit as st
 
-from arctic_analytics.config import (
+from python_data_analysis_agent.config import (
     get_openai_api_key,
     has_openai_api_key,
     save_openai_api_key_to_env,
 )
-from arctic_analytics.streamlit.helpers import (
+from python_data_analysis_agent.streamlit.helpers import (
     is_dev_environment,
     render_reset,
     render_reset_analysis,
     render_session_state,
     setup_session_state,
 )
-from arctic_analytics.streamlit.widgets.home import render_home, setup_home
+from python_data_analysis_agent.streamlit.widgets.home import render_home, setup_home
 
 
 def main():
     st.set_page_config(
-        page_title="Arctic Analytics",
+        page_title="Python Data Analysis Agent",
         layout="wide",
         page_icon="❄️",
         initial_sidebar_state="auto",
@@ -33,7 +33,7 @@ def main():
     if "session_id" not in st.session_state.keys():
         st.session_state.update(setup_session_state())
 
-    st.header(":blue[Arctic Analytics]")
+    st.header(":blue[Python Data Analysis Agent]")
 
     render_reset()
     render_api_key_setup_notice()
@@ -102,7 +102,7 @@ def render_api_key_setup_notice():
             "requires an OpenAI API key."
         )
         st.code("cp .env.example .env\n# then edit .env and set OPENAI_API_KEY", language="bash")
-        st.code("export OPENAI_API_KEY='your-key-here'\npoetry run arctic-analytics-app", language="bash")
+        st.code("export OPENAI_API_KEY='your-key-here'\npoetry run python-data-analysis-agent-app", language="bash")
         st.code(
             "cp .streamlit/secrets.example.toml .streamlit/secrets.toml\n"
             "# then edit .streamlit/secrets.toml",

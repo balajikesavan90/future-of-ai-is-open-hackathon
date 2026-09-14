@@ -1,6 +1,6 @@
 # Publication Workflow
 
-Arctic Analytics is intended to support AI-assisted structured-data research workflows that produce inspectable artifacts for papers, datasets, methods, and appendices.
+Python Data Analysis Agent is intended to support AI-assisted structured-data research workflows that produce inspectable artifacts for papers, datasets, methods, and appendices.
 
 ```text
 Upload dataset(s)

@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 pytest.importorskip("streamlit")
 
-from arctic_analytics.streamlit import helpers
+from python_data_analysis_agent.streamlit import helpers
 
 
 @pytest.mark.parametrize("mime_type", ["png", "jpeg", "gif", "webp"])

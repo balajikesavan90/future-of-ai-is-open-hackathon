@@ -18,7 +18,9 @@ from PIL import Image, UnidentifiedImageError
 
 
 MAX_TRACE_BYTES = 10 * 1024 * 1024
-SUPPORTED_TRACE_VERSIONS = {"0.3.0"}
+LEGACY_TRACE_SCHEMA_VERSION = "0.3.0"
+CURRENT_TRACE_SCHEMA_VERSION = "0.4.0"
+SUPPORTED_TRACE_VERSIONS = {LEGACY_TRACE_SCHEMA_VERSION, CURRENT_TRACE_SCHEMA_VERSION}
 RESERVED_EXECUTION_GLOBAL_NAMES = {
     "pd", "np", "plt", "go", "px", "datetime", "warnings", "math", "print", "st", "sm",
     "get_dataframe_names", "__builtins__",
@@ -81,7 +83,7 @@ def load_analysis_trace(raw_bytes: bytes) -> dict[str, Any]:
     try:
         trace = json.loads(raw_bytes.decode("utf-8"), parse_constant=_reject_json_constant)
     except (UnicodeDecodeError, json.JSONDecodeError, RecursionError, ValueError) as exc:
-        raise TraceResumeError("Upload a valid UTF-8 Arctic Analytics trace JSON file.") from exc
+        raise TraceResumeError("Upload a valid UTF-8 Python Data Analysis Agent trace JSON file.") from exc
 
     if not isinstance(trace, dict):
         raise TraceResumeError("The trace JSON must contain an object.")
@@ -93,10 +95,21 @@ def load_analysis_trace(raw_bytes: bytes) -> dict[str, Any]:
             key=lambda error: list(error.path),
         )
     except RecursionError as exc:
-        raise TraceResumeError("Upload a valid UTF-8 Arctic Analytics trace JSON file.") from exc
+        raise TraceResumeError("Upload a valid UTF-8 Python Data Analysis Agent trace JSON file.") from exc
     if errors:
         raise TraceResumeError(f"The trace does not match the supported import format: {errors[0].message}")
-    return trace
+    return _normalize_supported_trace(trace)
+
+
+def _normalize_supported_trace(trace: dict[str, Any]) -> dict[str, Any]:
+    """Return a canonical in-memory trace for every supported export version.
+
+    Version 0.3.0 traces remain resumable after the application rename. The
+    resume-critical fields deliberately retain their neutral names, so their
+    existing shape is already canonical. Copy the top-level mapping to ensure
+    later normalization can remain isolated from decoded upload data.
+    """
+    return dict(trace)
 
 
 def _reject_json_constant(value: str) -> None:

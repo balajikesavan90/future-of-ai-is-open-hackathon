@@ -101,9 +101,9 @@ def build_context_bundle(dataset_path, metadata_path, trace_path, trace, prompt)
 
 
 def build_research_session(trace, model, prompt, dataset_path, metadata_path, trace_path):
-    from arctic_analytics.artifacts import AnalysisTrace, ContextBundle, ResearchSession
+    from python_data_analysis_agent.artifacts import AnalysisTrace, ContextBundle, ResearchSession
 
-    from arctic_analytics.streamlit.helpers import _extract_raw_outputs
+    from python_data_analysis_agent.streamlit.helpers import _extract_raw_outputs
 
     return ResearchSession(
         prompt=prompt,
@@ -126,8 +126,8 @@ def build_research_session(trace, model, prompt, dataset_path, metadata_path, tr
 
 
 def seed_session_state(session_id, model, prompt, vetted_files):
-    from arctic_analytics.core.system_messages import construct_system_message
-    from arctic_analytics.llm.ai import construct_welcome_message
+    from python_data_analysis_agent.core.system_messages import construct_system_message
+    from python_data_analysis_agent.llm.ai import construct_welcome_message
 
     st.session_state.clear()
     st.session_state["session_id"] = session_id
@@ -160,7 +160,7 @@ def seed_session_state(session_id, model, prompt, vetted_files):
 
 
 def suppress_streamlit_rendering():
-    import arctic_analytics.llm.openai_responses as openai_responses
+    import python_data_analysis_agent.llm.openai_responses as openai_responses
 
     openai_responses.render_tool_call = lambda *args, **kwargs: None
     openai_responses.render_tool_response = lambda *args, **kwargs: None
@@ -260,9 +260,9 @@ def main():
         args.bundle_output = validate_bundle_output(args.bundle_output)
     load_openai_api_key()
 
-    from arctic_analytics.artifacts import write_research_bundle
-    from arctic_analytics.llm.openai_responses import OpenAIResponsesUtility
-    from arctic_analytics.streamlit.helpers import build_analysis_trace
+    from python_data_analysis_agent.artifacts import write_research_bundle
+    from python_data_analysis_agent.llm.openai_responses import OpenAIResponsesUtility
+    from python_data_analysis_agent.streamlit.helpers import build_analysis_trace
 
     suppress_streamlit_rendering()
     vetted_files = load_vetted_files(args.dataset, args.metadata)

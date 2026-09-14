@@ -12,14 +12,14 @@ import io
 import warnings
 from PIL import Image
 
-from arctic_analytics.config import (
+from python_data_analysis_agent.config import (
     DEFAULT_OPENAI_MODEL,
     MAX_MODEL_CONTEXT_TOKENS,
     SUPPORTED_OPENAI_MODELS,
     get_openai_api_key,
     validate_openai_model,
 )
-from arctic_analytics.streamlit.helpers import (
+from python_data_analysis_agent.streamlit.helpers import (
     LARGE_PYTHON_OUTPUT_USER_NOTICE,
     MAX_RENDERED_TOOL_RESPONSE_CHARS,
     MAX_RETAINED_TOOL_OUTPUT_BYTES,
@@ -29,9 +29,9 @@ from arctic_analytics.streamlit.helpers import (
     render_tool_call,
     render_tool_response,
 )
-from arctic_analytics.core.output_metadata import DISPLAY_OUTPUT_FIELDS
-from arctic_analytics.core.security import safely_execute_code
-from arctic_analytics.llm.tokenization import safe_encoding_for_model
+from python_data_analysis_agent.core.output_metadata import DISPLAY_OUTPUT_FIELDS
+from python_data_analysis_agent.core.security import safely_execute_code
+from python_data_analysis_agent.llm.tokenization import safe_encoding_for_model
 
 
 
@@ -90,7 +90,7 @@ class OpenAIResponsesUtility:
         )
 
     def _calculate_context_window_usage(self, input_tokens, model):
-        """Return request-context usage against Arctic Analytics' 128K limit."""
+        """Return request-context usage against Python Data Analysis Agent'ss 128K limit."""
         validate_openai_model(model)
         return min(input_tokens / MAX_MODEL_CONTEXT_TOKENS, 1.0)
 
@@ -195,8 +195,8 @@ class OpenAIResponsesUtility:
         estimated_token_count = self._request_context_token_count(request_args)
         if estimated_token_count > MAX_MODEL_CONTEXT_TOKENS:
             raise ValueError(
-                f"Estimated request context is {estimated_token_count:,} tokens, exceeding Arctic "
-                f"Analytics' {MAX_MODEL_CONTEXT_TOKENS:,}-token limit. Start a "
+                f"Estimated request context is {estimated_token_count:,} tokens, exceeding Python "
+                f"Data Analysis Agent's {MAX_MODEL_CONTEXT_TOKENS:,}-token limit. Start a "
                 "new analysis session or reduce the conversation history."
             )
 

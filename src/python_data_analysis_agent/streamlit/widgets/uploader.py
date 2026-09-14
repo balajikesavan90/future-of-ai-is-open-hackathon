@@ -5,9 +5,9 @@ import pandas as pd
 import re
 import os
 
-from arctic_analytics.core.data_import import build_vetted_files_from_uploads, gather_metadata
-from arctic_analytics.core.trace_resume import TraceResumeError, load_analysis_trace, prepare_resume
-from arctic_analytics.streamlit.helpers import is_dev_environment, restore_trace_session
+from python_data_analysis_agent.core.data_import import build_vetted_files_from_uploads, gather_metadata
+from python_data_analysis_agent.core.trace_resume import TraceResumeError, load_analysis_trace, prepare_resume
+from python_data_analysis_agent.streamlit.helpers import is_dev_environment, restore_trace_session
 
 def is_valid_csv(file):
     """Validate if file is a proper CSV and not malicious"""
@@ -113,7 +113,7 @@ def render_uploader():
     with st.form(key='resume_analysis'):
         st.write(':blue[Resume saved analysis]')
         st.caption(
-            'Upload an Arctic Analytics trace and CSVs with the original filenames and ordered columns. '
+            'Upload a Python Data Analysis Agent trace and CSVs with the original filenames and ordered columns. '
             'Refreshed rows are supported; prior findings should be re-run.'
         )
         trace_file = st.file_uploader(

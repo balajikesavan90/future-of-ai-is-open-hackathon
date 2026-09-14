@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/balajikesavan90/arctic-analytics/schemas/analysis_trace.schema.json",
-  "title": "Arctic Analytics Analysis Trace",
-  "description": "Schema for the lightweight, non-replayable analysis trace snapshot exported by Arctic Analytics.",
+  "$id": "https://github.com/balajikesavan90/python-data-analysis-agent/schemas/analysis_trace.schema.json",
+  "title": "Python Data Analysis Agent Analysis Trace",
+  "description": "Schema for the lightweight, non-replayable analysis trace snapshot exported by Python Data Analysis Agent.",
   "type": "object",
   "additionalProperties": true,
   "required": [
@@ -25,7 +25,7 @@
   "properties": {
     "trace_schema_version": {
       "type": "string",
-      "enum": ["0.2.0", "0.3.0"]
+      "enum": ["0.2.0", "0.3.0", "0.4.0"]
     },
     "package_version": {
       "type": "string"
@@ -201,7 +201,7 @@
       },
       "then": {
         "properties": {
-          "trace_schema_version": {"const": "0.3.0"}
+          "trace_schema_version": {"enum": ["0.3.0", "0.4.0"]}
         }
       }
     }

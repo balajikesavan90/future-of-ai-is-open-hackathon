@@ -1,6 +1,6 @@
 # Architecture
 
-Arctic Analytics centers on one workflow: Tool-Calling Analysis over loaded structured data.
+Python Data Analysis Agent centers on one workflow: Tool-Calling Analysis over loaded structured data.
 
 ```text
 User
@@ -37,16 +37,16 @@ Output
 
 | Stage | Modules | Notes |
 | --- | --- | --- |
-| User | `src/arctic_analytics/streamlit_app.py`, `src/arctic_analytics/streamlit/widgets/home.py` | Streamlit entrypoint and workflow routing. |
-| Context ingestion | `src/arctic_analytics/streamlit/widgets/uploader.py`, `src/arctic_analytics/streamlit/widgets/sample_datasets.py`, `src/arctic_analytics/core/data_import.py` | Loads CSV uploads or bundled sample datasets. |
-| Metadata editing | `src/arctic_analytics/streamlit/widgets/data_dictionary.py`, `src/arctic_analytics/streamlit/widgets/uploaded_data.py` | Lets users edit dataset descriptions, column descriptions, data types, and primary-key flags. |
-| Context construction | `src/arctic_analytics/core/system_messages.py` | Builds the system prompt from metadata, summary statistics, missing values, and row samples. |
-| LLM reasoning | `src/arctic_analytics/llm/ai.py`, `src/arctic_analytics/llm/openai_responses.py` | Dispatches to the supported tool-calling analysis implementation. |
-| Tool calls | `src/arctic_analytics/llm/openai_responses.py` | Defines tool specs and processes model-requested Python expression, function, and plot calls. |
-| Constrained execution | `src/arctic_analytics/core/security.py`, `src/arctic_analytics/llm/openai_responses.py` | Validates generated code, restricts imports/globals, executes with timeout, and checks outputs. |
-| Trace generation | `src/arctic_analytics/streamlit/helpers.py` | Builds JSON-safe session traces with prompts, messages, tool calls, outputs, metadata, and known limitations. |
-| Artifact bundle generation | `src/arctic_analytics/artifacts/` | Packages Streamlit session traces, context, prompts, generated code, outputs, environment metadata, methods drafts, limitations, and citation files. |
-| Output | `src/arctic_analytics/streamlit/widgets/analytics_agent.py` | Displays messages, reasoning summaries, tool calls, tool responses, tables, plots, and trace export controls. |
+| User | `src/python_data_analysis_agent/streamlit_app.py`, `src/python_data_analysis_agent/streamlit/widgets/home.py` | Streamlit entrypoint and workflow routing. |
+| Context ingestion | `src/python_data_analysis_agent/streamlit/widgets/uploader.py`, `src/python_data_analysis_agent/streamlit/widgets/sample_datasets.py`, `src/python_data_analysis_agent/core/data_import.py` | Loads CSV uploads or bundled sample datasets. |
+| Metadata editing | `src/python_data_analysis_agent/streamlit/widgets/data_dictionary.py`, `src/python_data_analysis_agent/streamlit/widgets/uploaded_data.py` | Lets users edit dataset descriptions, column descriptions, data types, and primary-key flags. |
+| Context construction | `src/python_data_analysis_agent/core/system_messages.py` | Builds the system prompt from metadata, summary statistics, missing values, and row samples. |
+| LLM reasoning | `src/python_data_analysis_agent/llm/ai.py`, `src/python_data_analysis_agent/llm/openai_responses.py` | Dispatches to the supported tool-calling analysis implementation. |
+| Tool calls | `src/python_data_analysis_agent/llm/openai_responses.py` | Defines tool specs and processes model-requested Python expression, function, and plot calls. |
+| Constrained execution | `src/python_data_analysis_agent/core/security.py`, `src/python_data_analysis_agent/llm/openai_responses.py` | Validates generated code, restricts imports/globals, executes with timeout, and checks outputs. |
+| Trace generation | `src/python_data_analysis_agent/streamlit/helpers.py` | Builds JSON-safe session traces with prompts, messages, tool calls, outputs, metadata, and known limitations. |
+| Artifact bundle generation | `src/python_data_analysis_agent/artifacts/` | Packages Streamlit session traces, context, prompts, generated code, outputs, environment metadata, methods drafts, limitations, and citation files. |
+| Output | `src/python_data_analysis_agent/streamlit/widgets/analytics_agent.py` | Displays messages, reasoning summaries, tool calls, tool responses, tables, plots, and trace export controls. |
 
 ## Local-First Artifact Boundary
 

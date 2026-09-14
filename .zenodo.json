@@ -1,6 +1,6 @@
 {
-  "title": "Arctic Analytics",
-  "description": "Arctic Analytics is an experimental open-source framework for metadata-aware, inspectable, constrained AI-assisted analysis over structured data.",
+  "title": "Python Data Analysis Agent",
+  "description": "Python Data Analysis Agent is an experimental open-source framework for metadata-aware, inspectable, constrained AI-assisted analysis over structured data.",
   "upload_type": "software",
   "license": "MIT",
   "creators": [
@@ -22,7 +22,7 @@
   "related_identifiers": [
     {
       "relation": "isSupplementTo",
-      "identifier": "https://github.com/balajikesavan90/arctic-analytics",
+      "identifier": "https://github.com/balajikesavan90/python-data-analysis-agent",
       "resource_type": "software",
       "scheme": "url"
     }

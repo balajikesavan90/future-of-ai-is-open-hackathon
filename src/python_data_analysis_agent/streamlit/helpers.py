@@ -12,18 +12,18 @@ import os
 import tempfile
 from pathlib import Path
 
-from arctic_analytics import __version__
-from arctic_analytics.config import (
+from python_data_analysis_agent import __version__
+from python_data_analysis_agent.config import (
     MAX_MODEL_CONTEXT_TOKENS,
 )
-from arctic_analytics.artifacts import (
+from python_data_analysis_agent.artifacts import (
     AnalysisTrace,
     ContextBundle,
     ResearchSession,
     build_research_bundle_zip,
 )
-from arctic_analytics.core.trace_resume import MAX_TRACE_BYTES, messages_for_resume
-from arctic_analytics.core.output_metadata import DISPLAY_OUTPUT_FIELDS
+from python_data_analysis_agent.core.trace_resume import MAX_TRACE_BYTES, messages_for_resume
+from python_data_analysis_agent.core.output_metadata import DISPLAY_OUTPUT_FIELDS
 
 MAX_TRACE_STRING_CHARS = 10000
 TRACE_STRING_PREVIEW_CHARS = 1000
@@ -389,7 +389,7 @@ def build_analysis_trace():
         else messages
     )
     trace = {
-        "trace_schema_version": "0.3.0",
+        "trace_schema_version": "0.4.0",
         "package_version": __version__,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "session_id": st.session_state.get("session_id"),
@@ -654,7 +654,7 @@ def render_trace_export():
             st.sidebar.download_button(
                 label=":green[Download Analysis Trace]",
                 data=st.session_state["trace_export_json"],
-                file_name=f"arctic_analytics_trace_{st.session_state.get('trace_export_session_id', 'session')}.json",
+                file_name=f"python_data_analysis_agent_trace_{st.session_state.get('trace_export_session_id', 'session')}.json",
                 mime="application/json",
                 key="download_trace_export",
                 width='stretch',
@@ -680,7 +680,7 @@ def render_trace_export():
             st.sidebar.download_button(
                 label=":green[Download Research Bundle]",
                 data=st.session_state["research_bundle_zip"],
-                file_name=f"arctic_analytics_research_bundle_{st.session_state.get('research_bundle_session_id', 'session')}.zip",
+                file_name=f"python_data_analysis_agent_research_bundle_{st.session_state.get('research_bundle_session_id', 'session')}.zip",
                 mime="application/zip",
                 key="download_research_bundle",
                 width='stretch',
@@ -889,7 +889,7 @@ def retain_tool_output(output_id, tool_response):
     directory = st.session_state.get(RETAINED_TOOL_OUTPUT_DIRECTORY_KEY)
     if directory is None:
         try:
-            directory = tempfile.TemporaryDirectory(prefix="arctic-analytics-tool-output-")
+            directory = tempfile.TemporaryDirectory(prefix="python-data-analysis-agent-tool-output-")
         except OSError:
             logging.exception("Unable to create temporary storage for tool output")
             return None
