@@ -73,6 +73,8 @@ Open [examples/sample_research_bundle](examples/sample_research_bundle) to inspe
 
 The sample bundle does not run a new analysis. It lets you inspect a completed analysis artifact.
 
+The checked-in sample bundle is a historical v2.0.0 artifact and intentionally retains its original trace, manifest, and citation metadata. To cite the current software release, use the repository-root [CITATION.cff](CITATION.cff).
+
 ## What It Does Today
 
 - Supports metadata-aware structured-data analysis.
@@ -280,7 +282,7 @@ DOI: `10.5281/zenodo.18514534`
 Suggested wording:
 
 ```text
-Analyses were performed using Python Data Analysis Agent v2.0.0 (DOI: 10.5281/zenodo.18514534).
+Analyses were performed using Python Data Analysis Agent v2.0.1 (DOI: 10.5281/zenodo.18514534).
 ```
 
 Before citing this release, verify that the README, `CITATION.cff`, package version, and Zenodo record refer to the same version. See [docs/citing.md](docs/citing.md).
