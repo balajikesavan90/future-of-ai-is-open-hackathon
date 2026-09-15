@@ -10,7 +10,7 @@ authors:
   - family-names: Kesavan
     given-names: Balaji
 title: "Python Data Analysis Agent"
-version: 2.0.0
+version: 2.0.1
 date-released: 2026-09-14
 url: "https://github.com/balajikesavan90/python-data-analysis-agent"
 repository-code: "https://github.com/balajikesavan90/python-data-analysis-agent"
