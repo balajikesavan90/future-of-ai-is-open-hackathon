@@ -13,13 +13,13 @@ Use the repository `CITATION.cff` file as the source of citation metadata. The Z
 Suggested methods wording:
 
 ```text
-Analyses were performed using Python Data Analysis Agent v0.1.0 (DOI: 10.5281/zenodo.18514535), experimental open-source research software for metadata-aware, inspectable, constrained AI-assisted analysis over structured data.
+Analyses were performed using Python Data Analysis Agent v2.0.0 (DOI: 10.5281/zenodo.18514535), experimental open-source research software for metadata-aware, inspectable, constrained AI-assisted analysis over structured data.
 ```
 
 Short citation wording:
 
 ```text
-Python Data Analysis Agent v0.1.0, DOI: 10.5281/zenodo.18514535.
+Python Data Analysis Agent v2.0.0, DOI: 10.5281/zenodo.18514535.
 ```
 
 ## DOI Workflow
@@ -40,5 +40,5 @@ Do not rely on the software DOI alone to reproduce a specific analysis. A paper 
 ## Paper Methods Example
 
 ```text
-Structured-data analyses were supported by Python Data Analysis Agent v0.1.0. Dataset metadata and column descriptions were reviewed before agent inference. The exported artifact bundle contains the analysis trace, prompts, generated code, tool outputs, environment snapshot, and software citation metadata. Agent-generated code and outputs were manually reviewed before inclusion in the manuscript.
+Structured-data analyses were supported by Python Data Analysis Agent v2.0.0. Dataset metadata and column descriptions were reviewed before agent inference. The exported artifact bundle contains the analysis trace, prompts, generated code, tool outputs, environment snapshot, and software citation metadata. Agent-generated code and outputs were manually reviewed before inclusion in the manuscript.
 ```

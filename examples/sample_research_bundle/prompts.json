@@ -6,7 +6,7 @@
   ],
   "assistant_messages": [
     "Hello. Python Data Analysis Agent can help generate metadata-aware analysis over your structured data.\nI have access to the metadata of the files you uploaded and will use that context to generate inspectable code for constrained execution.\n\n\nI have detected the following pandas dataframe:\n\nThe pandas dataframe :blue[tips] has :blue[244] rows with columns: :blue[total_bill, tip, sex, smoker, day, time, size].\n\n",
-    "**Friday** has the highest average tip percentage.\n\n| Day | Average tip percentage |\n|---|---:|\n| Friday | **16.99%** |\n| Sunday | 16.69% |\n| Thursday | 16.13% |\n| Saturday | 15.32% |\n\nCalculation used: `tip_percentage = tip / total_bill`, averaged across visits for each day."
+    "**Friday** has the highest average tip percentage.\n\n| Day | Average tip percentage |\n|---|---:|\n| Friday | **16.99%** |\n| Sunday | 16.69% |\n| Thursday | 16.13% |\n| Saturday | 15.32% |\n\nCalculation: `tip percentage = tip / total_bill \u00d7 100`, then averaged across meals for each day."
   ],
   "note": "Prompts are exported for review. Model outputs may vary across runs and model versions."
 }

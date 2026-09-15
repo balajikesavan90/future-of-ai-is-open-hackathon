@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "python-data-analysis-agent"
-version = "0.1.0"
+version = "2.0.0"
 description = "An experimental open-source framework for metadata-aware, inspectable, constrained AI-assisted analysis over structured data."
 authors = ["BalajiKesavan <36139209+balajikesavan90@users.noreply.github.com>"]
 readme = "README.md"
