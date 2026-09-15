@@ -14,7 +14,7 @@ Datasets represented in the exported context bundle: tips.
 
 ## Agent And Model
 
-Model recorded in the trace: gpt-5.4-mini-2026-03-17.
+Model recorded in the trace: gpt-5.6-luna.
 
 ## Execution Summary
 

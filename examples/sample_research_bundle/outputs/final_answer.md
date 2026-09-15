@@ -1,16 +1,10 @@
-The day with the **highest average tip percentage** is **Friday**.
+**Friday** has the highest average tip percentage.
 
-### Average tip percentage by day
-- **Fri:** 16.99%
-- **Sun:** 16.69%
-- **Thur:** 16.13%
-- **Sat:** 15.32%
+| Day | Average tip percentage |
+|---|---:|
+| Friday | **16.99%** |
+| Sunday | 16.69% |
+| Thursday | 16.13% |
+| Saturday | 15.32% |
 
-### Method
-Tip percentage was calculated as:
-
-\[
-\text{tip percentage} = \frac{\text{tip}}{\text{total\_bill}}
-\]
-
-Then I averaged that value within each day.
+Calculation used: `tip_percentage = tip / total_bill`, averaged across visits for each day.

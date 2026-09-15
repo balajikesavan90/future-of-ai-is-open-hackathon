@@ -5,7 +5,7 @@
 - [ ] Confirm `python-data-analysis-agent` is available on PyPI, then publish it from the intended owner account.
 - [ ] Rename the GitHub repository to `balajikesavan90/python-data-analysis-agent` and verify redirects from the prior repository.
 - [ ] Update repository metadata, badges, issue/PR templates, Actions settings, webhooks, deployment configuration, and project boards.
-- [ ] Publish a release note stating that legacy analysis traces remain importable, while the prior package imports and CLI commands are retired.
+- [ ] Publish a release note stating that legacy analysis traces are retained as non-resumable reference artifacts, while the prior package imports and CLI commands are retired.
 - [ ] Create a new Zenodo version for the renamed release, retain the concept DOI in citations, and update the Zenodo release metadata.
 
 ## Public presence

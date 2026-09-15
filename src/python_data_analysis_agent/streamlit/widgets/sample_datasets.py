@@ -7,7 +7,7 @@ def render_sample_datasets():
     logging.info(f'render_sample_datasets - {st.session_state["session_id"]}')
 
     with st.container(border=True):
-        st.write(':blue[Check out Python Data Analysis Agent\' capabilities with these sample datasets!]')
+        st.write(':blue[Check out Python Data Analysis Agent\'s capabilities with these sample datasets!]')
         col1, col2 = st.columns(2)
         with col1:
             if st.button(
