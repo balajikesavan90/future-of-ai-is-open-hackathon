@@ -6,7 +6,7 @@ The analysis workflow used an agent to review structured-data context before pro
 
 ## Analysis Question
 
-Which day has the highest average tip percentage? Calculate tip percentage as tip divided by total_bill.
+Which day has the highest average tip percentage? Calculate tip percentage as (tip divided by total_bill) × 100.
 
 ## Data And Context
 

@@ -133,7 +133,7 @@ This prompt is intentionally supported for exploration. Treat the response as a 
 A focused follow-up prompt can be useful after the exploratory pass:
 
 ```text
-Which day has the highest average tip percentage? Calculate tip percentage as tip divided by total_bill.
+Which day has the highest average tip percentage? Calculate tip percentage as (tip divided by total_bill) × 100.
 ```
 
 ## 8. Inspect Generated Code And Tool Calls

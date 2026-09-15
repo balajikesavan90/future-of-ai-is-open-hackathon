@@ -15,7 +15,7 @@ This directory contains small illustrative examples of the inspectable Python Da
 
 1. Load `sample_dataset.csv`, which contains the `tips` dataset.
 2. Review and edit the metadata in `sample_metadata.json`.
-3. Ask the focused analysis question used in the trace: `Which day has the highest average tip percentage? Calculate tip percentage as tip divided by total_bill.`
+3. Ask the focused analysis question used in the trace: `Which day has the highest average tip percentage? Calculate tip percentage as (tip divided by total_bill) × 100.`
 4. Review the visible tool call, generated code, tool response, and final answer before relying on the result.
 5. Export the trace and compare its structure with `sample_trace_export.json`.
 6. Inspect `sample_research_bundle/` to see the publication-support artifact format.
