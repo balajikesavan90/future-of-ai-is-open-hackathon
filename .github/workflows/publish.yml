@@ -56,6 +56,8 @@ jobs:
             exit 1
           fi
 
+          python scripts/validate_release_metadata.py "$expected_version"
+
       - name: Validate package metadata
         run: poetry check
 
