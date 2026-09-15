@@ -73,6 +73,8 @@ Open [examples/sample_research_bundle](examples/sample_research_bundle) to inspe
 
 The sample bundle does not run a new analysis. It lets you inspect a completed analysis artifact.
 
+The checked-in sample bundle is a historical v2.0.0 artifact and intentionally retains its original trace, manifest, and citation metadata. To cite the current software release, use the repository-root [CITATION.cff](CITATION.cff).
+
 ## What It Does Today
 
 - Supports metadata-aware structured-data analysis.
