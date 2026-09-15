@@ -16,7 +16,7 @@ url: "https://github.com/balajikesavan90/python-data-analysis-agent"
 repository-code: "https://github.com/balajikesavan90/python-data-analysis-agent"
 license: MIT
 type: software
-doi: 10.5281/zenodo.18514535
+doi: 10.5281/zenodo.18514534
 """
 
 

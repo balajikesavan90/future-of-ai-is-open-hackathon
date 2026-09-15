@@ -4,22 +4,22 @@ Python Data Analysis Agent is research software. If it supports an analysis, dat
 
 ## Software Citation
 
-Use the repository `CITATION.cff` file as the source of citation metadata. The Zenodo concept DOI is:
+Use the repository `CITATION.cff` file as the source of citation metadata. The Zenodo concept DOI, which resolves to the latest release, is:
 
 ```text
-10.5281/zenodo.18514535
+10.5281/zenodo.18514534
 ```
 
 Suggested methods wording:
 
 ```text
-Analyses were performed using Python Data Analysis Agent v2.0.0 (DOI: 10.5281/zenodo.18514535), experimental open-source research software for metadata-aware, inspectable, constrained AI-assisted analysis over structured data.
+Analyses were performed using Python Data Analysis Agent v2.0.0 (DOI: 10.5281/zenodo.18514534), experimental open-source research software for metadata-aware, inspectable, constrained AI-assisted analysis over structured data.
 ```
 
 Short citation wording:
 
 ```text
-Python Data Analysis Agent v2.0.0, DOI: 10.5281/zenodo.18514535.
+Python Data Analysis Agent v2.0.0, DOI: 10.5281/zenodo.18514534.
 ```
 
 ## DOI Workflow

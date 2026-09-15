@@ -88,7 +88,7 @@ def test_write_research_bundle_from_minimal_session(tmp_path):
     assert (bundle.output_dir / "context_bundle.json").exists()
     assert (bundle.output_dir / "methods.md").read_text().startswith("# Draft Methods")
     citation = (bundle.output_dir / "citation.cff").read_text()
-    assert "doi: 10.5281/zenodo.18514535" in citation
+    assert "doi: 10.5281/zenodo.18514534" in citation
     assert "family-names: Kesavan" in citation
     context = json.loads((bundle.output_dir / "context_bundle.json").read_text())
     assert context["researcher_notes"] == "Reviewed by analyst."
@@ -294,7 +294,7 @@ def test_research_bundle_writes_valid_fallback_citation_cff(tmp_path, monkeypatc
     assert citation.startswith("cff-version: 1.2.0\n")
     assert 'message: "If you use this software, please cite it as below."' in citation
     assert "title: \"Python Data Analysis Agent\"" in citation
-    assert "doi: 10.5281/zenodo.18514535" in citation
+    assert "doi: 10.5281/zenodo.18514534" in citation
 
 
 def test_software_citation_uses_doi_from_citation_cff(monkeypatch):
@@ -311,7 +311,7 @@ def test_software_citation_uses_doi_from_citation_cff(monkeypatch):
     citation = render_software_citation()
 
     assert "DOI: 10.1234/example-doi" in citation
-    assert "10.5281/zenodo.18514535" not in citation
+    assert "10.5281/zenodo.18514534" not in citation
 
 
 def test_root_and_packaged_citation_cff_match():

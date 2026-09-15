@@ -1,4 +1,4 @@
-**Friday** has the highest average tip percentage.
+**Friday** has the highest average tip percentage at **16.99%**.
 
 | Day | Average tip percentage |
 |---|---:|
@@ -7,4 +7,7 @@
 | Thursday | 16.13% |
 | Saturday | 15.32% |
 
-Calculation used: `(tip ÷ total_bill) × 100`, averaged across all meals for each day.
+Calculation used for each meal:
+\[
+\text{Tip percentage} = \frac{\text{tip}}{\text{total bill}} \times 100
+\]
