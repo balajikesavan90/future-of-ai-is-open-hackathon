@@ -3,7 +3,7 @@ import pandas as pd
 import logging
 import json
 
-from arctic_analytics.core.data_import import process_data_dictionaries, datasets
+from python_data_analysis_agent.core.data_import import process_data_dictionaries, datasets
 
 
 def preserve_or_derive_primary_keys(df, primary_keys):

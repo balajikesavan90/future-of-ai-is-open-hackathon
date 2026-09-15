@@ -7,10 +7,10 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
-APP_DISPLAY_NAME = "Arctic Analytics"
-DEFAULT_STREAMLIT_ENTRYPOINT = "arctic_analytics.streamlit_app"
+APP_DISPLAY_NAME = "Python Data Analysis Agent"
+DEFAULT_STREAMLIT_ENTRYPOINT = "python_data_analysis_agent.streamlit_app"
 DEFAULT_OPENAI_MODEL = "gpt-5.6-luna"
-# Arctic Analytics keeps each request well below the provider model windows so
+# Python Data Analysis Agent keeps each request well below the provider model windows so
 # long-lived analyses remain responsive and predictable.
 MAX_MODEL_CONTEXT_TOKENS = 128_000
 SUPPORTED_OPENAI_MODELS = frozenset(
@@ -30,7 +30,7 @@ def validate_openai_model(model: str) -> str:
         supported_models = ", ".join(sorted(SUPPORTED_OPENAI_MODELS))
         raise ValueError(
             f"Model {model!r} is not supported. "
-            f"Arctic Analytics only supports: {supported_models}."
+            f"Python Data Analysis Agent only supports: {supported_models}."
         )
     return model
 

@@ -1,14 +1,14 @@
 import streamlit as st
 import logging
 
-from arctic_analytics.llm.openai_responses import OpenAIResponsesUtility
+from python_data_analysis_agent.llm.openai_responses import OpenAIResponsesUtility
 
 openai_responses_client = OpenAIResponsesUtility()
 
 def construct_welcome_message():
     logging.info(f'construct_welcome_message - {st.session_state["session_id"]}')
 
-    welcome_message = f"""Hello. Arctic Analytics can help generate metadata-aware analysis over your structured data.
+    welcome_message = f"""Hello. Python Data Analysis Agent can help generate metadata-aware analysis over your structured data.
 I have access to the metadata of the files you uploaded and will use that context to generate inspectable code for constrained execution.
 \n\n"""
     

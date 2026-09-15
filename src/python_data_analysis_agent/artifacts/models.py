@@ -12,7 +12,7 @@ JsonDict = dict[str, Any]
 
 @dataclass
 class AnalysisTrace:
-    """A captured Arctic Analytics analysis trace."""
+    """A captured Python Data Analysis Agent analysis trace."""
 
     data: JsonDict | None = None
 
@@ -23,7 +23,7 @@ class AnalysisTrace:
 
 @dataclass
 class ContextBundle:
-    """Context and metadata supplied to an Arctic Analytics agent workflow."""
+    """Context and metadata supplied to a Python Data Analysis Agent workflow."""
 
     data: JsonDict
 

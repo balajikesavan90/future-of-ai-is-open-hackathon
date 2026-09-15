@@ -9,14 +9,14 @@ def render_about():
     with about_me_container:
         st.write(
             """
-            Arctic Analytics is an experimental open-source framework for metadata-aware, inspectable, constrained AI-assisted analysis over structured data.
+            Python Data Analysis Agent is an experimental open-source framework for metadata-aware, inspectable, constrained AI-assisted analysis over structured data.
             """
         )
 
-        with st.expander(':blue[What is Arctic Analytics?]', expanded=False):
+        with st.expander(':blue[What is Python Data Analysis Agent?]', expanded=False):
             st.write(
                 """
-                Arctic Analytics is an experimental framework for metadata-aware, inspectable, constrained AI-assisted analysis over structured data. It focuses on:
+                Python Data Analysis Agent is an experimental framework for metadata-aware, inspectable, constrained AI-assisted analysis over structured data. It focuses on:
                 - editable metadata before inference.
                 - visible reasoning, generated code, and tool calls.
                 - constrained Python execution.

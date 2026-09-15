@@ -8,8 +8,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from arctic_analytics.artifacts.models import ResearchSession
-from arctic_analytics.core.output_metadata import DISPLAY_OUTPUT_FIELDS
+from python_data_analysis_agent.artifacts.models import ResearchSession
+from python_data_analysis_agent.core.output_metadata import DISPLAY_OUTPUT_FIELDS
 
 
 def json_safe(value: Any) -> Any:

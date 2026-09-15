@@ -1,7 +1,7 @@
 import streamlit as st
 
-from arctic_analytics.llm import ai
-from arctic_analytics.streamlit.helpers import select_sample_prompt
+from python_data_analysis_agent.llm import ai
+from python_data_analysis_agent.streamlit.helpers import select_sample_prompt
 
 
 class StubResponsesClient:

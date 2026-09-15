@@ -1,10 +1,10 @@
 # Design Principles
 
-Arctic Analytics is an experimental framework for metadata-aware, inspectable, and constrained AI-assisted analysis over structured data. These principles describe what the project should emphasize as it evolves.
+Python Data Analysis Agent is an experimental framework for metadata-aware, inspectable, and constrained AI-assisted analysis over structured data. These principles describe what the project should emphasize as it evolves.
 
 ## Context Before Inference
 
-Structured-data analysis depends on context. Column names and raw values are rarely enough. Arctic Analytics therefore collects and injects metadata before model inference, including:
+Structured-data analysis depends on context. Column names and raw values are rarely enough. Python Data Analysis Agent therefore collects and injects metadata before model inference, including:
 
 - Dataset descriptions.
 - Column descriptions.
@@ -21,7 +21,7 @@ Future work should make this context more structured. A context bundle should be
 
 ## Inspectability Over Magic
 
-Arctic Analytics should not hide analysis behind opaque model behavior. The user should be able to inspect:
+Python Data Analysis Agent should not hide analysis behind opaque model behavior. The user should be able to inspect:
 
 - The system prompt.
 - User and model response messages.
@@ -43,7 +43,7 @@ Future execution work should move toward isolated processes or containers, resou
 
 ## Human Accountability
 
-Arctic Analytics should support human review rather than imply autonomous correctness. Users remain accountable for checking:
+Python Data Analysis Agent should support human review rather than imply autonomous correctness. Users remain accountable for checking:
 
 - Whether the injected metadata is correct.
 - Whether the generated code matches the analytical intent.
@@ -54,7 +54,7 @@ The product language should avoid claims that the system is an autonomous analys
 
 ## Minimal Claims
 
-Arctic Analytics can currently claim:
+Python Data Analysis Agent can currently claim:
 
 - Metadata-aware context construction.
 - Editable data dictionaries.

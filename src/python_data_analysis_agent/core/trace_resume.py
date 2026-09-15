@@ -81,7 +81,7 @@ def load_analysis_trace(raw_bytes: bytes) -> dict[str, Any]:
     try:
         trace = json.loads(raw_bytes.decode("utf-8"), parse_constant=_reject_json_constant)
     except (UnicodeDecodeError, json.JSONDecodeError, RecursionError, ValueError) as exc:
-        raise TraceResumeError("Upload a valid UTF-8 Arctic Analytics trace JSON file.") from exc
+        raise TraceResumeError("Upload a valid UTF-8 Python Data Analysis Agent trace JSON file.") from exc
 
     if not isinstance(trace, dict):
         raise TraceResumeError("The trace JSON must contain an object.")
@@ -93,7 +93,7 @@ def load_analysis_trace(raw_bytes: bytes) -> dict[str, Any]:
             key=lambda error: list(error.path),
         )
     except RecursionError as exc:
-        raise TraceResumeError("Upload a valid UTF-8 Arctic Analytics trace JSON file.") from exc
+        raise TraceResumeError("Upload a valid UTF-8 Python Data Analysis Agent trace JSON file.") from exc
     if errors:
         raise TraceResumeError(f"The trace does not match the supported import format: {errors[0].message}")
     return trace

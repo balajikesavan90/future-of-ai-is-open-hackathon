@@ -1,6 +1,6 @@
 # Quickstart: 15-Minute Local Evidence Bundle
 
-This walkthrough is for researchers who want to run Arctic Analytics locally, use the Streamlit **Analyze Data** workflow, inspect agent-generated code and tool calls, and export an evidence bundle for downstream review.
+This walkthrough is for researchers who want to run Python Data Analysis Agent locally, use the Streamlit **Analyze Data** workflow, inspect agent-generated code and tool calls, and export an evidence bundle for downstream review.
 
 Streamlit Community Cloud is useful for demo and onboarding. Local Streamlit execution is the intended research workflow.
 
@@ -8,7 +8,7 @@ Streamlit Community Cloud is useful for demo and onboarding. Local Streamlit exe
 
 By the end of this walkthrough, you should have:
 
-- a local Streamlit Arctic Analytics session
+- a local Streamlit Python Data Analysis Agent session
 - a sample dataset loaded through **Analyze Data**
 - reviewed or edited metadata before inference
 - one agent-assisted analysis response
@@ -19,13 +19,13 @@ By the end of this walkthrough, you should have:
 ## 1. Clone The Repository
 
 ```bash
-git clone https://github.com/balajikesavan90/arctic-analytics.git
-cd arctic-analytics
+git clone https://github.com/balajikesavan90/python-data-analysis-agent.git
+cd python-data-analysis-agent
 ```
 
 ## 2. Install Dependencies
 
-Arctic Analytics currently targets Python 3.12. The fastest local research path uses `uv` and editable pip install.
+Python Data Analysis Agent currently targets Python 3.12. The fastest local research path uses `uv` and editable pip install.
 
 ```bash
 uv venv --python 3.12
@@ -90,8 +90,8 @@ streamlit run app.py
 Developer/contributor equivalent:
 
 ```bash
-poetry run arctic-analytics-app
-poetry run arctic-analytics app
+poetry run python-data-analysis-agent-app
+poetry run python-data-analysis-agent app
 ```
 
 Open the Streamlit URL printed in your terminal, usually:
@@ -212,14 +212,14 @@ Open:
 examples/sample_research_bundle/
 ```
 
-This checked-in bundle demonstrates the evidence format, not live agent execution. It was generated from a sample analysis and is useful for understanding what Arctic Analytics exports before you spend time on local setup.
+This checked-in bundle demonstrates the evidence format, not live agent execution. It was generated from a sample analysis and is useful for understanding what Python Data Analysis Agent exports before you spend time on local setup.
 
 The sample bundle does not run a new analysis. It lets you inspect a completed analysis artifact.
 
 Key files:
 
 - `README.md`: overview of the bundle contents.
-- `run_manifest.json`: run id, timestamp, Arctic Analytics version, Python/platform details, model/provider, source filenames, selected SHA-256 hashes, trace presence, and limitations.
+- `run_manifest.json`: run id, timestamp, Python Data Analysis Agent version, Python/platform details, model/provider, source filenames, selected SHA-256 hashes, trace presence, and limitations.
 - `context_bundle.json`: dataset metadata and analysis context available to the workflow.
 - `analysis_trace.json`: exported session trace, including messages, visible tool calls, outputs, model, cost, and known limitations.
 - `prompts.json`: system prompt and user prompt material available for review.
@@ -229,7 +229,7 @@ Key files:
 - `environment.json`: local software/runtime metadata and selected dependency versions.
 - `methods.md`: draft methods language for human editing.
 - `limitations.md`: limitations to disclose when using the bundle.
-- `software_citation.md`: suggested citation wording for Arctic Analytics.
+- `software_citation.md`: suggested citation wording for Python Data Analysis Agent.
 
 For the corresponding input files, inspect:
 
@@ -280,7 +280,7 @@ Environment variable fallback:
 
 ```bash
 export OPENAI_API_KEY="your-openai-api-key"
-poetry run arctic-analytics-app
+poetry run python-data-analysis-agent-app
 ```
 
 Docker:
@@ -292,11 +292,11 @@ Docker:
 Build:
 
 ```bash
-docker build -t arctic-analytics .
+docker build -t python-data-analysis-agent .
 ```
 
 Run:
 
 ```bash
-docker run --rm -p 8501:8501 -e OPENAI_API_KEY="$OPENAI_API_KEY" -e ENV=dev arctic-analytics
+docker run --rm -p 8501:8501 -e OPENAI_API_KEY="$OPENAI_API_KEY" -e ENV=dev python-data-analysis-agent
 ```

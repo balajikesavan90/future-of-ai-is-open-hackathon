@@ -1,6 +1,6 @@
 # Examples
 
-This directory contains small illustrative examples of the inspectable Arctic Analytics workflow and research artifact bundle format. The examples are useful for review and documentation, but they are not deterministic replay artifacts.
+This directory contains small illustrative examples of the inspectable Python Data Analysis Agent workflow and research artifact bundle format. The examples are useful for review and documentation, but they are not deterministic replay artifacts.
 
 ## Labels
 
@@ -26,7 +26,7 @@ The checked-in `sample_research_bundle/` directory lets reviewers inspect the ar
 
 ## Trace Provenance
 
-`sample_trace_export.json` and `sample_research_bundle/` were generated with Arctic Analytics' application path using a real external OpenAI API call. The bundle's run manifest records the example model, `gpt-5.4-mini-2026-03-17`.
+`sample_trace_export.json` and `sample_research_bundle/` were generated with Python Data Analysis Agent's application path using a real external OpenAI API call. The bundle's run manifest records the example model, `gpt-5.6-luna`.
 
 To regenerate both the trace and the checked-in research bundle:
 
@@ -50,7 +50,7 @@ poetry run python scripts/regenerate_example_trace.py \
 
 The script reads `OPENAI_API_KEY` from the environment first, then falls back to Streamlit secrets, such as `.streamlit/secrets.toml`.
 
-The example session state uses the bundled `tips` dataset and its data dictionary, constructs the system prompt with `arctic_analytics.core.system_messages.construct_system_message()`, calls `arctic_analytics.llm.ai.generate_ai_response()`, executes the model-produced tool call through the constrained execution path, exports the same JSON structure used by the Streamlit "Export Analysis Trace" control, and then writes `sample_research_bundle/` through the standard artifact bundle writer.
+The example session state uses the bundled `tips` dataset and its data dictionary, constructs the system prompt with `python_data_analysis_agent.core.system_messages.construct_system_message()`, calls `python_data_analysis_agent.llm.ai.generate_ai_response()`, executes the model-produced tool call through the constrained execution path, exports the same JSON structure used by the Streamlit "Export Analysis Trace" control, and then writes `sample_research_bundle/` through the standard artifact bundle writer.
 
 ## Limitations
 

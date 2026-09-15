@@ -1,14 +1,14 @@
-# Contributing to Arctic Analytics
+# Contributing to Python Data Analysis Agent
 
-Thank you for considering a contribution to Arctic Analytics.
+Thank you for considering a contribution to Python Data Analysis Agent.
 
 ## Where do I go from here?
 
-If you notice a bug or have a focused feature request, check the existing issues first. Arctic Analytics is intentionally scoped to metadata-aware, inspectable, constrained Tool-Calling Analysis over structured data.
+If you notice a bug or have a focused feature request, check the existing issues first. Python Data Analysis Agent is intentionally scoped to metadata-aware, inspectable, constrained Tool-Calling Analysis over structured data.
 
 ## Fork & create a branch
 
-If this is something you think you can fix, then fork Arctic Analytics and create a branch with a descriptive name.
+If this is something you think you can fix, then fork Python Data Analysis Agent and create a branch with a descriptive name.
 
 A good branch name would be (where issue #325 is the ticket you're working on):
 
@@ -22,13 +22,13 @@ At this point, you're ready to make your changes! Feel free to ask for help; eve
 ## Get the code
 ```bash
 # Clone your fork of the repo into the current directory
-git clone https://github.com/<your-username>/arctic-analytics.git
+git clone https://github.com/<your-username>/python-data-analysis-agent.git
 
 # Navigate to the newly cloned directory
-cd arctic-analytics
+cd python-data-analysis-agent
 
 # Assign the original repo to a remote called "upstream"
-git remote add upstream https://github.com/balajikesavan90/arctic-analytics.git
+git remote add upstream https://github.com/balajikesavan90/python-data-analysis-agent.git
 
 ## Create a new branch
 git checkout -b <my-branch-name>
@@ -58,7 +58,7 @@ Push your branch to your fork:
 # Push the branch
 git push origin <my-branch-name>
 ```
-Then go to the GitHub page of the original Arctic Analytics repository and you'll see your new changes proposed. Hit the "Compare & pull request" button on the page to create a new pull request.
+Then go to the GitHub page of the original Python Data Analysis Agent repository and you'll see your new changes proposed. Hit the "Compare & pull request" button on the page to create a new pull request.
 
 
 ## Keeping your Pull Request updated

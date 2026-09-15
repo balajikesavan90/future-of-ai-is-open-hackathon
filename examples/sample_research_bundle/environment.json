@@ -1,8 +1,8 @@
 {
-  "arctic_analytics_version": "0.1.0",
+  "python_data_analysis_agent_version": "0.1.0",
   "python_version": "3.12.4 (main, Jan 25 2026, 21:08:48) [GCC 13.3.0]",
-  "platform": "Linux-6.17.0-19-generic-x86_64-with-glibc2.39",
-  "timestamp": "2026-06-01T02:44:25.335856+00:00",
+  "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.39",
+  "timestamp": "2026-09-15T03:38:01.659176+00:00",
   "command": "streamlit research bundle export",
   "source_files": {
     "data": "examples/sample_dataset.csv",
@@ -10,13 +10,13 @@
     "trace": "examples/sample_trace_export.json"
   },
   "dependencies": {
-    "streamlit": "1.58.0",
-    "pandas": "3.0.3",
-    "numpy": "2.4.6",
+    "streamlit": "1.63.0",
+    "pandas": "3.0.5",
+    "numpy": "2.5.2",
     "openai": "1.109.1",
-    "matplotlib": "3.10.9",
+    "matplotlib": "3.11.1",
     "seaborn": "0.13.2",
-    "plotly": "6.7.0",
+    "plotly": "6.9.0",
     "statsmodels": "0.14.6"
   }
 }

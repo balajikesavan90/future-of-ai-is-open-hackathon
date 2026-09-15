@@ -2,7 +2,7 @@ import json
 
 import pandas as pd
 
-from arctic_analytics.streamlit.widgets.data_dictionary import (
+from python_data_analysis_agent.streamlit.widgets.data_dictionary import (
     _restored_data_dictionary_frame,
     preserve_or_derive_primary_keys,
 )

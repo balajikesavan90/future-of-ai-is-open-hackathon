@@ -1,13 +1,13 @@
 [tool.poetry]
-name = "arctic-analytics"
+name = "python-data-analysis-agent"
 version = "0.1.0"
 description = "An experimental open-source framework for metadata-aware, inspectable, constrained AI-assisted analysis over structured data."
 authors = ["BalajiKesavan <36139209+balajikesavan90@users.noreply.github.com>"]
 readme = "README.md"
 license = "MIT"
-repository = "https://github.com/balajikesavan90/arctic-analytics"
-packages = [{include = "arctic_analytics", from = "src"}]
-include = [{path = "src/arctic_analytics/CITATION.cff", format = ["sdist", "wheel"]}]
+repository = "https://github.com/balajikesavan90/python-data-analysis-agent"
+packages = [{include = "python_data_analysis_agent", from = "src"}]
+include = [{path = "src/python_data_analysis_agent/CITATION.cff", format = ["sdist", "wheel"]}]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -37,8 +37,8 @@ pytest = ">=8.3,<10.0"
 
 
 [tool.poetry.scripts]
-arctic-analytics-app = "arctic_analytics.cli:main"
-arctic-analytics = "arctic_analytics.cli:main"
+python-data-analysis-agent-app = "python_data_analysis_agent.cli:main"
+python-data-analysis-agent = "python_data_analysis_agent.cli:main"
 
 
 [tool.pytest.ini_options]

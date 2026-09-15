@@ -5,16 +5,16 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from arctic_analytics.core import data_import
-from arctic_analytics.core.data_import import (
+from python_data_analysis_agent.core import data_import
+from python_data_analysis_agent.core.data_import import (
     check_datatypes,
     build_vetted_files_from_uploads,
     dataframe_name_from_filename,
     gather_metadata,
     unique_dataframe_name,
 )
-from arctic_analytics.streamlit.widgets import uploader
-from arctic_analytics.streamlit.widgets.uploader import is_valid_csv, sanitize_filename
+from python_data_analysis_agent.streamlit.widgets import uploader
+from python_data_analysis_agent.streamlit.widgets.uploader import is_valid_csv, sanitize_filename
 
 
 class Upload(io.BytesIO):

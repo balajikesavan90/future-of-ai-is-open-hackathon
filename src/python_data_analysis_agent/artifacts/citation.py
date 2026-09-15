@@ -9,11 +9,11 @@ message: "If you use this software, please cite it as below."
 authors:
   - family-names: Kesavan
     given-names: Balaji
-title: "Arctic Analytics"
+title: "Python Data Analysis Agent"
 version: 0.1.0
 date-released: 2026-02-06
-url: "https://github.com/balajikesavan90/arctic-analytics"
-repository-code: "https://github.com/balajikesavan90/arctic-analytics"
+url: "https://github.com/balajikesavan90/python-data-analysis-agent"
+repository-code: "https://github.com/balajikesavan90/python-data-analysis-agent"
 license: MIT
 type: software
 doi: 10.5281/zenodo.18514535
@@ -22,7 +22,7 @@ doi: 10.5281/zenodo.18514535
 
 def citation_cff_text() -> str:
     try:
-        return resources.files("arctic_analytics").joinpath("CITATION.cff").read_text()
+        return resources.files("python_data_analysis_agent").joinpath("CITATION.cff").read_text()
     except (FileNotFoundError, ModuleNotFoundError):
         return FALLBACK_CITATION_CFF
 

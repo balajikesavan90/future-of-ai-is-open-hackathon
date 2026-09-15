@@ -1,11 +1,11 @@
 # Security
 
-Arctic Analytics runs model-generated Python through application-level checks before execution. These controls reduce accidental misuse, but they do not provide security isolation.
+Python Data Analysis Agent runs model-generated Python through application-level checks before execution. These controls reduce accidental misuse, but they do not provide security isolation.
 
 ## Execution Restrictions
 
 - Code is parsed with Python `ast` before execution.
-- Imports are limited to an allowlist in `src/arctic_analytics/core/security.py`.
+- Imports are limited to an allowlist in `src/python_data_analysis_agent/core/security.py`.
 - Known dangerous calls and modules, including OS/process/file/network-oriented APIs, are blocked during validation.
 - Execution receives restricted globals and the loaded dataframes, not a normal unrestricted Python environment.
 - Tool outputs are constrained to supported table, series, scalar, text, and plot result types.
@@ -38,4 +38,4 @@ The timeout is a responsiveness control. It is not a CPU, memory, or process iso
 
 Allowed libraries may expose unexpected behavior or resource-heavy operations. Python-level validation can miss edge cases. Large dataframes or expensive generated code can still consume memory or CPU before timeout handling completes. Users should treat outputs as reviewable analysis artifacts, not trusted autonomous decisions.
 
-For untrusted users, sensitive datasets, or production workloads, run Arctic Analytics inside an external isolation boundary such as a locked-down container, VM, or managed execution service with explicit CPU, memory, filesystem, and network controls.
+For untrusted users, sensitive datasets, or production workloads, run Python Data Analysis Agent inside an external isolation boundary such as a locked-down container, VM, or managed execution service with explicit CPU, memory, filesystem, and network controls.

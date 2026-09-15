@@ -1,11 +1,11 @@
-"""Research artifact bundle generation for Arctic Analytics."""
+"""Research artifact bundle generation for Python Data Analysis Agent."""
 
-from arctic_analytics.artifacts.bundle import (
+from python_data_analysis_agent.artifacts.bundle import (
     build_research_bundle_zip,
     validate_research_bundle,
     write_research_bundle,
 )
-from arctic_analytics.artifacts.models import (
+from python_data_analysis_agent.artifacts.models import (
     AnalysisTrace,
     BundleValidationResult,
     ContextBundle,

@@ -7,12 +7,12 @@ from types import SimpleNamespace
 import pytest
 from PIL import Image
 
-import arctic_analytics.llm.openai_responses as openai_responses
-import arctic_analytics.artifacts.extractors as artifact_extractors
-from arctic_analytics.config import MAX_MODEL_CONTEXT_TOKENS
-from arctic_analytics.core.output_metadata import DISPLAY_OUTPUT_FIELDS
-from arctic_analytics.streamlit import helpers
-from arctic_analytics.llm.openai_responses import OpenAIResponsesUtility
+import python_data_analysis_agent.llm.openai_responses as openai_responses
+import python_data_analysis_agent.artifacts.extractors as artifact_extractors
+from python_data_analysis_agent.config import MAX_MODEL_CONTEXT_TOKENS
+from python_data_analysis_agent.core.output_metadata import DISPLAY_OUTPUT_FIELDS
+from python_data_analysis_agent.streamlit import helpers
+from python_data_analysis_agent.llm.openai_responses import OpenAIResponsesUtility
 
 
 def test_calculate_cost_returns_numeric_cost_for_known_model():

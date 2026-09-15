@@ -1,6 +1,6 @@
 import pytest
 
-from arctic_analytics.config import (
+from python_data_analysis_agent.config import (
     SUPPORTED_OPENAI_MODELS,
     get_config_value,
     get_openai_api_key,

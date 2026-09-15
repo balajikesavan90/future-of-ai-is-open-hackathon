@@ -8,7 +8,7 @@ import re
 from seaborn import load_dataset
 import logging
 
-from arctic_analytics.core.trace_resume import RESERVED_EXECUTION_GLOBAL_NAMES
+from python_data_analysis_agent.core.trace_resume import RESERVED_EXECUTION_GLOBAL_NAMES
 
 datasets = {
     'tips': {

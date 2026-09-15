@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-from arctic_analytics.core.system_messages import construct_system_message
+from python_data_analysis_agent.core.system_messages import construct_system_message
 
 
 def test_construct_system_message_includes_dataframe_metadata():

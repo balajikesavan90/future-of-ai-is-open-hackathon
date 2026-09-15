@@ -1,6 +1,6 @@
 # Security Assumptions
 
-Arctic Analytics assumes a trusted local operator running the application in a controlled development or research environment.
+Python Data Analysis Agent assumes a trusted local operator running the application in a controlled development or research environment.
 
 ## Assumptions
 
@@ -8,7 +8,7 @@ Arctic Analytics assumes a trusted local operator running the application in a c
 - Uploaded datasets are appropriate for the local environment where the app is running.
 - API keys and secrets are managed outside the repository and are not committed.
 - The Python environment and installed dependencies are trusted by the operator.
-- Network and filesystem controls, if needed, are provided outside Arctic Analytics.
+- Network and filesystem controls, if needed, are provided outside Python Data Analysis Agent.
 
 ## Non-Assumptions
 

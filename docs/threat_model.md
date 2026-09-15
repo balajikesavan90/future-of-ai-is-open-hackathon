@@ -1,6 +1,6 @@
 # Threat Model
 
-Arctic Analytics is an experimental framework. Its execution controls are application-level restrictions for generated Python, not a security boundary.
+Python Data Analysis Agent is an experimental framework. Its execution controls are application-level restrictions for generated Python, not a security boundary.
 
 ## In Scope
 

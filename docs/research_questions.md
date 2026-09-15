@@ -1,6 +1,6 @@
 # Research Questions
 
-Arctic Analytics is a practical experiment in metadata-aware and inspectable AI-assisted analysis over structured data. The project should use implementation work to explore the following questions.
+Python Data Analysis Agent is a practical experiment in metadata-aware and inspectable AI-assisted analysis over structured data. The project should use implementation work to explore the following questions.
 
 ## Metadata And Context
 
@@ -43,9 +43,9 @@ Arctic Analytics is a practical experiment in metadata-aware and inspectable AI-
 
 ## Current Non-Goals
 
-- Arctic Analytics is not an enterprise governance platform.
-- Arctic Analytics does not provide role-based governance.
-- Arctic Analytics does not provide durable audit logs.
-- Arctic Analytics does not provide replayable traces today.
-- Arctic Analytics does not provide OS-level or container isolation today.
-- Arctic Analytics does not claim a novel agent architecture.
+- Python Data Analysis Agent is not an enterprise governance platform.
+- Python Data Analysis Agent does not provide role-based governance.
+- Python Data Analysis Agent does not provide durable audit logs.
+- Python Data Analysis Agent does not provide replayable traces today.
+- Python Data Analysis Agent does not provide OS-level or container isolation today.
+- Python Data Analysis Agent does not claim a novel agent architecture.

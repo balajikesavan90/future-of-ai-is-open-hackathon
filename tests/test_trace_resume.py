@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 from PIL import Image
 
-from arctic_analytics.core import trace_resume
-from arctic_analytics.core.trace_resume import (
+from python_data_analysis_agent.core import trace_resume
+from python_data_analysis_agent.core.trace_resume import (
     TraceResumeError,
     load_analysis_trace,
     messages_for_resume,

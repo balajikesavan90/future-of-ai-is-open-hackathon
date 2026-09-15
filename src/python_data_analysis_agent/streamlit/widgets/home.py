@@ -1,12 +1,12 @@
 import streamlit as st
 import logging
 
-from arctic_analytics.streamlit.widgets.sample_datasets import render_sample_datasets
-from arctic_analytics.streamlit.widgets.uploader import render_uploader
-from arctic_analytics.streamlit.widgets.about import render_about
-from arctic_analytics.streamlit.widgets.data_dictionary import render_data_dictionary_widget
-from arctic_analytics.streamlit.widgets.uploaded_data import render_uploaded_data
-from arctic_analytics.streamlit.widgets.analytics_agent import render_analytics_agent
+from python_data_analysis_agent.streamlit.widgets.sample_datasets import render_sample_datasets
+from python_data_analysis_agent.streamlit.widgets.uploader import render_uploader
+from python_data_analysis_agent.streamlit.widgets.about import render_about
+from python_data_analysis_agent.streamlit.widgets.data_dictionary import render_data_dictionary_widget
+from python_data_analysis_agent.streamlit.widgets.uploaded_data import render_uploaded_data
+from python_data_analysis_agent.streamlit.widgets.analytics_agent import render_analytics_agent
 
 def setup_home():
     logging.info(f'setup_home - {st.session_state["session_id"]}')
