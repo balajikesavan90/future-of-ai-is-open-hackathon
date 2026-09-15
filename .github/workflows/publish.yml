@@ -5,10 +5,9 @@ on:
     types: [published]
   workflow_dispatch:
     inputs:
-      ref:
-        description: Git tag or commit to publish
+      release_tag:
+        description: Release tag to publish (for example, v2.0.0)
         required: true
-        default: v2.0.0
 
 permissions:
   contents: read
@@ -21,7 +20,7 @@ jobs:
       - name: Check out release source
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name || inputs.ref }}
+          ref: ${{ github.event.release.tag_name || inputs.release_tag }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -30,6 +29,25 @@ jobs:
 
       - name: Install Poetry
         run: pipx install poetry
+
+      - name: Verify release tag matches package version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
+        run: |
+          case "$RELEASE_TAG" in
+            v[0-9]*) ;;
+            *)
+              echo "Release tag must begin with 'v', got: $RELEASE_TAG"
+              exit 1
+              ;;
+          esac
+
+          expected_version="${RELEASE_TAG#v}"
+          actual_version="$(poetry version --short)"
+          if [ "$actual_version" != "$expected_version" ]; then
+            echo "Release tag $RELEASE_TAG does not match package version $actual_version"
+            exit 1
+          fi
 
       - name: Validate package metadata
         run: poetry check
