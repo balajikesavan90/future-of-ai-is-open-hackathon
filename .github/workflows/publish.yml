@@ -1,0 +1,62 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git tag or commit to publish
+        required: true
+        default: v2.0.0
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build package distributions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out release source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Validate package metadata
+        run: poetry check
+
+      - name: Build distributions
+        run: poetry build
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    name: Publish distributions to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
