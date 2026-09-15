@@ -280,7 +280,7 @@ DOI: `10.5281/zenodo.18514535`
 Suggested wording:
 
 ```text
-Analyses were performed using Python Data Analysis Agent v0.1.0 (DOI: 10.5281/zenodo.18514535).
+Analyses were performed using Python Data Analysis Agent v2.0.0 (DOI: 10.5281/zenodo.18514535).
 ```
 
 Before citing this release, verify that the README, `CITATION.cff`, package version, and Zenodo record refer to the same version. See [docs/citing.md](docs/citing.md).

@@ -20,7 +20,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 
-DEFAULT_PROMPT = "Which day has the highest average tip percentage? Calculate tip percentage as tip divided by total_bill."
+DEFAULT_PROMPT = "Which day has the highest average tip percentage? Calculate tip percentage as (tip divided by total_bill) × 100."
 DEFAULT_MODEL = "gpt-5.6-luna"
 
 

@@ -7,4 +7,4 @@
 | Thursday | 16.13% |
 | Saturday | 15.32% |
 
-Calculation used: `tip_percentage = tip / total_bill`, averaged across visits for each day.
+Calculation used: `(tip ÷ total_bill) × 100`, averaged across all meals for each day.

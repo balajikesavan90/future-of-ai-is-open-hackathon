@@ -24,4 +24,4 @@ Use the active Tool-Calling Analysis path:
 
 ## Removal Timeline
 
-These files are retained only as temporary migration context for the 0.1.x line. They should be deleted before a 0.2.0 release unless a specific archived reference is still needed for a migration note.
+These files are retained only as temporary migration context for the 0.1.x line. They should be deleted before a 3.0.0 release unless a specific archived reference is still needed for a migration note.

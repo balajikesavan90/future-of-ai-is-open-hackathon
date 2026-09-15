@@ -1,6 +1,6 @@
 {
   "context_bundle_version": "0.1.0",
-  "prompt": "Which day has the highest average tip percentage? Calculate tip percentage as tip divided by total_bill.",
+  "prompt": "Which day has the highest average tip percentage? Calculate tip percentage as (tip divided by total_bill) \u00d7 100.",
   "metadata": {
     "dataset_name": "tips",
     "dataset_description": "This dataset contains data on tips given to waitstaff at a restaurant.",

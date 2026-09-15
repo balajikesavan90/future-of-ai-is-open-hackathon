@@ -6,8 +6,8 @@ authors:
     email: 36139209+balajikesavan90@users.noreply.github.com
     orcid: 'https://orcid.org/0009-0002-7714-518X'
 title: "Python Data Analysis Agent"
-version: 0.1.0
-date-released: 2026-02-06
+version: 2.0.0
+date-released: 2026-09-14
 url: "https://github.com/balajikesavan90/python-data-analysis-agent"
 repository-code: "https://github.com/balajikesavan90/python-data-analysis-agent"
 license: MIT
