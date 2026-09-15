@@ -66,6 +66,16 @@ def test_fallback_citation_version_requires_fallback_constant(tmp_path):
     assert validator.fallback_citation_version(citation) is None
 
 
+def test_fallback_citation_version_does_not_search_past_assigned_literal(tmp_path):
+    citation = tmp_path / "citation.py"
+    citation.write_text(
+        'FALLBACK_CITATION_CFF = """\ntitle: Example\n"""\n'
+        'OTHER_CITATION_CFF = """\nversion: 2.0.0\n"""\n'
+    )
+
+    assert validator.fallback_citation_version(citation) is None
+
+
 def test_release_metadata_validation_succeeds_when_versions_match(release_metadata, monkeypatch, capsys):
     assert run_validation(monkeypatch) == 0
     assert "Release metadata matches version 2.0.0." in capsys.readouterr().out

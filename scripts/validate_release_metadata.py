@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import re
 import sys
@@ -21,12 +22,17 @@ def cff_version(path: Path) -> str | None:
 
 
 def fallback_citation_version(path: Path) -> str | None:
-    match = re.search(
-        r'FALLBACK_CITATION_CFF\s*=\s*""".*?^version:\s*["\']?([^\s"\']+)',
-        path.read_text(),
-        flags=re.MULTILINE | re.DOTALL,
-    )
-    return match.group(1) if match else None
+    tree = ast.parse(path.read_text(), filename=str(path))
+    for node in tree.body:
+        if not isinstance(node, ast.Assign):
+            continue
+        if not any(isinstance(target, ast.Name) and target.id == "FALLBACK_CITATION_CFF" for target in node.targets):
+            continue
+        if not isinstance(node.value, ast.Constant) or not isinstance(node.value.value, str):
+            return None
+        match = re.search(r'^version:\s*["\']?([^\s"\']+)', node.value.value, flags=re.MULTILINE)
+        return match.group(1) if match else None
+    return None
 
 
 def main() -> int:
